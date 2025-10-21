@@ -1157,6 +1157,37 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!1 &645737072
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 645737073}
+  m_Layer: 0
+  m_Name: -----------------------
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &645737073
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 645737072}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 1.6102321, y: 3.4615202, z: 4.293292}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &667718353
 GameObject:
   m_ObjectHideFlags: 0
@@ -2118,7 +2149,7 @@ MonoBehaviour:
     IconType: 169520
     IconTexture: {fileID: 0}
     IsIconRecursive: 0
-    BackgroundType: 0
+    BackgroundType: 4000
     BackgroundTexture: {fileID: 0}
     IsBackgroundRecursive: 0
     IsHidden: 0
@@ -2141,6 +2172,42 @@ MonoBehaviour:
     Priority: 0
     IconType: 290000
     IconTexture: {fileID: 0}
+    IsIconRecursive: 0
+    BackgroundType: 0
+    BackgroundTexture: {fileID: 0}
+    IsBackgroundRecursive: 0
+    IsHidden: 0
+  - Type: 0
+    Name: 
+    GameObject: {fileID: 1369649580}
+    Ordinal: 3
+    Priority: 0
+    IconType: 302000
+    IconTexture: {fileID: 0}
+    IsIconRecursive: 0
+    BackgroundType: 0
+    BackgroundTexture: {fileID: 0}
+    IsBackgroundRecursive: 0
+    IsHidden: 0
+  - Type: 0
+    Name: 
+    GameObject: {fileID: 645737072}
+    Ordinal: 4
+    Priority: 0
+    IconType: 1
+    IconTexture: {fileID: 2800000, guid: c4e56d06f0690414f825f586576ee550, type: 3}
+    IsIconRecursive: 0
+    BackgroundType: 0
+    BackgroundTexture: {fileID: 0}
+    IsBackgroundRecursive: 0
+    IsHidden: 0
+  - Type: 0
+    Name: 
+    GameObject: {fileID: 993886871}
+    Ordinal: 5
+    Priority: 0
+    IconType: 1
+    IconTexture: {fileID: 2800000, guid: c4e56d06f0690414f825f586576ee550, type: 3}
     IsIconRecursive: 0
     BackgroundType: 0
     BackgroundTexture: {fileID: 0}
@@ -3853,10 +3920,12 @@ SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
   - {fileID: 667718355}
-  - {fileID: 114794490}
   - {fileID: 1861342443}
+  - {fileID: 1369649582}
   - {fileID: 2247695638406281966}
   - {fileID: 993886873}
+  - {fileID: 645737073}
+  - {fileID: 114794490}
   - {fileID: 579520155}
   - {fileID: 482508197}
   - {fileID: 1272567385}
@@ -3883,5 +3952,4 @@ SceneRoots:
   - {fileID: 1070745051}
   - {fileID: 392160223}
   - {fileID: 768721000}
-  - {fileID: 1369649582}
   - {fileID: 959749385}
