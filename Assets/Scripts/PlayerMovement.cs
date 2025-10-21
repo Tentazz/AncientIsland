@@ -1,9 +1,21 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class PlayerMovement : MonoBehaviour
 {
+    //setup input Action
+    public InputActionAsset InputActions;
+    public InputAction moveAction;
+    public InputAction jumpAction;
+    public InputAction sprintAction;
+
+    //Setup variable pour input
+    private Vector2 moveAmount;
+
+
+
     public CharacterController controller;
     public float speed = 12f;
 
@@ -21,20 +33,37 @@ public class PlayerMovement : MonoBehaviour
     bool sprinting = false;
     public float sprintMultiplyier = 2f;
 
- 
+    //Activer le systeme d'input du joueur
+    private void OnEnable ()
+     {
+        InputActions.FindActionMap("Player").Enable();
+      }
+
+    private void OnDisable () {
+        InputActions.FindActionMap("Player").Disable();
+    }
+
+    private void Awake () {
+        moveAction = InputSystem.actions.FindAction("Move");
+        jumpAction = InputSystem.actions.FindAction("Jump");
+        sprintAction = InputSystem.actions.FindAction("Sprint");
+    }
 
     void Update()
     {
+        moveAmount = moveAction.ReadValue<Vector2>();
+
+
         //isGrounded = Physics.CheckSphere(groundcheck.position,grounddistance, groundMask);
         isGrounded = controller.isGrounded;
 
         //check Sprint
-        if(Input.GetButtonDown("Sprint"))
+        if(sprintAction.WasPressedThisFrame())
         {
                 sprinting = true;
         }
 
-        if(Input.GetButtonUp("Sprint"))
+        if(sprintAction.WasReleasedThisFrame())
         {
                 sprinting = false;
         }
@@ -46,10 +75,10 @@ public class PlayerMovement : MonoBehaviour
         }
         
         //mouvement de base
-        float x = Input.GetAxis("Horizontal");
-        float z = Input.GetAxis("Vertical");
+        //float x = lookAction.x;
+        //float z = Input.GetAxis("Vertical");
 
-        Vector3 move = transform.right * x + transform.forward * z;
+        Vector3 move = transform.right * moveAmount.x + transform.forward * moveAmount.y;
 
         if(sprinting == true){
             controller.Move(move * speed * Time.deltaTime * sprintMultiplyier);
@@ -60,10 +89,10 @@ public class PlayerMovement : MonoBehaviour
         
 
         //jump
-        if(Input.GetButtonDown("Jump") && isGrounded)
-    {
+        if(jumpAction.WasPressedThisFrame() && isGrounded)
+        {
         velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
-    }
+        }
 
         velocity.y += gravity * gravityMultiplyier * Time.deltaTime;
         controller.Move(velocity * Time.deltaTime);

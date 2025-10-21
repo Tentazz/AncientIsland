@@ -2252,6 +2252,26 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 46349f14007b7e448b3807c28afb17fd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  InputActions: {fileID: -944628639613478452, guid: 57ee71ee826d017449e054ba027627b3,
+    type: 3}
+  moveAction:
+    m_Name: Move
+    m_Type: 0
+    m_ExpectedControlType: 
+    m_Id: d8e10eb1-98f3-4da1-afce-97b3aafd3604
+    m_Processors: 
+    m_Interactions: 
+    m_SingletonActionBindings: []
+    m_Flags: 0
+  jumpAction:
+    m_Name: Jump
+    m_Type: 0
+    m_ExpectedControlType: 
+    m_Id: 2eae2335-7629-42e8-b011-d847a70dc162
+    m_Processors: 
+    m_Interactions: 
+    m_SingletonActionBindings: []
+    m_Flags: 0
   controller: {fileID: 1009475858}
   speed: 5
   groundcheck: {fileID: 1230794524}
@@ -2262,6 +2282,37 @@ MonoBehaviour:
   gravityMultiplyier: 2
   jumpHeight: 3
   sprintMultiplyier: 2
+--- !u!114 &1009475860
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 150075834}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 62899f850307741f2a39c98a8b639597, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Actions: {fileID: -944628639613478452, guid: 472052434f5eec948b74b1733d52d445,
+    type: 3}
+  m_NotificationBehavior: 0
+  m_UIInputModule: {fileID: 0}
+  m_DeviceLostEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  m_DeviceRegainedEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  m_ControlsChangedEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  m_ActionEvents: []
+  m_NeverAutoSwitchControlSchemes: 0
+  m_DefaultControlScheme: Keyboard and mouse
+  m_DefaultActionMap: Player
+  m_SplitScreenIndex: -1
+  m_Camera: {fileID: 0}
 --- !u!1 &1070745047
 GameObject:
   m_ObjectHideFlags: 0
@@ -3889,10 +3940,18 @@ PrefabInstance:
         type: 3}
       insertIndex: -1
       addedObject: {fileID: 1009475859}
+    - targetCorrespondingSourceObject: {fileID: 4607285457530146397, guid: cb22d33dfe694d8479e5f1373e621b11,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1009475860}
     - targetCorrespondingSourceObject: {fileID: 6415716310589563371, guid: cb22d33dfe694d8479e5f1373e621b11,
         type: 3}
       insertIndex: -1
       addedObject: {fileID: 2247695638406281968}
+    - targetCorrespondingSourceObject: {fileID: 6415716310589563371, guid: cb22d33dfe694d8479e5f1373e621b11,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2247695638406281973}
   m_SourcePrefab: {fileID: 100100000, guid: cb22d33dfe694d8479e5f1373e621b11, type: 3}
 --- !u!1 &2247695638406281967 stripped
 GameObject:
@@ -3912,9 +3971,51 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 30b7929f5ebe01d419bf9c2ed127ce11, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  mouseSensitivityX: 400
-  mouseSensitivityY: 400
+  InputActions: {fileID: -944628639613478452, guid: 57ee71ee826d017449e054ba027627b3,
+    type: 3}
+  lookAction:
+    m_Name: Look
+    m_Type: 0
+    m_ExpectedControlType: 
+    m_Id: aa14471c-de48-4656-a169-000480eaefda
+    m_Processors: 
+    m_Interactions: 
+    m_SingletonActionBindings: []
+    m_Flags: 0
+  mouseSensitivityX: 35
+  mouseSensitivityY: 35
   playerBody: {fileID: 1009475857}
+--- !u!114 &2247695638406281973
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2247695638406281967}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 62899f850307741f2a39c98a8b639597, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Actions: {fileID: -944628639613478452, guid: 472052434f5eec948b74b1733d52d445,
+    type: 3}
+  m_NotificationBehavior: 0
+  m_UIInputModule: {fileID: 0}
+  m_DeviceLostEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  m_DeviceRegainedEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  m_ControlsChangedEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  m_ActionEvents: []
+  m_NeverAutoSwitchControlSchemes: 0
+  m_DefaultControlScheme: Keyboard and mouse
+  m_DefaultActionMap: Player
+  m_SplitScreenIndex: -1
+  m_Camera: {fileID: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

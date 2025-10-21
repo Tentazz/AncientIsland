@@ -1,14 +1,36 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class MouseLook : MonoBehaviour
 {
+    //setup input Action
+    public InputActionAsset InputActions;
+    public InputAction lookAction;
+
+    private Vector2 lookAmount;
+
     public float mouseSensitivityX = 100f;
     public float mouseSensitivityY = 100f;
     public Transform playerBody;
 
     float xRotation = 0f;
+
+
+
+    //Activer le systeme d'input du joueur
+    private void OnEnable() {
+        InputActions.FindActionMap("Player").Enable();
+    }
+
+    private void OnDisable() {
+        InputActions.FindActionMap("Player").Disable();
+    }
+
+    private void Awake() {
+        lookAction = InputSystem.actions.FindAction("Look");
+    }
 
     // Start is called before the first frame update
     void Start()
@@ -19,8 +41,10 @@ public class MouseLook : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        float mouseX = Input.GetAxis("Mouse X") * mouseSensitivityX * Time.deltaTime;
-        float mouseY = Input.GetAxis("Mouse Y") * mouseSensitivityY * Time.deltaTime;
+        lookAmount = lookAction.ReadValue<Vector2>();
+
+        float mouseX = lookAmount.x * mouseSensitivityX * Time.deltaTime;
+        float mouseY = lookAmount.y * mouseSensitivityY * Time.deltaTime;
         
 
         xRotation -= mouseY;
