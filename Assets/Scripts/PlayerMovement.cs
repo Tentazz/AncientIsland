@@ -35,15 +35,17 @@ public class PlayerMovement : MonoBehaviour
 
     //Activer le systeme d'input du joueur
     private void OnEnable ()
-     {
+    {
         InputActions.FindActionMap("Player").Enable();
-      }
+    }
 
-    private void OnDisable () {
+    private void OnDisable ()
+    {
         InputActions.FindActionMap("Player").Disable();
     }
 
-    private void Awake () {
+    private void Awake ()
+    {
         moveAction = InputSystem.actions.FindAction("Move");
         jumpAction = InputSystem.actions.FindAction("Jump");
         sprintAction = InputSystem.actions.FindAction("Sprint");
@@ -60,12 +62,12 @@ public class PlayerMovement : MonoBehaviour
         //check Sprint
         if(sprintAction.WasPressedThisFrame())
         {
-                sprinting = true;
+            sprinting = true;
         }
 
         if(sprintAction.WasReleasedThisFrame())
         {
-                sprinting = false;
+            sprinting = false;
         }
 
         //quand on touche le sol, ralentis le joueur
@@ -75,15 +77,15 @@ public class PlayerMovement : MonoBehaviour
         }
         
         //mouvement de base
-        //float x = lookAction.x;
-        //float z = Input.GetAxis("Vertical");
-
         Vector3 move = transform.right * moveAmount.x + transform.forward * moveAmount.y;
 
-        if(sprinting == true){
+        if(sprinting == true)
+        {
             controller.Move(move * speed * Time.deltaTime * sprintMultiplyier);
         }
-        else {
+
+        else
+        {
             controller.Move(move * speed * Time.deltaTime);
         }
         
@@ -91,7 +93,8 @@ public class PlayerMovement : MonoBehaviour
         //jump
         if(jumpAction.WasPressedThisFrame() && isGrounded)
         {
-        velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
+            velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
+            RumbleManager.instance.RumblePulse(0f, 1f, 0.05f);
         }
 
         velocity.y += gravity * gravityMultiplyier * Time.deltaTime;
