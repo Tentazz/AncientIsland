@@ -7,6 +7,7 @@ Shader "Grass Test"
 		[HideInInspector] _AlphaCutoff("Alpha Cutoff ", Range(0, 1)) = 0.5
 		_TextureSample0("Texture Sample 0", 2D) = "white" {}
 		_Color0("Color 0", Color) = (1,1,1,1)
+		_Smoothness("Smoothness", Range( 0 , 1)) = 0
 		[HideInInspector] _texcoord( "", 2D ) = "white" {}
 
 		[HideInInspector] _RenderQueueType("Render Queue Type", Float) = 1
@@ -375,6 +376,7 @@ Shader "Grass Test"
 			CBUFFER_START( UnityPerMaterial )
 			float4 _Color0;
 			float4 _TextureSample0_ST;
+			float _Smoothness;
 			float4 _EmissionColor;
 			float _AlphaCutoff;
 			float _RenderQueueType;
@@ -482,6 +484,7 @@ Shader "Grass Test"
 				float4 uv1 : TEXCOORD3;
 				float4 uv2 : TEXCOORD4;
 				float4 ase_texcoord5 : TEXCOORD5;
+				float4 ase_texcoord6 : TEXCOORD6;
 				UNITY_VERTEX_INPUT_INSTANCE_ID
 				UNITY_VERTEX_OUTPUT_STEREO
 				#if defined(SHADER_STAGE_FRAGMENT) && defined(ASE_NEED_CULLFACE)
@@ -490,7 +493,18 @@ Shader "Grass Test"
 			};
 
 
+			inline float Dither4x4Bayer( int x, int y )
+			{
+				const float dither[ 16 ] = {
+			 1,  9,  3, 11,
+			13,  5, 15,  7,
+			 4, 12,  2, 10,
+			16,  8, 14,  6 };
+				int r = y * 4 + x;
+				return dither[r] / 16; // same # of instructions as pre-dividing due to compiler magic
+			}
 			
+
 			void BuildSurfaceData(FragInputs fragInputs, inout GlobalSurfaceDescription surfaceDescription, float3 V, PositionInputs posInput, out SurfaceData surfaceData, out float3 bentNormalWS)
 			{
 				ZERO_INITIALIZE(SurfaceData, surfaceData);
@@ -715,6 +729,10 @@ Shader "Grass Test"
 				UNITY_TRANSFER_INSTANCE_ID(inputMesh, outputPackedVaryingsMeshToPS);
 				UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO( outputPackedVaryingsMeshToPS );
 
+				float4 ase_clipPos = TransformWorldToHClip( TransformObjectToWorld(inputMesh.positionOS));
+				float4 screenPos = ComputeScreenPos( ase_clipPos , _ProjectionParams.x );
+				outputPackedVaryingsMeshToPS.ase_texcoord6 = screenPos;
+				
 				outputPackedVaryingsMeshToPS.ase_texcoord5.xy = inputMesh.ase_texcoord.xy;
 				
 				//setting value to unused interpolator channels and avoid initialization warnings
@@ -882,6 +900,14 @@ Shader "Grass Test"
 
 				GlobalSurfaceDescription surfaceDescription = (GlobalSurfaceDescription)0;
 				float2 uv_TextureSample0 = packedInput.ase_texcoord5.xy * _TextureSample0_ST.xy + _TextureSample0_ST.zw;
+				float4 screenPos = packedInput.ase_texcoord6;
+				float4 ase_screenPosNorm = screenPos / screenPos.w;
+				ase_screenPosNorm.z = ( UNITY_NEAR_CLIP_VALUE >= 0 ) ? ase_screenPosNorm.z : ase_screenPosNorm.z * 0.5 + 0.5;
+				float2 clipScreen17 = ase_screenPosNorm.xy * _ScreenParams.xy;
+				float dither17 = Dither4x4Bayer( fmod(clipScreen17.x, 4), fmod(clipScreen17.y, 4) );
+				float2 texCoord16 = packedInput.ase_texcoord5.xy * float2( 1,1 ) + float2( 0,0 );
+				float smoothstepResult23 = smoothstep( 0.0 , 0.5 , texCoord16.y);
+				dither17 = step( dither17, smoothstepResult23 );
 				
 				surfaceDescription.BaseColor = _Color0.rgb;
 				surfaceDescription.Normal = float3( 0, 0, 1 );
@@ -894,9 +920,9 @@ Shader "Grass Test"
 				#endif
 
 				surfaceDescription.Emission = 0;
-				surfaceDescription.Smoothness = 0.5;
+				surfaceDescription.Smoothness = _Smoothness;
 				surfaceDescription.Occlusion = 1;
-				surfaceDescription.Alpha = tex2D( _TextureSample0, uv_TextureSample0 ).a;
+				surfaceDescription.Alpha = ( tex2D( _TextureSample0, uv_TextureSample0 ).a * dither17 );
 
 				#ifdef _ALPHATEST_ON
 				surfaceDescription.AlphaClipThreshold = _AlphaCutoff;
@@ -1053,6 +1079,7 @@ Shader "Grass Test"
 			CBUFFER_START( UnityPerMaterial )
 			float4 _Color0;
 			float4 _TextureSample0_ST;
+			float _Smoothness;
 			float4 _EmissionColor;
 			float _AlphaCutoff;
 			float _RenderQueueType;
@@ -1161,13 +1188,25 @@ Shader "Grass Test"
 				float4 LightCoord : TEXCOORD1;
 				#endif
 				float4 ase_texcoord2 : TEXCOORD2;
+				float4 ase_texcoord3 : TEXCOORD3;
 				UNITY_VERTEX_INPUT_INSTANCE_ID
 				#if defined(SHADER_STAGE_FRAGMENT) && defined(ASE_NEED_CULLFACE)
 				FRONT_FACE_TYPE cullFace : FRONT_FACE_SEMANTIC;
 				#endif
 			};
 
+			inline float Dither4x4Bayer( int x, int y )
+			{
+				const float dither[ 16 ] = {
+			 1,  9,  3, 11,
+			13,  5, 15,  7,
+			 4, 12,  2, 10,
+			16,  8, 14,  6 };
+				int r = y * 4 + x;
+				return dither[r] / 16; // same # of instructions as pre-dividing due to compiler magic
+			}
 			
+
 			void BuildSurfaceData(FragInputs fragInputs, inout GlobalSurfaceDescription surfaceDescription, float3 V, PositionInputs posInput, out SurfaceData surfaceData, out float3 bentNormalWS)
 			{
 				ZERO_INITIALIZE(SurfaceData, surfaceData);
@@ -1377,6 +1416,10 @@ Shader "Grass Test"
 				UNITY_SETUP_INSTANCE_ID(inputMesh);
 				UNITY_TRANSFER_INSTANCE_ID(inputMesh, outputPackedVaryingsMeshToPS);
 
+				float4 ase_clipPos = TransformWorldToHClip( TransformObjectToWorld(inputMesh.positionOS));
+				float4 screenPos = ComputeScreenPos( ase_clipPos , _ProjectionParams.x );
+				outputPackedVaryingsMeshToPS.ase_texcoord3 = screenPos;
+				
 				outputPackedVaryingsMeshToPS.ase_texcoord2.xy = inputMesh.uv0.xy;
 				
 				//setting value to unused interpolator channels and avoid initialization warnings
@@ -1536,6 +1579,14 @@ Shader "Grass Test"
 				BuiltinData builtinData;
 				GlobalSurfaceDescription surfaceDescription = (GlobalSurfaceDescription)0;
 				float2 uv_TextureSample0 = packedInput.ase_texcoord2.xy * _TextureSample0_ST.xy + _TextureSample0_ST.zw;
+				float4 screenPos = packedInput.ase_texcoord3;
+				float4 ase_screenPosNorm = screenPos / screenPos.w;
+				ase_screenPosNorm.z = ( UNITY_NEAR_CLIP_VALUE >= 0 ) ? ase_screenPosNorm.z : ase_screenPosNorm.z * 0.5 + 0.5;
+				float2 clipScreen17 = ase_screenPosNorm.xy * _ScreenParams.xy;
+				float dither17 = Dither4x4Bayer( fmod(clipScreen17.x, 4), fmod(clipScreen17.y, 4) );
+				float2 texCoord16 = packedInput.ase_texcoord2.xy * float2( 1,1 ) + float2( 0,0 );
+				float smoothstepResult23 = smoothstep( 0.0 , 0.5 , texCoord16.y);
+				dither17 = step( dither17, smoothstepResult23 );
 				
 				surfaceDescription.BaseColor = _Color0.rgb;
 				surfaceDescription.Normal = float3( 0, 0, 1 );
@@ -1548,9 +1599,9 @@ Shader "Grass Test"
 				#endif
 
 				surfaceDescription.Emission = 0;
-				surfaceDescription.Smoothness = 0.5;
+				surfaceDescription.Smoothness = _Smoothness;
 				surfaceDescription.Occlusion = 1;
-				surfaceDescription.Alpha = tex2D( _TextureSample0, uv_TextureSample0 ).a;
+				surfaceDescription.Alpha = ( tex2D( _TextureSample0, uv_TextureSample0 ).a * dither17 );
 
 				#ifdef _ALPHATEST_ON
 				surfaceDescription.AlphaClipThreshold = _AlphaCutoff;
@@ -1710,6 +1761,7 @@ Shader "Grass Test"
 			CBUFFER_START( UnityPerMaterial )
 			float4 _Color0;
 			float4 _TextureSample0_ST;
+			float _Smoothness;
 			float4 _EmissionColor;
 			float _AlphaCutoff;
 			float _RenderQueueType;
@@ -1810,6 +1862,7 @@ Shader "Grass Test"
 				SV_POSITION_QUALIFIERS float4 positionCS : SV_Position;
 				float3 positionRWS : TEXCOORD0;
 				float4 ase_texcoord1 : TEXCOORD1;
+				float4 ase_texcoord2 : TEXCOORD2;
 				UNITY_VERTEX_INPUT_INSTANCE_ID
 				UNITY_VERTEX_OUTPUT_STEREO
 				#if defined(SHADER_STAGE_FRAGMENT) && defined(ASE_NEED_CULLFACE)
@@ -1817,7 +1870,18 @@ Shader "Grass Test"
 				#endif
 			};
 
+			inline float Dither4x4Bayer( int x, int y )
+			{
+				const float dither[ 16 ] = {
+			 1,  9,  3, 11,
+			13,  5, 15,  7,
+			 4, 12,  2, 10,
+			16,  8, 14,  6 };
+				int r = y * 4 + x;
+				return dither[r] / 16; // same # of instructions as pre-dividing due to compiler magic
+			}
 			
+
 			void BuildSurfaceData(FragInputs fragInputs, inout AlphaSurfaceDescription surfaceDescription, float3 V, PositionInputs posInput, out SurfaceData surfaceData, out float3 bentNormalWS)
 			{
 				ZERO_INITIALIZE(SurfaceData, surfaceData);
@@ -1975,6 +2039,10 @@ Shader "Grass Test"
 				UNITY_TRANSFER_INSTANCE_ID(inputMesh, outputPackedVaryingsMeshToPS);
 				UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO( outputPackedVaryingsMeshToPS );
 
+				float4 ase_clipPos = TransformWorldToHClip( TransformObjectToWorld(inputMesh.positionOS));
+				float4 screenPos = ComputeScreenPos( ase_clipPos , _ProjectionParams.x );
+				outputPackedVaryingsMeshToPS.ase_texcoord2 = screenPos;
+				
 				outputPackedVaryingsMeshToPS.ase_texcoord1.xy = inputMesh.ase_texcoord.xy;
 				
 				//setting value to unused interpolator channels and avoid initialization warnings
@@ -2148,8 +2216,16 @@ Shader "Grass Test"
 
 				AlphaSurfaceDescription surfaceDescription = (AlphaSurfaceDescription)0;
 				float2 uv_TextureSample0 = packedInput.ase_texcoord1.xy * _TextureSample0_ST.xy + _TextureSample0_ST.zw;
+				float4 screenPos = packedInput.ase_texcoord2;
+				float4 ase_screenPosNorm = screenPos / screenPos.w;
+				ase_screenPosNorm.z = ( UNITY_NEAR_CLIP_VALUE >= 0 ) ? ase_screenPosNorm.z : ase_screenPosNorm.z * 0.5 + 0.5;
+				float2 clipScreen17 = ase_screenPosNorm.xy * _ScreenParams.xy;
+				float dither17 = Dither4x4Bayer( fmod(clipScreen17.x, 4), fmod(clipScreen17.y, 4) );
+				float2 texCoord16 = packedInput.ase_texcoord1.xy * float2( 1,1 ) + float2( 0,0 );
+				float smoothstepResult23 = smoothstep( 0.0 , 0.5 , texCoord16.y);
+				dither17 = step( dither17, smoothstepResult23 );
 				
-				surfaceDescription.Alpha = tex2D( _TextureSample0, uv_TextureSample0 ).a;
+				surfaceDescription.Alpha = ( tex2D( _TextureSample0, uv_TextureSample0 ).a * dither17 );
 
 				#ifdef _ALPHATEST_ON
 				surfaceDescription.AlphaClipThreshold = _AlphaCutoff;
@@ -2280,6 +2356,7 @@ Shader "Grass Test"
 			CBUFFER_START( UnityPerMaterial )
 			float4 _Color0;
 			float4 _TextureSample0_ST;
+			float _Smoothness;
 			float4 _EmissionColor;
 			float _AlphaCutoff;
 			float _RenderQueueType;
@@ -2381,6 +2458,7 @@ Shader "Grass Test"
 				SV_POSITION_QUALIFIERS float4 positionCS : SV_Position;
 				float3 positionRWS : TEXCOORD0;
 				float4 ase_texcoord1 : TEXCOORD1;
+				float4 ase_texcoord2 : TEXCOORD2;
 				UNITY_VERTEX_INPUT_INSTANCE_ID
 				UNITY_VERTEX_OUTPUT_STEREO
 				#if defined(SHADER_STAGE_FRAGMENT) && defined(ASE_NEED_CULLFACE)
@@ -2388,7 +2466,18 @@ Shader "Grass Test"
 				#endif
 			};
 
+			inline float Dither4x4Bayer( int x, int y )
+			{
+				const float dither[ 16 ] = {
+			 1,  9,  3, 11,
+			13,  5, 15,  7,
+			 4, 12,  2, 10,
+			16,  8, 14,  6 };
+				int r = y * 4 + x;
+				return dither[r] / 16; // same # of instructions as pre-dividing due to compiler magic
+			}
 			
+
 			void BuildSurfaceData(FragInputs fragInputs, inout SceneSurfaceDescription surfaceDescription, float3 V, PositionInputs posInput, out SurfaceData surfaceData, out float3 bentNormalWS)
 			{
 				ZERO_INITIALIZE(SurfaceData, surfaceData);
@@ -2542,6 +2631,10 @@ Shader "Grass Test"
 				UNITY_TRANSFER_INSTANCE_ID(inputMesh, outputPackedVaryingsMeshToPS);
 				UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO( outputPackedVaryingsMeshToPS );
 
+				float4 ase_clipPos = TransformWorldToHClip( TransformObjectToWorld(inputMesh.positionOS));
+				float4 screenPos = ComputeScreenPos( ase_clipPos , _ProjectionParams.x );
+				outputPackedVaryingsMeshToPS.ase_texcoord2 = screenPos;
+				
 				outputPackedVaryingsMeshToPS.ase_texcoord1.xy = inputMesh.ase_texcoord.xy;
 				
 				//setting value to unused interpolator channels and avoid initialization warnings
@@ -2697,8 +2790,16 @@ Shader "Grass Test"
 
 				SceneSurfaceDescription surfaceDescription = (SceneSurfaceDescription)0;
 				float2 uv_TextureSample0 = packedInput.ase_texcoord1.xy * _TextureSample0_ST.xy + _TextureSample0_ST.zw;
+				float4 screenPos = packedInput.ase_texcoord2;
+				float4 ase_screenPosNorm = screenPos / screenPos.w;
+				ase_screenPosNorm.z = ( UNITY_NEAR_CLIP_VALUE >= 0 ) ? ase_screenPosNorm.z : ase_screenPosNorm.z * 0.5 + 0.5;
+				float2 clipScreen17 = ase_screenPosNorm.xy * _ScreenParams.xy;
+				float dither17 = Dither4x4Bayer( fmod(clipScreen17.x, 4), fmod(clipScreen17.y, 4) );
+				float2 texCoord16 = packedInput.ase_texcoord1.xy * float2( 1,1 ) + float2( 0,0 );
+				float smoothstepResult23 = smoothstep( 0.0 , 0.5 , texCoord16.y);
+				dither17 = step( dither17, smoothstepResult23 );
 				
-				surfaceDescription.Alpha = tex2D( _TextureSample0, uv_TextureSample0 ).a;
+				surfaceDescription.Alpha = ( tex2D( _TextureSample0, uv_TextureSample0 ).a * dither17 );
 
 				#ifdef _ALPHATEST_ON
 				surfaceDescription.AlphaClipThreshold = _AlphaCutoff;
@@ -2818,6 +2919,7 @@ Shader "Grass Test"
 			CBUFFER_START( UnityPerMaterial )
 			float4 _Color0;
 			float4 _TextureSample0_ST;
+			float _Smoothness;
 			float4 _EmissionColor;
 			float _AlphaCutoff;
 			float _RenderQueueType;
@@ -2921,6 +3023,7 @@ Shader "Grass Test"
 				float3 normalWS : TEXCOORD1;
 				float4 tangentWS : TEXCOORD2;
 				float4 ase_texcoord3 : TEXCOORD3;
+				float4 ase_texcoord4 : TEXCOORD4;
 				UNITY_VERTEX_INPUT_INSTANCE_ID
 				UNITY_VERTEX_OUTPUT_STEREO
 				#if defined(SHADER_STAGE_FRAGMENT) && defined(ASE_NEED_CULLFACE)
@@ -2928,7 +3031,18 @@ Shader "Grass Test"
 				#endif
 			};
 
+			inline float Dither4x4Bayer( int x, int y )
+			{
+				const float dither[ 16 ] = {
+			 1,  9,  3, 11,
+			13,  5, 15,  7,
+			 4, 12,  2, 10,
+			16,  8, 14,  6 };
+				int r = y * 4 + x;
+				return dither[r] / 16; // same # of instructions as pre-dividing due to compiler magic
+			}
 			
+
 			void BuildSurfaceData(FragInputs fragInputs, inout SmoothSurfaceDescription surfaceDescription, float3 V, PositionInputs posInput, out SurfaceData surfaceData, out float3 bentNormalWS)
 			{
 				ZERO_INITIALIZE(SurfaceData, surfaceData);
@@ -3088,6 +3202,10 @@ Shader "Grass Test"
 				UNITY_TRANSFER_INSTANCE_ID(inputMesh, outputPackedVaryingsMeshToPS);
 				UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO( outputPackedVaryingsMeshToPS );
 
+				float4 ase_clipPos = TransformWorldToHClip( TransformObjectToWorld(inputMesh.positionOS));
+				float4 screenPos = ComputeScreenPos( ase_clipPos , _ProjectionParams.x );
+				outputPackedVaryingsMeshToPS.ase_texcoord4 = screenPos;
+				
 				outputPackedVaryingsMeshToPS.ase_texcoord3.xy = inputMesh.ase_texcoord.xy;
 				
 				//setting value to unused interpolator channels and avoid initialization warnings
@@ -3273,10 +3391,18 @@ Shader "Grass Test"
 
 				SmoothSurfaceDescription surfaceDescription = (SmoothSurfaceDescription)0;
 				float2 uv_TextureSample0 = packedInput.ase_texcoord3.xy * _TextureSample0_ST.xy + _TextureSample0_ST.zw;
+				float4 screenPos = packedInput.ase_texcoord4;
+				float4 ase_screenPosNorm = screenPos / screenPos.w;
+				ase_screenPosNorm.z = ( UNITY_NEAR_CLIP_VALUE >= 0 ) ? ase_screenPosNorm.z : ase_screenPosNorm.z * 0.5 + 0.5;
+				float2 clipScreen17 = ase_screenPosNorm.xy * _ScreenParams.xy;
+				float dither17 = Dither4x4Bayer( fmod(clipScreen17.x, 4), fmod(clipScreen17.y, 4) );
+				float2 texCoord16 = packedInput.ase_texcoord3.xy * float2( 1,1 ) + float2( 0,0 );
+				float smoothstepResult23 = smoothstep( 0.0 , 0.5 , texCoord16.y);
+				dither17 = step( dither17, smoothstepResult23 );
 				
 				surfaceDescription.Normal = float3( 0, 0, 1 );
-				surfaceDescription.Smoothness = 1;
-				surfaceDescription.Alpha = tex2D( _TextureSample0, uv_TextureSample0 ).a;
+				surfaceDescription.Smoothness = _Smoothness;
+				surfaceDescription.Alpha = ( tex2D( _TextureSample0, uv_TextureSample0 ).a * dither17 );
 
 				#ifdef _ALPHATEST_ON
 				surfaceDescription.AlphaClipThreshold = _AlphaCutoff;
@@ -3413,6 +3539,7 @@ Shader "Grass Test"
 			CBUFFER_START( UnityPerMaterial )
 			float4 _Color0;
 			float4 _TextureSample0_ST;
+			float _Smoothness;
 			float4 _EmissionColor;
 			float _AlphaCutoff;
 			float _RenderQueueType;
@@ -3517,6 +3644,7 @@ Shader "Grass Test"
 				float3 vpassInterpolators0 : TEXCOORD1; //interpolators0
 				float3 vpassInterpolators1 : TEXCOORD2; //interpolators1
 				float4 ase_texcoord3 : TEXCOORD3;
+				float4 ase_texcoord4 : TEXCOORD4;
 				UNITY_VERTEX_INPUT_INSTANCE_ID
 				UNITY_VERTEX_OUTPUT_STEREO
 				#if defined(SHADER_STAGE_FRAGMENT) && defined(ASE_NEED_CULLFACE)
@@ -3524,7 +3652,18 @@ Shader "Grass Test"
 				#endif
 			};
 
+			inline float Dither4x4Bayer( int x, int y )
+			{
+				const float dither[ 16 ] = {
+			 1,  9,  3, 11,
+			13,  5, 15,  7,
+			 4, 12,  2, 10,
+			16,  8, 14,  6 };
+				int r = y * 4 + x;
+				return dither[r] / 16; // same # of instructions as pre-dividing due to compiler magic
+			}
 			
+
 			void BuildSurfaceData(FragInputs fragInputs, inout SmoothSurfaceDescription surfaceDescription, float3 V, PositionInputs posInput, out SurfaceData surfaceData, out float3 bentNormalWS)
 			{
 				ZERO_INITIALIZE(SurfaceData, surfaceData);
@@ -3675,6 +3814,10 @@ Shader "Grass Test"
 			AttributesMesh ApplyMeshModification(AttributesMesh inputMesh, float3 timeParameters, inout PackedVaryingsMeshToPS outputPackedVaryingsMeshToPS )
 			{
 				_TimeParameters.xyz = timeParameters;
+				float4 ase_clipPos = TransformWorldToHClip( TransformObjectToWorld(inputMesh.positionOS));
+				float4 screenPos = ComputeScreenPos( ase_clipPos , _ProjectionParams.x );
+				outputPackedVaryingsMeshToPS.ase_texcoord4 = screenPos;
+				
 				outputPackedVaryingsMeshToPS.ase_texcoord3.xy = inputMesh.ase_texcoord.xy;
 				
 				//setting value to unused interpolator channels and avoid initialization warnings
@@ -3917,10 +4060,18 @@ Shader "Grass Test"
 
 				SmoothSurfaceDescription surfaceDescription = (SmoothSurfaceDescription)0;
 				float2 uv_TextureSample0 = packedInput.ase_texcoord3.xy * _TextureSample0_ST.xy + _TextureSample0_ST.zw;
+				float4 screenPos = packedInput.ase_texcoord4;
+				float4 ase_screenPosNorm = screenPos / screenPos.w;
+				ase_screenPosNorm.z = ( UNITY_NEAR_CLIP_VALUE >= 0 ) ? ase_screenPosNorm.z : ase_screenPosNorm.z * 0.5 + 0.5;
+				float2 clipScreen17 = ase_screenPosNorm.xy * _ScreenParams.xy;
+				float dither17 = Dither4x4Bayer( fmod(clipScreen17.x, 4), fmod(clipScreen17.y, 4) );
+				float2 texCoord16 = packedInput.ase_texcoord3.xy * float2( 1,1 ) + float2( 0,0 );
+				float smoothstepResult23 = smoothstep( 0.0 , 0.5 , texCoord16.y);
+				dither17 = step( dither17, smoothstepResult23 );
 				
 				surfaceDescription.Normal = float3( 0, 0, 1 );
-				surfaceDescription.Smoothness = 1;
-				surfaceDescription.Alpha = tex2D( _TextureSample0, uv_TextureSample0 ).a;
+				surfaceDescription.Smoothness = _Smoothness;
+				surfaceDescription.Alpha = ( tex2D( _TextureSample0, uv_TextureSample0 ).a * dither17 );
 
 				#ifdef _ALPHATEST_ON
 				surfaceDescription.AlphaClipThreshold = _AlphaCutoff;
@@ -4104,6 +4255,7 @@ Shader "Grass Test"
 			CBUFFER_START( UnityPerMaterial )
 			float4 _Color0;
 			float4 _TextureSample0_ST;
+			float _Smoothness;
 			float4 _EmissionColor;
 			float _AlphaCutoff;
 			float _RenderQueueType;
@@ -4220,6 +4372,7 @@ Shader "Grass Test"
 					float3 vpassPreviousPositionCS : TEXCOORD6;
 				#endif
 				float4 ase_texcoord7 : TEXCOORD7;
+				float4 ase_texcoord8 : TEXCOORD8;
 				UNITY_VERTEX_INPUT_INSTANCE_ID
 				UNITY_VERTEX_OUTPUT_STEREO
 				#if defined(SHADER_STAGE_FRAGMENT) && defined(ASE_NEED_CULLFACE)
@@ -4227,7 +4380,18 @@ Shader "Grass Test"
 				#endif
 			};
 
+			inline float Dither4x4Bayer( int x, int y )
+			{
+				const float dither[ 16 ] = {
+			 1,  9,  3, 11,
+			13,  5, 15,  7,
+			 4, 12,  2, 10,
+			16,  8, 14,  6 };
+				int r = y * 4 + x;
+				return dither[r] / 16; // same # of instructions as pre-dividing due to compiler magic
+			}
 			
+
 			void BuildSurfaceData(FragInputs fragInputs, inout GlobalSurfaceDescription surfaceDescription, float3 V, PositionInputs posInput, out SurfaceData surfaceData, out float3 bentNormalWS)
 			{
 				ZERO_INITIALIZE(SurfaceData, surfaceData);
@@ -4447,6 +4611,10 @@ Shader "Grass Test"
 			AttributesMesh ApplyMeshModification(AttributesMesh inputMesh, float3 timeParameters, inout PackedVaryingsMeshToPS outputPackedVaryingsMeshToPS )
 			{
 				_TimeParameters.xyz = timeParameters;
+				float4 ase_clipPos = TransformWorldToHClip( TransformObjectToWorld(inputMesh.positionOS));
+				float4 screenPos = ComputeScreenPos( ase_clipPos , _ProjectionParams.x );
+				outputPackedVaryingsMeshToPS.ase_texcoord8 = screenPos;
+				
 				outputPackedVaryingsMeshToPS.ase_texcoord7.xy = inputMesh.ase_texcoord.xy;
 				
 				//setting value to unused interpolator channels and avoid initialization warnings
@@ -4708,6 +4876,14 @@ Shader "Grass Test"
 
 				GlobalSurfaceDescription surfaceDescription = (GlobalSurfaceDescription)0;
 				float2 uv_TextureSample0 = packedInput.ase_texcoord7.xy * _TextureSample0_ST.xy + _TextureSample0_ST.zw;
+				float4 screenPos = packedInput.ase_texcoord8;
+				float4 ase_screenPosNorm = screenPos / screenPos.w;
+				ase_screenPosNorm.z = ( UNITY_NEAR_CLIP_VALUE >= 0 ) ? ase_screenPosNorm.z : ase_screenPosNorm.z * 0.5 + 0.5;
+				float2 clipScreen17 = ase_screenPosNorm.xy * _ScreenParams.xy;
+				float dither17 = Dither4x4Bayer( fmod(clipScreen17.x, 4), fmod(clipScreen17.y, 4) );
+				float2 texCoord16 = packedInput.ase_texcoord7.xy * float2( 1,1 ) + float2( 0,0 );
+				float smoothstepResult23 = smoothstep( 0.0 , 0.5 , texCoord16.y);
+				dither17 = step( dither17, smoothstepResult23 );
 				
 				surfaceDescription.BaseColor = _Color0.rgb;
 				surfaceDescription.Normal = float3( 0, 0, 1 );
@@ -4720,9 +4896,9 @@ Shader "Grass Test"
 				#endif
 
 				surfaceDescription.Emission = 0;
-				surfaceDescription.Smoothness = 0.5;
+				surfaceDescription.Smoothness = _Smoothness;
 				surfaceDescription.Occlusion = 1;
-				surfaceDescription.Alpha = tex2D( _TextureSample0, uv_TextureSample0 ).a;
+				surfaceDescription.Alpha = ( tex2D( _TextureSample0, uv_TextureSample0 ).a * dither17 );
 
 				#ifdef _ALPHATEST_ON
 				surfaceDescription.AlphaClipThreshold = _AlphaCutoff;
@@ -4985,6 +5161,7 @@ Shader "Grass Test"
             CBUFFER_START( UnityPerMaterial )
 			float4 _Color0;
 			float4 _TextureSample0_ST;
+			float _Smoothness;
 			float4 _EmissionColor;
 			float _AlphaCutoff;
 			float _RenderQueueType;
@@ -5067,11 +5244,23 @@ Shader "Grass Test"
 				float3 normalWS : TEXCOORD0;
 				float4 tangentWS : TEXCOORD1;
 				float4 ase_texcoord2 : TEXCOORD2;
+				float4 ase_texcoord3 : TEXCOORD3;
 				UNITY_VERTEX_INPUT_INSTANCE_ID
 				UNITY_VERTEX_OUTPUT_STEREO
 			};
 
+			inline float Dither4x4Bayer( int x, int y )
+			{
+				const float dither[ 16 ] = {
+			 1,  9,  3, 11,
+			13,  5, 15,  7,
+			 4, 12,  2, 10,
+			16,  8, 14,  6 };
+				int r = y * 4 + x;
+				return dither[r] / 16; // same # of instructions as pre-dividing due to compiler magic
+			}
 			
+
             struct SurfaceDescription
 			{
 				float Alpha;
@@ -5185,6 +5374,10 @@ Shader "Grass Test"
 				UNITY_SETUP_INSTANCE_ID(inputMesh);
 				UNITY_TRANSFER_INSTANCE_ID(inputMesh, o );
 
+				float4 ase_clipPos = TransformWorldToHClip( TransformObjectToWorld(inputMesh.positionOS));
+				float4 screenPos = ComputeScreenPos( ase_clipPos , _ProjectionParams.x );
+				o.ase_texcoord3 = screenPos;
+				
 				o.ase_texcoord2.xy = inputMesh.ase_texcoord.xy;
 				
 				//setting value to unused interpolator channels and avoid initialization warnings
@@ -5321,8 +5514,16 @@ Shader "Grass Test"
 
 				SurfaceDescription surfaceDescription = (SurfaceDescription)0;
 				float2 uv_TextureSample0 = packedInput.ase_texcoord2.xy * _TextureSample0_ST.xy + _TextureSample0_ST.zw;
+				float4 screenPos = packedInput.ase_texcoord3;
+				float4 ase_screenPosNorm = screenPos / screenPos.w;
+				ase_screenPosNorm.z = ( UNITY_NEAR_CLIP_VALUE >= 0 ) ? ase_screenPosNorm.z : ase_screenPosNorm.z * 0.5 + 0.5;
+				float2 clipScreen17 = ase_screenPosNorm.xy * _ScreenParams.xy;
+				float dither17 = Dither4x4Bayer( fmod(clipScreen17.x, 4), fmod(clipScreen17.y, 4) );
+				float2 texCoord16 = packedInput.ase_texcoord2.xy * float2( 1,1 ) + float2( 0,0 );
+				float smoothstepResult23 = smoothstep( 0.0 , 0.5 , texCoord16.y);
+				dither17 = step( dither17, smoothstepResult23 );
 				
-				surfaceDescription.Alpha = tex2D( _TextureSample0, uv_TextureSample0 ).a;
+				surfaceDescription.Alpha = ( tex2D( _TextureSample0, uv_TextureSample0 ).a * dither17 );
 				surfaceDescription.AlphaClipThreshold =  _AlphaCutoff;
 
 
@@ -5613,21 +5814,29 @@ Shader "Grass Test"
 /*ASEBEGIN
 Version=19201
 Node;AmplifyShaderEditor.TemplateMultiPassMasterNode;0;0,0;Float;False;True;-1;2;Rendering.HighDefinition.LightingShaderGraphGUI;0;12;Grass Test;53b46d85872c5b24c8f4f0a1c3fe4c87;True;GBuffer;0;0;GBuffer;34;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;3;RenderPipeline=HDRenderPipeline;RenderType=Opaque=RenderType;Queue=Geometry=Queue=0;True;5;True;7;d3d11;metal;vulkan;xboxone;xboxseries;playstation;switch;0;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;0;True;_CullMode;False;True;True;True;True;True;0;True;_LightLayersMaskBuffer4;False;False;False;False;False;False;False;True;True;0;True;_StencilRefGBuffer;255;False;;255;True;_StencilWriteMaskGBuffer;7;False;;3;False;;0;False;;0;False;;7;False;;3;False;;0;False;;0;False;;False;False;True;0;True;_ZTestGBuffer;False;True;1;LightMode=GBuffer;False;False;0;;0;0;Standard;39;Surface Type;0;0;  Rendering Pass;1;0;  Refraction Model;0;0;    Blending Mode;0;0;    Blend Preserves Specular;1;0;  Back Then Front Rendering;0;0;  Transparent Depth Prepass;0;0;  Transparent Depth Postpass;0;0;  ZWrite;0;0;  Z Test;4;0;Double-Sided;0;0;Alpha Clipping;1;638967471595811504;  Use Shadow Threshold;0;0;Material Type,InvertActionOnDeselection;0;0;  Energy Conserving Specular;1;0;  Transmission,InvertActionOnDeselection;0;0;Forward Only;0;0;Receive Decals;1;0;Receives SSR;1;0;Receive SSR Transparent;0;0;Motion Vectors;1;0;  Add Precomputed Velocity;0;0;Specular AA;0;0;Specular Occlusion Mode;1;0;Override Baked GI;0;0;Depth Offset;0;0;DOTS Instancing;0;0;GPU Instancing;1;0;LOD CrossFade;0;0;Tessellation;0;0;  Phong;0;0;  Strength;0.5,False,;0;  Type;0;0;  Tess;16,False,;0;  Min;10,False,;0;  Max;25,False,;0;  Edge Length;16,False,;0;  Max Displacement;25,False,;0;Vertex Position;1;0;0;11;True;True;True;True;True;True;False;False;False;True;True;False;;False;0
-Node;AmplifyShaderEditor.TemplateMultiPassMasterNode;1;0,0;Float;False;False;-1;2;Rendering.HighDefinition.LightingShaderGraphGUI;0;1;New Amplify Shader;53b46d85872c5b24c8f4f0a1c3fe4c87;True;META;0;1;META;0;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;3;RenderPipeline=HDRenderPipeline;RenderType=Opaque=RenderType;Queue=Geometry=Queue=0;True;5;True;7;d3d11;metal;vulkan;xboxone;xboxseries;playstation;switch;0;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;2;False;;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;1;LightMode=Meta;False;False;0;;0;0;Standard;0;False;0
-Node;AmplifyShaderEditor.TemplateMultiPassMasterNode;2;0,0;Float;False;False;-1;2;Rendering.HighDefinition.LightingShaderGraphGUI;0;1;New Amplify Shader;53b46d85872c5b24c8f4f0a1c3fe4c87;True;ShadowCaster;0;2;ShadowCaster;0;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;3;RenderPipeline=HDRenderPipeline;RenderType=Opaque=RenderType;Queue=Geometry=Queue=0;True;5;True;7;d3d11;metal;vulkan;xboxone;xboxseries;playstation;switch;0;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;0;True;_CullMode;False;True;False;False;False;False;0;False;;False;False;False;False;False;False;False;False;False;True;1;False;;True;3;False;;False;True;1;LightMode=ShadowCaster;False;False;0;;0;0;Standard;0;False;0
-Node;AmplifyShaderEditor.TemplateMultiPassMasterNode;3;0,0;Float;False;False;-1;2;Rendering.HighDefinition.LightingShaderGraphGUI;0;1;New Amplify Shader;53b46d85872c5b24c8f4f0a1c3fe4c87;True;SceneSelectionPass;0;3;SceneSelectionPass;0;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;3;RenderPipeline=HDRenderPipeline;RenderType=Opaque=RenderType;Queue=Geometry=Queue=0;True;5;True;7;d3d11;metal;vulkan;xboxone;xboxseries;playstation;switch;0;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;2;False;;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;1;LightMode=SceneSelectionPass;False;False;0;;0;0;Standard;0;False;0
-Node;AmplifyShaderEditor.TemplateMultiPassMasterNode;4;0,0;Float;False;False;-1;2;Rendering.HighDefinition.LightingShaderGraphGUI;0;1;New Amplify Shader;53b46d85872c5b24c8f4f0a1c3fe4c87;True;DepthOnly;0;4;DepthOnly;0;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;3;RenderPipeline=HDRenderPipeline;RenderType=Opaque=RenderType;Queue=Geometry=Queue=0;True;5;True;7;d3d11;metal;vulkan;xboxone;xboxseries;playstation;switch;0;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;0;True;_CullMode;False;False;False;False;False;False;False;False;False;True;True;0;True;_StencilRefDepth;255;False;;255;True;_StencilWriteMaskDepth;7;False;;3;False;;0;False;;0;False;;7;False;;3;False;;0;False;;0;False;;False;True;1;False;;False;False;True;1;LightMode=DepthOnly;False;False;0;;0;0;Standard;0;False;0
-Node;AmplifyShaderEditor.TemplateMultiPassMasterNode;5;0,0;Float;False;False;-1;2;Rendering.HighDefinition.LightingShaderGraphGUI;0;1;New Amplify Shader;53b46d85872c5b24c8f4f0a1c3fe4c87;True;MotionVectors;0;5;MotionVectors;0;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;3;RenderPipeline=HDRenderPipeline;RenderType=Opaque=RenderType;Queue=Geometry=Queue=0;True;5;True;7;d3d11;metal;vulkan;xboxone;xboxseries;playstation;switch;0;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;0;True;_CullMode;False;False;False;False;False;False;False;False;False;True;True;0;True;_StencilRefMV;255;False;;255;True;_StencilWriteMaskMV;7;False;;3;False;;0;False;;0;False;;7;False;;3;False;;0;False;;0;False;;False;True;1;False;;False;False;True;1;LightMode=MotionVectors;False;False;0;;0;0;Standard;0;False;0
-Node;AmplifyShaderEditor.TemplateMultiPassMasterNode;6;0,0;Float;False;False;-1;2;Rendering.HighDefinition.LightingShaderGraphGUI;0;1;New Amplify Shader;53b46d85872c5b24c8f4f0a1c3fe4c87;True;TransparentBackface;0;6;TransparentBackface;0;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;3;RenderPipeline=HDRenderPipeline;RenderType=Opaque=RenderType;Queue=Geometry=Queue=0;True;5;True;7;d3d11;metal;vulkan;xboxone;xboxseries;playstation;switch;0;False;False;False;False;True;2;5;False;;10;False;;0;1;False;;0;False;;False;False;False;False;False;False;False;False;False;True;1;False;;False;False;False;True;True;True;True;True;0;True;_ColorMaskTransparentVelOne;False;True;True;True;True;True;0;True;_ColorMaskTransparentVelTwo;False;False;False;False;False;True;0;True;_ZWrite;True;0;True;_ZTestTransparent;False;True;1;LightMode=TransparentBackface;False;False;0;;0;0;Standard;0;False;0
-Node;AmplifyShaderEditor.TemplateMultiPassMasterNode;7;0,0;Float;False;False;-1;2;Rendering.HighDefinition.LightingShaderGraphGUI;0;1;New Amplify Shader;53b46d85872c5b24c8f4f0a1c3fe4c87;True;TransparentDepthPrepass;0;7;TransparentDepthPrepass;0;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;3;RenderPipeline=HDRenderPipeline;RenderType=Opaque=RenderType;Queue=Geometry=Queue=0;True;5;True;7;d3d11;metal;vulkan;xboxone;xboxseries;playstation;switch;0;False;True;1;1;False;;0;False;;0;1;False;;0;False;;False;False;False;False;False;False;False;False;False;False;False;False;True;0;True;_CullMode;False;False;False;False;False;False;False;False;False;True;True;0;True;_StencilRefDepth;255;False;;255;True;_StencilWriteMaskDepth;7;False;;3;False;;0;False;;0;False;;7;False;;3;False;;0;False;;0;False;;False;True;1;False;;False;False;True;1;LightMode=TransparentDepthPrepass;False;False;0;;0;0;Standard;0;False;0
-Node;AmplifyShaderEditor.TemplateMultiPassMasterNode;8;0,0;Float;False;False;-1;2;Rendering.HighDefinition.LightingShaderGraphGUI;0;1;New Amplify Shader;53b46d85872c5b24c8f4f0a1c3fe4c87;True;TransparentDepthPostpass;0;8;TransparentDepthPostpass;0;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;3;RenderPipeline=HDRenderPipeline;RenderType=Opaque=RenderType;Queue=Geometry=Queue=0;True;5;True;7;d3d11;metal;vulkan;xboxone;xboxseries;playstation;switch;0;False;True;1;1;False;;0;False;;0;1;False;;0;False;;False;False;False;False;False;False;False;False;False;False;False;False;True;0;True;_CullMode;False;True;False;False;False;False;0;False;;False;False;False;False;False;False;False;False;False;True;1;False;;False;False;True;1;LightMode=TransparentDepthPostpass;False;False;0;;0;0;Standard;0;False;0
-Node;AmplifyShaderEditor.TemplateMultiPassMasterNode;9;0,0;Float;False;False;-1;2;Rendering.HighDefinition.LightingShaderGraphGUI;0;1;New Amplify Shader;53b46d85872c5b24c8f4f0a1c3fe4c87;True;Forward;0;9;Forward;0;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;3;RenderPipeline=HDRenderPipeline;RenderType=Opaque=RenderType;Queue=Geometry=Queue=0;True;5;True;7;d3d11;metal;vulkan;xboxone;xboxseries;playstation;switch;0;False;False;False;False;True;2;5;False;;10;False;;0;1;False;;0;False;;False;False;False;False;False;False;False;False;False;True;0;True;_CullModeForward;False;False;False;True;True;True;True;True;0;True;_ColorMaskTransparentVelOne;False;True;True;True;True;True;0;True;_ColorMaskTransparentVelTwo;False;False;False;True;True;0;True;_StencilRef;255;False;;255;True;_StencilWriteMask;7;False;;3;False;;0;False;;0;False;;7;False;;3;False;;0;False;;0;False;;False;True;0;True;_ZWrite;True;0;True;_ZTestDepthEqualForOpaque;False;True;1;LightMode=Forward;False;False;0;;0;0;Standard;0;False;0
-Node;AmplifyShaderEditor.TemplateMultiPassMasterNode;10;0,0;Float;False;False;-1;2;Rendering.HighDefinition.LightingShaderGraphGUI;0;1;New Amplify Shader;53b46d85872c5b24c8f4f0a1c3fe4c87;True;ScenePickingPass;0;10;ScenePickingPass;0;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;3;RenderPipeline=HDRenderPipeline;RenderType=Opaque=RenderType;Queue=Geometry=Queue=0;True;5;True;7;d3d11;metal;vulkan;xboxone;xboxseries;playstation;switch;0;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;0;True;_CullMode;False;False;False;False;False;False;False;False;False;False;False;True;2;False;;True;3;False;;False;True;1;LightMode=Picking;False;False;0;;0;0;Standard;0;False;0
-Node;AmplifyShaderEditor.SamplerNode;11;-705,-174.5;Inherit;True;Property;_TextureSample0;Texture Sample 0;0;0;Create;True;0;0;0;False;0;False;-1;e449cd529b2756d4ca5dd643f078bd8b;None;True;0;False;white;Auto;False;Object;-1;Auto;Texture2D;8;0;SAMPLER2D;;False;1;FLOAT2;0,0;False;2;FLOAT;0;False;3;FLOAT2;0,0;False;4;FLOAT2;0,0;False;5;FLOAT;1;False;6;FLOAT;0;False;7;SAMPLERSTATE;;False;5;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
-Node;AmplifyShaderEditor.Vector3Node;12;-596,331.5;Inherit;False;Constant;_Vector0;Vector 0;1;0;Create;True;0;0;0;False;0;False;0,1,0;0,0,0;0;4;FLOAT3;0;FLOAT;1;FLOAT;2;FLOAT;3
-Node;AmplifyShaderEditor.TransformDirectionNode;14;-336,502.5;Inherit;False;World;Object;False;Fast;False;1;0;FLOAT3;0,0,0;False;4;FLOAT3;0;FLOAT;1;FLOAT;2;FLOAT;3
+Node;AmplifyShaderEditor.TemplateMultiPassMasterNode;1;0,0;Float;False;False;-1;2;Rendering.HighDefinition.LightingShaderGraphGUI;0;12;New Amplify Shader;53b46d85872c5b24c8f4f0a1c3fe4c87;True;META;0;1;META;0;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;3;RenderPipeline=HDRenderPipeline;RenderType=Opaque=RenderType;Queue=Geometry=Queue=0;True;5;True;7;d3d11;metal;vulkan;xboxone;xboxseries;playstation;switch;0;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;2;False;;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;1;LightMode=Meta;False;False;0;;0;0;Standard;0;False;0
+Node;AmplifyShaderEditor.TemplateMultiPassMasterNode;2;0,0;Float;False;False;-1;2;Rendering.HighDefinition.LightingShaderGraphGUI;0;12;New Amplify Shader;53b46d85872c5b24c8f4f0a1c3fe4c87;True;ShadowCaster;0;2;ShadowCaster;0;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;3;RenderPipeline=HDRenderPipeline;RenderType=Opaque=RenderType;Queue=Geometry=Queue=0;True;5;True;7;d3d11;metal;vulkan;xboxone;xboxseries;playstation;switch;0;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;0;True;_CullMode;False;True;False;False;False;False;0;False;;False;False;False;False;False;False;False;False;False;True;1;False;;True;3;False;;False;True;1;LightMode=ShadowCaster;False;False;0;;0;0;Standard;0;False;0
+Node;AmplifyShaderEditor.TemplateMultiPassMasterNode;3;0,0;Float;False;False;-1;2;Rendering.HighDefinition.LightingShaderGraphGUI;0;12;New Amplify Shader;53b46d85872c5b24c8f4f0a1c3fe4c87;True;SceneSelectionPass;0;3;SceneSelectionPass;0;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;3;RenderPipeline=HDRenderPipeline;RenderType=Opaque=RenderType;Queue=Geometry=Queue=0;True;5;True;7;d3d11;metal;vulkan;xboxone;xboxseries;playstation;switch;0;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;2;False;;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;1;LightMode=SceneSelectionPass;False;False;0;;0;0;Standard;0;False;0
+Node;AmplifyShaderEditor.TemplateMultiPassMasterNode;4;0,0;Float;False;False;-1;2;Rendering.HighDefinition.LightingShaderGraphGUI;0;12;New Amplify Shader;53b46d85872c5b24c8f4f0a1c3fe4c87;True;DepthOnly;0;4;DepthOnly;0;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;3;RenderPipeline=HDRenderPipeline;RenderType=Opaque=RenderType;Queue=Geometry=Queue=0;True;5;True;7;d3d11;metal;vulkan;xboxone;xboxseries;playstation;switch;0;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;0;True;_CullMode;False;False;False;False;False;False;False;False;False;True;True;0;True;_StencilRefDepth;255;False;;255;True;_StencilWriteMaskDepth;7;False;;3;False;;0;False;;0;False;;7;False;;3;False;;0;False;;0;False;;False;True;1;False;;False;False;True;1;LightMode=DepthOnly;False;False;0;;0;0;Standard;0;False;0
+Node;AmplifyShaderEditor.TemplateMultiPassMasterNode;5;0,0;Float;False;False;-1;2;Rendering.HighDefinition.LightingShaderGraphGUI;0;12;New Amplify Shader;53b46d85872c5b24c8f4f0a1c3fe4c87;True;MotionVectors;0;5;MotionVectors;0;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;3;RenderPipeline=HDRenderPipeline;RenderType=Opaque=RenderType;Queue=Geometry=Queue=0;True;5;True;7;d3d11;metal;vulkan;xboxone;xboxseries;playstation;switch;0;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;0;True;_CullMode;False;False;False;False;False;False;False;False;False;True;True;0;True;_StencilRefMV;255;False;;255;True;_StencilWriteMaskMV;7;False;;3;False;;0;False;;0;False;;7;False;;3;False;;0;False;;0;False;;False;True;1;False;;False;False;True;1;LightMode=MotionVectors;False;False;0;;0;0;Standard;0;False;0
+Node;AmplifyShaderEditor.TemplateMultiPassMasterNode;6;0,0;Float;False;False;-1;2;Rendering.HighDefinition.LightingShaderGraphGUI;0;12;New Amplify Shader;53b46d85872c5b24c8f4f0a1c3fe4c87;True;TransparentBackface;0;6;TransparentBackface;0;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;3;RenderPipeline=HDRenderPipeline;RenderType=Opaque=RenderType;Queue=Geometry=Queue=0;True;5;True;7;d3d11;metal;vulkan;xboxone;xboxseries;playstation;switch;0;False;False;False;False;True;2;5;False;;10;False;;0;1;False;;0;False;;False;False;False;False;False;False;False;False;False;True;1;False;;False;False;False;True;True;True;True;True;0;True;_ColorMaskTransparentVelOne;False;True;True;True;True;True;0;True;_ColorMaskTransparentVelTwo;False;False;False;False;False;True;0;True;_ZWrite;True;0;True;_ZTestTransparent;False;True;1;LightMode=TransparentBackface;False;False;0;;0;0;Standard;0;False;0
+Node;AmplifyShaderEditor.TemplateMultiPassMasterNode;7;0,0;Float;False;False;-1;2;Rendering.HighDefinition.LightingShaderGraphGUI;0;12;New Amplify Shader;53b46d85872c5b24c8f4f0a1c3fe4c87;True;TransparentDepthPrepass;0;7;TransparentDepthPrepass;0;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;3;RenderPipeline=HDRenderPipeline;RenderType=Opaque=RenderType;Queue=Geometry=Queue=0;True;5;True;7;d3d11;metal;vulkan;xboxone;xboxseries;playstation;switch;0;False;True;1;1;False;;0;False;;0;1;False;;0;False;;False;False;False;False;False;False;False;False;False;False;False;False;True;0;True;_CullMode;False;False;False;False;False;False;False;False;False;True;True;0;True;_StencilRefDepth;255;False;;255;True;_StencilWriteMaskDepth;7;False;;3;False;;0;False;;0;False;;7;False;;3;False;;0;False;;0;False;;False;True;1;False;;False;False;True;1;LightMode=TransparentDepthPrepass;False;False;0;;0;0;Standard;0;False;0
+Node;AmplifyShaderEditor.TemplateMultiPassMasterNode;8;0,0;Float;False;False;-1;2;Rendering.HighDefinition.LightingShaderGraphGUI;0;12;New Amplify Shader;53b46d85872c5b24c8f4f0a1c3fe4c87;True;TransparentDepthPostpass;0;8;TransparentDepthPostpass;0;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;3;RenderPipeline=HDRenderPipeline;RenderType=Opaque=RenderType;Queue=Geometry=Queue=0;True;5;True;7;d3d11;metal;vulkan;xboxone;xboxseries;playstation;switch;0;False;True;1;1;False;;0;False;;0;1;False;;0;False;;False;False;False;False;False;False;False;False;False;False;False;False;True;0;True;_CullMode;False;True;False;False;False;False;0;False;;False;False;False;False;False;False;False;False;False;True;1;False;;False;False;True;1;LightMode=TransparentDepthPostpass;False;False;0;;0;0;Standard;0;False;0
+Node;AmplifyShaderEditor.TemplateMultiPassMasterNode;9;0,0;Float;False;False;-1;2;Rendering.HighDefinition.LightingShaderGraphGUI;0;12;New Amplify Shader;53b46d85872c5b24c8f4f0a1c3fe4c87;True;Forward;0;9;Forward;0;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;3;RenderPipeline=HDRenderPipeline;RenderType=Opaque=RenderType;Queue=Geometry=Queue=0;True;5;True;7;d3d11;metal;vulkan;xboxone;xboxseries;playstation;switch;0;False;False;False;False;True;2;5;False;;10;False;;0;1;False;;0;False;;False;False;False;False;False;False;False;False;False;True;0;True;_CullModeForward;False;False;False;True;True;True;True;True;0;True;_ColorMaskTransparentVelOne;False;True;True;True;True;True;0;True;_ColorMaskTransparentVelTwo;False;False;False;True;True;0;True;_StencilRef;255;False;;255;True;_StencilWriteMask;7;False;;3;False;;0;False;;0;False;;7;False;;3;False;;0;False;;0;False;;False;True;0;True;_ZWrite;True;0;True;_ZTestDepthEqualForOpaque;False;True;1;LightMode=Forward;False;False;0;;0;0;Standard;0;False;0
+Node;AmplifyShaderEditor.TemplateMultiPassMasterNode;10;0,0;Float;False;False;-1;2;Rendering.HighDefinition.LightingShaderGraphGUI;0;12;New Amplify Shader;53b46d85872c5b24c8f4f0a1c3fe4c87;True;ScenePickingPass;0;10;ScenePickingPass;0;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;3;RenderPipeline=HDRenderPipeline;RenderType=Opaque=RenderType;Queue=Geometry=Queue=0;True;5;True;7;d3d11;metal;vulkan;xboxone;xboxseries;playstation;switch;0;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;0;True;_CullMode;False;False;False;False;False;False;False;False;False;False;False;True;2;False;;True;3;False;;False;True;1;LightMode=Picking;False;False;0;;0;0;Standard;0;False;0
+Node;AmplifyShaderEditor.SamplerNode;11;-705,-174.5;Inherit;True;Property;_TextureSample0;Texture Sample 0;0;0;Create;True;0;0;0;False;0;False;-1;e449cd529b2756d4ca5dd643f078bd8b;e449cd529b2756d4ca5dd643f078bd8b;True;0;False;white;Auto;False;Object;-1;Auto;Texture2D;8;0;SAMPLER2D;;False;1;FLOAT2;0,0;False;2;FLOAT;0;False;3;FLOAT2;0,0;False;4;FLOAT2;0,0;False;5;FLOAT;1;False;6;FLOAT;0;False;7;SAMPLERSTATE;;False;5;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
 Node;AmplifyShaderEditor.ColorNode;15;-332,-190.5;Inherit;False;Property;_Color0;Color 0;1;0;Create;True;0;0;0;False;0;False;1,1,1,1;1,1,1,1;True;0;5;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
+Node;AmplifyShaderEditor.TextureCoordinatesNode;16;-980.9709,243.3296;Inherit;True;0;-1;2;3;2;SAMPLER2D;;False;0;FLOAT2;1,1;False;1;FLOAT2;0,0;False;5;FLOAT2;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
+Node;AmplifyShaderEditor.DitheringNode;17;-466.9289,371.7635;Inherit;False;0;False;4;0;FLOAT;0;False;1;SAMPLER2D;;False;2;FLOAT4;0,0,0,0;False;3;SAMPLERSTATE;;False;1;FLOAT;0
+Node;AmplifyShaderEditor.SimpleMultiplyOpNode;21;-209.5154,178.4932;Inherit;False;2;2;0;FLOAT;0;False;1;FLOAT;0;False;1;FLOAT;0
+Node;AmplifyShaderEditor.RangedFloatNode;24;-366.515,38.49323;Inherit;False;Property;_Smoothness;Smoothness;2;0;Create;True;0;0;0;False;0;False;0;0;0;1;0;1;FLOAT;0
+Node;AmplifyShaderEditor.SmoothstepOpNode;23;-708.5154,297.4932;Inherit;True;3;0;FLOAT;0;False;1;FLOAT;0;False;2;FLOAT;0.5;False;1;FLOAT;0
 WireConnection;0;0;15;0
-WireConnection;0;9;11;4
+WireConnection;0;7;24;0
+WireConnection;0;9;21;0
+WireConnection;17;0;23;0
+WireConnection;21;0;11;4
+WireConnection;21;1;17;0
+WireConnection;23;0;16;2
 ASEEND*/
-//CHKSM=D649350E1909B0B2B44C5226BF49C731E0A802AD
+//CHKSM=C6BB18485A3CCB980954D64D35510A15EA0DEDC4
