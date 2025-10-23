@@ -1,13 +1,21 @@
-// Made with Amplify Shader Editor v1.9.2.1
+// Made with Amplify Shader Editor v1.9.9.4
 // Available at the Unity Asset Store - http://u3d.as/y3X 
 Shader "Grass Test"
 {
 	Properties
 	{
 		[HideInInspector] _AlphaCutoff("Alpha Cutoff ", Range(0, 1)) = 0.5
-		_TextureSample0("Texture Sample 0", 2D) = "white" {}
-		_Color0("Color 0", Color) = (1,1,1,1)
-		_Smoothness("Smoothness", Range( 0 , 1)) = 0
+		_Color( "Color", Color ) = ( 1, 1, 1, 1 )
+		_TextureSample0( "Texture Sample 0", 2D ) = "white" {}
+		_Noisetexture( "Noise texture", 2D ) = "white" {}
+		_Windintensity( "Wind intensity", Range( 0, 1 ) ) = 1
+		_WindSpeed( "Wind Speed", Vector ) = ( 1, 1, 0, 0 )
+		_Size( "Size", Range( 1, 50 ) ) = 5
+		_Windinalbedo( "Wind in albedo", Range( 0, 0.1 ) ) = 0
+		_Smoothness( "Smoothness", Range( 0, 1 ) ) = 0
+		[Toggle] _BottomGradient( "Bottom Gradient", Range( 0, 1 ) ) = 0
+		_BottomGradientsize( "Bottom Gradient size", Range( 0, 1 ) ) = 0.5
+		[Toggle] _Fresneldither( "Fresnel dither", Range( 0, 1 ) ) = 0
 		[HideInInspector] _texcoord( "", 2D ) = "white" {}
 
 		[HideInInspector] _RenderQueueType("Render Queue Type", Float) = 1
@@ -31,6 +39,7 @@ Shader "Grass Test"
 		[HideInInspector] _BlendMode("Blend Mode", Float) = 0
 		[HideInInspector] _SrcBlend("Src Blend", Float) = 1
 		[HideInInspector] _DstBlend("Dst Blend", Float) = 0
+		[HideInInspector] _DstBlend2("__dst2", Float) = 0
 		[HideInInspector] _AlphaSrcBlend("Alpha Src Blend", Float) = 1
 		[HideInInspector] _AlphaDstBlend("Alpha Dst Blend", Float) = 0
 		[HideInInspector][ToggleUI] _ZWrite("ZWrite", Float) = 1
@@ -39,15 +48,15 @@ Shader "Grass Test"
 		[HideInInspector] _TransparentSortPriority("Transparent Sort Priority", Float) = 0
 		[HideInInspector][ToggleUI] _EnableFogOnTransparent("Enable Fog", Float) = 1
 		[HideInInspector] _CullModeForward("Cull Mode Forward", Float) = 2 // This mode is dedicated to Forward to correctly handle backface then front face rendering thin transparent
-		[HideInInspector][Enum(UnityEditor.Rendering.HighDefinition.TransparentCullMode)] _TransparentCullMode("Transparent Cull Mode", Int) = 2 // Back culling by default
+		[HideInInspector][Enum(Default, 0, Front, 1, Back, 2)]_TransparentCullMode("Transparent Cull Mode", Float) = 2
 		[HideInInspector] _ZTestDepthEqualForOpaque("ZTest Depth Equal For Opaque", Int) = 4 // Less equal
 		[HideInInspector][Enum(UnityEngine.Rendering.CompareFunction)] _ZTestTransparent("ZTest Transparent", Int) = 4 // Less equal
 		[HideInInspector][ToggleUI] _TransparentBackfaceEnable("Transparent Backface Enable", Float) = 0
 		[HideInInspector][ToggleUI] _AlphaCutoffEnable("Alpha Cutoff Enable", Float) = 0
 		[HideInInspector][ToggleUI] _UseShadowThreshold("Use Shadow Threshold", Float) = 0
 		[HideInInspector][ToggleUI] _DoubleSidedEnable("Double Sided Enable", Float) = 0
-		[HideInInspector][Enum(Flip, 0, Mirror, 1, None, 2)] _DoubleSidedNormalMode("Double Sided Normal Mode", Float) = 2
-		[HideInInspector] _DoubleSidedConstants("DoubleSidedConstants", Vector) = (1,1,-1,0)
+		[HideInInspector][Enum(Default, 0, Flip, 1, Mirror, 2, None, 3)]_DoubleSidedNormalMode("Double Sided Normal Mode", Float) = 2
+		[HideInInspector]_DoubleSidedConstants("DoubleSidedConstants", Vector, 4) = (1, 1, -1, 0)
 
 		//_TessPhongStrength( "Tess Phong Strength", Range( 0, 1 ) ) = 0.5
 		//_TessValue( "Tess Max Tessellation", Range( 1, 32 ) ) = 16
@@ -57,7 +66,8 @@ Shader "Grass Test"
 		//_TessMaxDisp( "Tess Max Displacement", Float ) = 25
 
 		[HideInInspector][ToggleUI] _TransparentWritingMotionVec("Transparent Writing MotionVec", Float) = 0
-		[HideInInspector][Enum(UnityEditor.Rendering.HighDefinition.OpaqueCullMode)] _OpaqueCullMode("Opaque Cull Mode", Int) = 2 // Back culling by default
+		[HideInInspector][ToggleUI] _PerPixelSorting("_PerPixelSorting", Float) = 0.0
+		[HideInInspector][Enum(UnityEngine.Rendering.HighDefinition.OpaqueCullMode)] _OpaqueCullMode("Opaque Cull Mode", Int) = 2 // Back culling by default
 		[HideInInspector][ToggleUI] _EnableBlendModePreserveSpecularLighting("Enable Blend Mode Preserve Specular Lighting", Float) = 1
 		[HideInInspector] _EmissionColor("Color", Color) = (1, 1, 1)
 
@@ -65,10 +75,16 @@ Shader "Grass Test"
         [HideInInspector][NoScaleOffset] unity_LightmapsInd("unity_LightmapsInd", 2DArray) = "" {}
         [HideInInspector][NoScaleOffset] unity_ShadowMasks("unity_ShadowMasks", 2DArray) = "" {}
 
-		[HideInInspector][Enum(Auto, 0, On, 1, Off, 2)] _DoubleSidedGIMode("Double sided GI mode", Float) = 0 //DoubleSidedGIMode added in api 12x and higher
+		[HideInInspector][Enum(Default, 0, Auto, 1, On, 2, Off, 3)]_DoubleSidedGIMode("Double sided GI mode", Float) = 0
 
 		[HideInInspector][ToggleUI] _AlphaToMaskInspectorValue("_AlphaToMaskInspectorValue", Float) = 0 // Property used to save the alpha to mask state in the inspector
         [HideInInspector][ToggleUI] _AlphaToMask("__alphaToMask", Float) = 0
+
+		//_Refrac ( "Refraction Model", Float) = 0
+        [HideInInspector][ToggleUI]_DepthOffsetEnable("Boolean", Float) = 1
+        [HideInInspector][ToggleUI]_ConservativeDepthOffsetEnable("Boolean", Float) = 1
+
+		//_InstancedTerrainNormals("Instanced Terrain Normals", Float) = 1.0
 	}
 
 	SubShader
@@ -77,7 +93,11 @@ Shader "Grass Test"
 
 		
 
+		
+
 		Tags { "RenderPipeline"="HDRenderPipeline" "RenderType"="Opaque" "Queue"="Geometry" }
+
+		AlphaToMask Off
 
 		HLSLINCLUDE
 		#pragma target 4.5
@@ -102,71 +122,113 @@ Shader "Grass Test"
 			float AlphaClipThresholdShadow;
 			float AlphaClipThresholdDepthPrepass;
 			float AlphaClipThresholdDepthPostpass;
+			float SpecularOcclusion;
 			float SpecularAAScreenSpaceVariance;
 			float SpecularAAThreshold;
-			float SpecularOcclusion;
-			float DepthOffset;
-			//Refraction
 			float RefractionIndex;
 			float3 RefractionColor;
 			float RefractionDistance;
-			//SSS/Translucent
 			float DiffusionProfile;
 			float TransmissionMask;
-			// Transmission + Diffusion Profile
 			float Thickness;
 			float SubsurfaceMask;
-			//Anisotropy
 			float Anisotropy;
 			float3 Tangent;
-			//Iridescent
 			float IridescenceMask;
 			float IridescenceThickness;
-			//BakedGI
 			float3 BakedGI;
 			float3 BakedBackGI;
-			//Virtual Texturing
+			float DepthOffset;
 			float4 VTPackedFeedback;
 		};
 
 		struct AlphaSurfaceDescription // ShadowCaster
 		{
+			float3 Emission;
 			float Alpha;
 			float AlphaClipThreshold;
 			float AlphaClipThresholdShadow;
+			float3 BakedGI;
+			float3 BakedBackGI;
 			float DepthOffset;
+			float4 VTPackedFeedback;
 		};
 
 		struct SceneSurfaceDescription // SceneSelection
 		{
+		    float3 Emission;
 			float Alpha;
 			float AlphaClipThreshold;
+			float AlphaClipThresholdShadow;
+			float RefractionIndex;
+			float3 RefractionColor;
+			float RefractionDistance;
+			float3 BakedGI;
+			float3 BakedBackGI;
 			float DepthOffset;
+			float4 VTPackedFeedback;
 		};
 
 		struct PrePassSurfaceDescription // DepthPrePass
 		{
 			float3 Normal;
+			float3 Emission;
 			float Smoothness;
 			float Alpha;
+			float AlphaClipThreshold;
+			float AlphaClipThresholdShadow;
 			float AlphaClipThresholdDepthPrepass;
+			float3 BakedGI;
+			float3 BakedBackGI;
 			float DepthOffset;
+			float4 VTPackedFeedback;
 		};
 
 		struct PostPassSurfaceDescription //DepthPostPass
 		{
+			float3 Emission;
 			float Alpha;
+			float AlphaClipThreshold;
+			float AlphaClipThresholdShadow;
 			float AlphaClipThresholdDepthPostpass;
+			float3 BakedGI;
+			float3 BakedBackGI;
 			float DepthOffset;
+			float4 VTPackedFeedback;
 		};
 
 		struct SmoothSurfaceDescription // MotionVectors DepthOnly
 		{
 			float3 Normal;
+			float3 Emission;
 			float Smoothness;
 			float Alpha;
 			float AlphaClipThreshold;
+			float AlphaClipThresholdShadow;
+			float3 BakedGI;
+			float3 BakedBackGI;
 			float DepthOffset;
+			float4 VTPackedFeedback;
+		};
+
+        struct PickingSurfaceDescription //Picking
+		{
+            float3 BentNormal;
+			float3 Emission;
+			float Alpha;
+			float AlphaClipThreshold;
+			float AlphaClipThresholdShadow;
+			float3 BakedGI;
+			float3 BakedBackGI;
+			float DepthOffset;
+			float4 VTPackedFeedback;
+
+			float3 ObjectSpaceNormal;
+			float3 WorldSpaceNormal;
+			float3 TangentSpaceNormal;
+			float3 ObjectSpaceViewDirection;
+			float3 WorldSpaceViewDirection;
+			float3 ObjectSpacePosition;
 		};
 
 		#ifndef ASE_TESS_FUNCS
@@ -290,35 +352,41 @@ Shader "Grass Test"
 			}
 
 
-			ColorMask [_LightLayersMaskBuffer4] 4
-			ColorMask [_LightLayersMaskBuffer5] 5
-
 			HLSLPROGRAM
-
+            #define ASE_GEOMETRY
+            #pragma shader_feature_local _ _DOUBLESIDED_ON
+            #define ASE_FRAGMENT_NORMAL 0
+            #pragma shader_feature_local_fragment _ _DISABLE_DECALS
             #define _SPECULAR_OCCLUSION_FROM_AO 1
             #pragma multi_compile_instancing
             #pragma instancing_options renderinglayer
-            #define ASE_SRP_VERSION 140012
+            #pragma shader_feature_local _ _ALPHATEST_ON
+            #define HAVE_MESH_MODIFICATION
+            #define ASE_VERSION 19904
+            #define ASE_SRP_VERSION 170200
 
+            #pragma multi_compile _ DOTS_INSTANCING_ON
 
-            #pragma shader_feature _SURFACE_TYPE_TRANSPARENT
-            #pragma shader_feature_local _TRANSPARENT_WRITES_MOTION_VEC
-            #pragma shader_feature_local_fragment _ENABLE_FOG_ON_TRANSPARENT
-			#pragma shader_feature_local _DOUBLESIDED_ON
-			#pragma shader_feature_local _ALPHATEST_ON
+            #pragma shader_feature _ _SURFACE_TYPE_TRANSPARENT
+            #pragma shader_feature_local _ _TRANSPARENT_WRITES_MOTION_VEC _TRANSPARENT_REFRACTIVE_SORT
+            #pragma shader_feature_local_fragment _ _ENABLE_FOG_ON_TRANSPARENT
 
-			#pragma multi_compile_fragment _ SHADOWS_SHADOWMASK
-			#pragma multi_compile_fragment _ LIGHT_LAYERS
-			#pragma multi_compile_fragment PROBE_VOLUMES_OFF PROBE_VOLUMES_L1 PROBE_VOLUMES_L2
-			#pragma multi_compile _ DEBUG_DISPLAY
-			#pragma multi_compile _ LIGHTMAP_ON
-			#pragma multi_compile _ DIRLIGHTMAP_COMBINED
-			#pragma multi_compile _ DYNAMICLIGHTMAP_ON
-			#pragma multi_compile_fragment DECALS_OFF DECALS_3RT DECALS_4RT
-			#pragma multi_compile_fragment _ DECAL_SURFACE_GRADIENT
+			#pragma multi_compile_fragment _ RENDERING_LAYERS
+            #pragma multi_compile_fragment _ SHADOWS_SHADOWMASK
+            #pragma multi_compile _ DEBUG_DISPLAY
+            #pragma multi_compile _ LIGHTMAP_ON
+			#pragma multi_compile _ LIGHTMAP_BICUBIC_SAMPLING
+            #pragma multi_compile _ DIRLIGHTMAP_COMBINED
+            #pragma multi_compile_fragment _ PROBE_VOLUMES_L1 PROBE_VOLUMES_L2
+            #pragma multi_compile _ DYNAMICLIGHTMAP_ON
+            #pragma multi_compile_fragment DECALS_OFF DECALS_3RT DECALS_4RT
+            #pragma multi_compile_fragment _ DECAL_SURFACE_GRADIENT
+            #pragma multi_compile _ USE_LEGACY_LIGHTMAPS
 
 			#pragma vertex Vert
 			#pragma fragment Frag
+
+			#define SHADERPASS SHADERPASS_GBUFFER
 
 			#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
 			#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/GeometricTools.hlsl"
@@ -327,17 +395,32 @@ Shader "Grass Test"
 			#include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/ShaderVariables.hlsl"
 			#include "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/ShaderPass/ShaderPass.cs.hlsl"
 			#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/TextureStack.hlsl"
+			#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/DebugMipmapStreamingMacros.hlsl"
             #include "Packages/com.unity.shadergraph/ShaderGraphLibrary/Functions.hlsl"
 
 			#include "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/ShaderPass/FragInputs.hlsl"
 
-			#define SHADERPASS SHADERPASS_GBUFFER
+            #ifdef RAYTRACING_SHADER_GRAPH_DEFAULT
+                #define RAYTRACING_SHADER_GRAPH_HIGH
+            #endif
 
-			#ifndef SHADER_UNLIT
-			#if defined(_DOUBLESIDED_ON) && !defined(VARYINGS_NEED_CULLFACE)
-			#define VARYINGS_NEED_CULLFACE
+            #ifdef RAYTRACING_SHADER_GRAPH_RAYTRACED
+                #define RAYTRACING_SHADER_GRAPH_LOW
+            #endif
+
+            #ifndef SHADER_UNLIT
+            #if defined(_DOUBLESIDED_ON) && !defined(VARYINGS_NEED_CULLFACE)
+                #define VARYINGS_NEED_CULLFACE
+            #endif
+            #endif
+
+			#if defined(_DOUBLESIDED_ON) && !defined(ASE_NEED_CULLFACE)
+			    #define ASE_NEED_CULLFACE 1
 			#endif
-			#endif
+
+            #if _MATERIAL_FEATURE_COLORED_TRANSMISSION
+            #undef _MATERIAL_FEATURE_CLEAR_COAT
+            #endif
 
 		    #if defined(_MATERIAL_FEATURE_SUBSURFACE_SCATTERING) && !defined(_SURFACE_TYPE_TRANSPARENT)
 			#define OUTPUT_SPLIT_LIGHTING
@@ -349,39 +432,50 @@ Shader "Grass Test"
 			#define _REFRACTION_THIN
 		    #endif
 
-			#if SHADERPASS == SHADERPASS_TRANSPARENT_DEPTH_PREPASS
-			#if !defined(_DISABLE_SSR_TRANSPARENT) && !defined(SHADER_UNLIT)
-				#define WRITE_NORMAL_BUFFER
-			#endif
-			#endif
+            #if SHADERPASS == SHADERPASS_TRANSPARENT_DEPTH_PREPASS
+            #if !defined(_DISABLE_SSR_TRANSPARENT) && !defined(SHADER_UNLIT)
+                #define WRITE_NORMAL_BUFFER
+            #endif
+            #endif
 
-			#ifndef DEBUG_DISPLAY
-				#if !defined(_SURFACE_TYPE_TRANSPARENT)
-					#if SHADERPASS == SHADERPASS_FORWARD
-					#define SHADERPASS_FORWARD_BYPASS_ALPHA_TEST
-					#elif SHADERPASS == SHADERPASS_GBUFFER
-					#define SHADERPASS_GBUFFER_BYPASS_ALPHA_TEST
-					#endif
-				#endif
-			#endif
+            #if SHADERPASS == SHADERPASS_MOTION_VECTORS && defined(WRITE_DECAL_BUFFER_AND_RENDERING_LAYER)
+                #define WRITE_DECAL_BUFFER
+            #endif
 
-			#if defined(SHADER_LIT) && !defined(_SURFACE_TYPE_TRANSPARENT)
-			#define _DEFERRED_CAPABLE_MATERIAL
-			#endif
+            #ifndef DEBUG_DISPLAY
+                #if !defined(_SURFACE_TYPE_TRANSPARENT)
+                    #if SHADERPASS == SHADERPASS_FORWARD
+                    #define SHADERPASS_FORWARD_BYPASS_ALPHA_TEST
+                    #elif SHADERPASS == SHADERPASS_GBUFFER
+                    #define SHADERPASS_GBUFFER_BYPASS_ALPHA_TEST
+                    #endif
+                #endif
+            #endif
 
-			#if defined(_TRANSPARENT_WRITES_MOTION_VEC) && defined(_SURFACE_TYPE_TRANSPARENT)
-			#define _WRITE_TRANSPARENT_MOTION_VECTOR
-			#endif
+            #if defined(SHADER_LIT) && !defined(_SURFACE_TYPE_TRANSPARENT)
+                #define _DEFERRED_CAPABLE_MATERIAL
+            #endif
+
+            #if (defined(_TRANSPARENT_WRITES_MOTION_VEC) || defined(_TRANSPARENT_REFRACTIVE_SORT)) && defined(_SURFACE_TYPE_TRANSPARENT)
+                #define _WRITE_TRANSPARENT_MOTION_VECTOR
+            #endif
 
 			CBUFFER_START( UnityPerMaterial )
-			float4 _Color0;
+			float4 _Color;
 			float4 _TextureSample0_ST;
+			float2 _WindSpeed;
+			float _Size;
+			float _Windintensity;
+			float _Windinalbedo;
 			float _Smoothness;
+			float _BottomGradientsize;
+			float _BottomGradient;
+			float _Fresneldither;
 			float4 _EmissionColor;
 			float _AlphaCutoff;
 			float _RenderQueueType;
 			#ifdef _ADD_PRECOMPUTED_VELOCITY
-			float _AddPrecomputedVelocity;
+			    float _AddPrecomputedVelocity;
 			#endif
 			float _StencilRef;
 			float _StencilWriteMask;
@@ -389,6 +483,8 @@ Shader "Grass Test"
 			float _StencilWriteMaskDepth;
 			float _StencilRefMV;
 			float _StencilWriteMaskMV;
+			float _StencilRefDistortionVec;
+			float _StencilWriteMaskDistortionVec;
 			float _StencilWriteMaskGBuffer;
 			float _StencilRefGBuffer;
 			float _ZTestGBuffer;
@@ -397,10 +493,11 @@ Shader "Grass Test"
 			float _SurfaceType;
 			float _BlendMode;
             #ifdef SUPPORT_BLENDMODE_PRESERVE_SPECULAR_LIGHTING
-			float _EnableBlendModePreserveSpecularLighting;
+			    float _EnableBlendModePreserveSpecularLighting;
             #endif
 			float _SrcBlend;
 			float _DstBlend;
+			float _DstBlend2;
 			float _AlphaSrcBlend;
 			float _AlphaDstBlend;
 			float _ZWrite;
@@ -419,26 +516,26 @@ Shader "Grass Test"
 			float _DoubleSidedNormalMode;
 			float4 _DoubleSidedConstants;
 			#ifdef ASE_TESSELLATION
-			float _TessPhongStrength;
-			float _TessValue;
-			float _TessMin;
-			float _TessMax;
-			float _TessEdgeLength;
-			float _TessMaxDisp;
+			    float _TessPhongStrength;
+			    float _TessValue;
+			    float _TessMin;
+			    float _TessMax;
+			    float _TessEdgeLength;
+			    float _TessMaxDisp;
 			#endif
+			UNITY_TEXTURE_STREAMING_DEBUG_VARS;
 			CBUFFER_END
 
-		    // Property used by ScenePickingPass
             #ifdef SCENEPICKINGPASS
 			float4 _SelectionID;
             #endif
 
-			// Properties used by SceneSelectionPass
             #ifdef SCENESELECTIONPASS
 			int _ObjectId;
 			int _PassValue;
             #endif
 
+			sampler2D _Noisetexture;
 			sampler2D _TextureSample0;
 
 
@@ -453,25 +550,32 @@ Shader "Grass Test"
 			#include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/MaterialUtilities.hlsl"
 			#include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/ShaderGraphFunctions.hlsl"
 
-			// Setup DECALS_OFF so the shader stripper can remove variants
-            #define HAVE_DECALS ( (defined(DECALS_3RT) || defined(DECALS_4RT)) && !defined(_DISABLE_DECALS) )
             #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Decal/DecalUtilities.hlsl"
 			#include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Lit/LitDecalData.hlsl"
 
-			
-
-			#if defined(_DOUBLESIDED_ON) && !defined(ASE_NEED_CULLFACE)
-			#define ASE_NEED_CULLFACE 1
+			#if defined( UNITY_INSTANCING_ENABLED ) && defined( ASE_INSTANCED_TERRAIN ) && ( defined(_TERRAIN_INSTANCED_PERPIXEL_NORMAL) || defined(_INSTANCEDTERRAINNORMALS_PIXEL) )
+				#define ENABLE_TERRAIN_PERPIXEL_NORMAL
 			#endif
+
+			#define ASE_NEEDS_TEXTURE_COORDINATES0
+			#define ASE_NEEDS_VERT_TEXTURE_COORDINATES0
+			#define ASE_NEEDS_FRAG_SCREEN_POSITION_NORMALIZED
+			#define ASE_NEEDS_FRAG_TEXTURE_COORDINATES0
+			#define ASE_NEEDS_FRAG_WORLD_VIEW_DIR
+			#define ASE_NEEDS_WORLD_NORMAL
+			#define ASE_NEEDS_FRAG_WORLD_NORMAL
+			#define ASE_NEEDS_VERT_POSITION
+
 
 			struct AttributesMesh
 			{
 				float3 positionOS : POSITION;
 				float3 normalOS : NORMAL;
 				float4 tangentOS : TANGENT;
+				float4 uv0 : TEXCOORD0;
 				float4 uv1 : TEXCOORD1;
 				float4 uv2 : TEXCOORD2;
-				float4 ase_texcoord : TEXCOORD0;
+				
 				UNITY_VERTEX_INPUT_INSTANCE_ID
 			};
 
@@ -480,11 +584,10 @@ Shader "Grass Test"
 				SV_POSITION_QUALIFIERS float4 positionCS : SV_Position;
 				float3 positionRWS : TEXCOORD0;
 				float3 normalWS : TEXCOORD1;
-				float4 tangentWS : TEXCOORD2;
+				float4 tangentWS : TEXCOORD2; // holds terrainUV ifdef ENABLE_TERRAIN_PERPIXEL_NORMAL
 				float4 uv1 : TEXCOORD3;
 				float4 uv2 : TEXCOORD4;
 				float4 ase_texcoord5 : TEXCOORD5;
-				float4 ase_texcoord6 : TEXCOORD6;
 				UNITY_VERTEX_INPUT_INSTANCE_ID
 				UNITY_VERTEX_OUTPUT_STEREO
 				#if defined(SHADER_STAGE_FRAGMENT) && defined(ASE_NEED_CULLFACE)
@@ -493,15 +596,26 @@ Shader "Grass Test"
 			};
 
 
-			inline float Dither4x4Bayer( int x, int y )
+			float4 ASEScreenPositionNormalizedToPixel( float4 screenPosNorm, float4 screenParams )
+			{
+				float4 screenPosPixel = screenPosNorm * float4( screenParams.xy, 1, 1 );
+				#if UNITY_UV_STARTS_AT_TOP
+					screenPosPixel.xy = float2( screenPosPixel.x, ( _ProjectionParams.x < 0 ) ? screenParams.y - screenPosPixel.y : screenPosPixel.y );
+				#else
+					screenPosPixel.xy = float2( screenPosPixel.x, ( _ProjectionParams.x > 0 ) ? screenParams.y - screenPosPixel.y : screenPosPixel.y );
+				#endif
+				return screenPosPixel;
+			}
+			
+			inline float Dither4x4Bayer( uint x, uint y )
 			{
 				const float dither[ 16 ] = {
-			 1,  9,  3, 11,
-			13,  5, 15,  7,
-			 4, 12,  2, 10,
-			16,  8, 14,  6 };
-				int r = y * 4 + x;
-				return dither[r] / 16; // same # of instructions as pre-dividing due to compiler magic
+				     1,  9,  3, 11,
+				    13,  5, 15,  7,
+				     4, 12,  2, 10,
+				    16,  8, 14,  6 };
+				uint r = y * 4 + x;
+				return dither[ min( r, 15 ) ] / 16; // same # of instructions as pre-dividing due to compiler magic
 			}
 			
 
@@ -510,8 +624,8 @@ Shader "Grass Test"
 				ZERO_INITIALIZE(SurfaceData, surfaceData);
 
 				surfaceData.specularOcclusion = 1.0;
+				surfaceData.thickness = 0.0;
 
-				// surface data
 				surfaceData.baseColor =					surfaceDescription.BaseColor;
 				surfaceData.perceptualSmoothness =		surfaceDescription.Smoothness;
 				surfaceData.ambientOcclusion =			surfaceDescription.Occlusion;
@@ -521,229 +635,271 @@ Shader "Grass Test"
 				#ifdef _SPECULAR_OCCLUSION_CUSTOM
 				surfaceData.specularOcclusion =			surfaceDescription.SpecularOcclusion;
 				#endif
+
 				#ifdef _MATERIAL_FEATURE_SUBSURFACE_SCATTERING
 				surfaceData.subsurfaceMask =			surfaceDescription.SubsurfaceMask;
 				#endif
+
 				#if defined(_HAS_REFRACTION) || defined(_MATERIAL_FEATURE_TRANSMISSION)
 				surfaceData.thickness =					surfaceDescription.Thickness;
 				#endif
+
 				#ifdef _MATERIAL_FEATURE_TRANSMISSION
 				surfaceData.transmissionMask =			surfaceDescription.TransmissionMask;
 				#endif
+
 				#if defined( _MATERIAL_FEATURE_SUBSURFACE_SCATTERING ) || defined( _MATERIAL_FEATURE_TRANSMISSION )
 				surfaceData.diffusionProfileHash =		asuint(surfaceDescription.DiffusionProfile);
 				#endif
+
 				#ifdef _MATERIAL_FEATURE_SPECULAR_COLOR
 				surfaceData.specularColor =				surfaceDescription.Specular;
 				#endif
+
 				#ifdef _MATERIAL_FEATURE_ANISOTROPY
 				surfaceData.anisotropy =				surfaceDescription.Anisotropy;
 				#endif
+
 				#ifdef _MATERIAL_FEATURE_IRIDESCENCE
 				surfaceData.iridescenceMask =			surfaceDescription.IridescenceMask;
 				surfaceData.iridescenceThickness =		surfaceDescription.IridescenceThickness;
 				#endif
 
 				// refraction
-				#ifdef _HAS_REFRACTION
-				if( _EnableSSRefraction )
-				{
-					surfaceData.ior = surfaceDescription.RefractionIndex;
-					surfaceData.transmittanceColor = surfaceDescription.RefractionColor;
-					surfaceData.atDistance = surfaceDescription.RefractionDistance;
-
-					surfaceData.transmittanceMask = ( 1.0 - surfaceDescription.Alpha );
-					surfaceDescription.Alpha = 1.0;
-				}
-				else
-				{
-					surfaceData.ior = 1.0;
-					surfaceData.transmittanceColor = float3( 1.0, 1.0, 1.0 );
-					surfaceData.atDistance = 1.0;
-					surfaceData.transmittanceMask = 0.0;
-					surfaceDescription.Alpha = 1.0;
-				}
-				#else
-				surfaceData.ior = 1.0;
-				surfaceData.transmittanceColor = float3( 1.0, 1.0, 1.0 );
-				surfaceData.atDistance = 1.0;
-				surfaceData.transmittanceMask = 0.0;
-				#endif
-
-
-				// material features
-				surfaceData.materialFeatures = MATERIALFEATUREFLAGS_LIT_STANDARD;
-				#ifdef _MATERIAL_FEATURE_SUBSURFACE_SCATTERING
-				surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_LIT_SUBSURFACE_SCATTERING;
-				#endif
-				#ifdef _MATERIAL_FEATURE_TRANSMISSION
-				surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_LIT_TRANSMISSION;
-				#endif
-                #ifdef _MATERIAL_FEATURE_ANISOTROPY
-				surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_LIT_ANISOTROPY;
-				surfaceData.normalWS = float3(0, 1, 0);
+                #if defined(_REFRACTION_PLANE) || defined(_REFRACTION_SPHERE) || defined(_REFRACTION_THIN)
+                    if (_EnableSSRefraction)
+                    {
+                        surfaceData.ior =                       surfaceDescription.RefractionIndex;
+                        surfaceData.transmittanceColor =        surfaceDescription.RefractionColor;
+                        surfaceData.atDistance =                surfaceDescription.RefractionDistance;
+                        surfaceData.transmittanceMask = (1.0 - surfaceDescription.Alpha);
+                        surfaceDescription.Alpha = 1.0;
+                    }
+                    else
+                    {
+                        surfaceData.ior = 1.0;
+                        surfaceData.transmittanceColor = float3(1.0, 1.0, 1.0);
+                        surfaceData.atDistance = 1.0;
+                        surfaceData.transmittanceMask = 0.0;
+                        surfaceDescription.Alpha = 1.0;
+                    }
+                #else
+                    surfaceData.ior = 1.0;
+                    surfaceData.transmittanceColor = float3(1.0, 1.0, 1.0);
+                    surfaceData.atDistance = 1.0;
+                    surfaceData.transmittanceMask = 0.0;
                 #endif
-				#ifdef _MATERIAL_FEATURE_CLEAR_COAT
-				surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_LIT_CLEAR_COAT;
-				#endif
-				#ifdef _MATERIAL_FEATURE_IRIDESCENCE
-				surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_LIT_IRIDESCENCE;
-				#endif
-				#ifdef _MATERIAL_FEATURE_SPECULAR_COLOR
-				surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_LIT_SPECULAR_COLOR;
+
+				surfaceData.materialFeatures = MATERIALFEATUREFLAGS_LIT_STANDARD;
+
+				#ifdef _MATERIAL_FEATURE_SUBSURFACE_SCATTERING
+				if (surfaceData.subsurfaceMask > 0)
+                    surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_LIT_SUBSURFACE_SCATTERING;
 				#endif
 
-				// others
+				#ifdef _MATERIAL_FEATURE_TRANSMISSION
+                    surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_LIT_TRANSMISSION;
+				#endif
+
+				#ifdef _MATERIAL_FEATURE_COLORED_TRANSMISSION
+                    surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_LIT_TRANSMISSION;
+                    surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_LIT_COLORED_TRANSMISSION;
+				#endif
+
+                #ifdef _MATERIAL_FEATURE_ANISOTROPY
+                    surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_LIT_ANISOTROPY;
+                    surfaceData.normalWS = float3(0, 1, 0);
+                #endif
+
+				#ifdef _MATERIAL_FEATURE_CLEAR_COAT
+                    surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_LIT_CLEAR_COAT;
+				#endif
+
+				#ifdef _MATERIAL_FEATURE_IRIDESCENCE
+                    surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_LIT_IRIDESCENCE;
+				#endif
+
+				#ifdef _MATERIAL_FEATURE_SPECULAR_COLOR
+                    surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_LIT_SPECULAR_COLOR;
+				#endif
+
 				#if defined (_MATERIAL_FEATURE_SPECULAR_COLOR) && defined (_ENERGY_CONSERVING_SPECULAR)
-				surfaceData.baseColor *= ( 1.0 - Max3( surfaceData.specularColor.r, surfaceData.specularColor.g, surfaceData.specularColor.b ) );
+                    surfaceData.baseColor *= ( 1.0 - Max3( surfaceData.specularColor.r, surfaceData.specularColor.g, surfaceData.specularColor.b ) );
 				#endif
 
 				#ifdef _DOUBLESIDED_ON
-				float3 doubleSidedConstants = _DoubleSidedConstants.xyz;
+					float3 doubleSidedConstants = _DoubleSidedConstants.xyz;
 				#else
-				float3 doubleSidedConstants = float3( 1.0, 1.0, 1.0 );
+					float3 doubleSidedConstants = float3( 1.0, 1.0, 1.0 );
 				#endif
 
-				// normals
-				float3 normalTS = float3(0.0f, 0.0f, 1.0f);
-				normalTS = surfaceDescription.Normal;
+				float3 normal = surfaceDescription.Normal;
 
-				surfaceData.geomNormalWS = fragInputs.tangentToWorld[ 2 ];
-				surfaceData.tangentWS = normalize( fragInputs.tangentToWorld[ 0 ].xyz );
-
-				// decals
-			#ifdef DECAL_NORMAL_BLENDING
-				if (_EnableDecals)
-				{
+				#ifdef DECAL_NORMAL_BLENDING
 					#ifndef SURFACE_GRADIENT
-					normalTS = SurfaceGradientFromTangentSpaceNormalAndFromTBN(normalTS, fragInputs.tangentToWorld[0], fragInputs.tangentToWorld[1]);
+					#if ( ASE_FRAGMENT_NORMAL == 1 )
+						normal = SurfaceGradientFromPerturbedNormal(TransformWorldToObjectNormal(fragInputs.tangentToWorld[2]), normal);
+					#elif ( ASE_FRAGMENT_NORMAL == 2 )
+						normal = SurfaceGradientFromPerturbedNormal(fragInputs.tangentToWorld[2], normal);
+					#else
+						normal = SurfaceGradientFromTangentSpaceNormalAndFromTBN(normal, fragInputs.tangentToWorld[0], fragInputs.tangentToWorld[1]);
+					#endif
 					#endif
 
-					DecalSurfaceData decalSurfaceData = GetDecalSurfaceData(posInput, fragInputs, surfaceDescription.Alpha);
-					ApplyDecalToSurfaceData(decalSurfaceData, fragInputs.tangentToWorld[2], surfaceData, normalTS);
-				}
+					#if HAVE_DECALS
+					if (_EnableDecals)
+					{
+						DecalSurfaceData decalSurfaceData = GetDecalSurfaceData(posInput, fragInputs, surfaceDescription.Alpha);
+						ApplyDecalToSurfaceNormal(decalSurfaceData, fragInputs.tangentToWorld[2], normal);
+						ApplyDecalToSurfaceDataNoNormal(decalSurfaceData, surfaceData);
+					}
+					#endif
 
-				GetNormalWS_SG(fragInputs, normalTS, surfaceData.normalWS, doubleSidedConstants);
-			#else
-				GetNormalWS(fragInputs, normalTS, surfaceData.normalWS, doubleSidedConstants);
+					GetNormalWS_SG(fragInputs, normal, surfaceData.normalWS, doubleSidedConstants);
+				#else
+					#if ( ASE_FRAGMENT_NORMAL == 1 )
+						GetNormalWS_SrcOS(fragInputs, normal, surfaceData.normalWS, doubleSidedConstants);
+					#elif ( ASE_FRAGMENT_NORMAL == 2 )
+						GetNormalWS_SrcWS(fragInputs, normal, surfaceData.normalWS, doubleSidedConstants);
+					#else
+						GetNormalWS(fragInputs, normal, surfaceData.normalWS, doubleSidedConstants);
+					#endif
 
-				#if HAVE_DECALS
-				if (_EnableDecals)
-				{
-					// Both uses and modifies 'surfaceData.normalWS'.
-					DecalSurfaceData decalSurfaceData = GetDecalSurfaceData(posInput, fragInputs, surfaceDescription.Alpha);
-					ApplyDecalToSurfaceData(decalSurfaceData, fragInputs.tangentToWorld[2], surfaceData);
-				}
+					#if HAVE_DECALS
+					if (_EnableDecals)
+					{
+						DecalSurfaceData decalSurfaceData = GetDecalSurfaceData(posInput, fragInputs, surfaceDescription.Alpha);
+						ApplyDecalToSurfaceNormal(decalSurfaceData, surfaceData.normalWS.xyz);
+						ApplyDecalToSurfaceDataNoNormal(decalSurfaceData, surfaceData);
+					}
+					#endif
 				#endif
-			#endif
-				
+
+				surfaceData.geomNormalWS = fragInputs.tangentToWorld[2];
+                surfaceData.tangentWS = normalize(fragInputs.tangentToWorld[0].xyz );
+                surfaceData.tangentWS = Orthonormalize(surfaceData.tangentWS, surfaceData.normalWS);
+
 				bentNormalWS = surfaceData.normalWS;
 
 				#ifdef ASE_BENT_NORMAL
-				GetNormalWS( fragInputs, surfaceDescription.BentNormal, bentNormalWS, doubleSidedConstants );
+                    GetNormalWS( fragInputs, surfaceDescription.BentNormal, bentNormalWS, doubleSidedConstants );
 				#endif
 
 				#ifdef _MATERIAL_FEATURE_ANISOTROPY
-				surfaceData.tangentWS = TransformTangentToWorld( surfaceDescription.Tangent, fragInputs.tangentToWorld );
+                    surfaceData.tangentWS = TransformTangentToWorld(surfaceDescription.Tangent, fragInputs.tangentToWorld);
 				#endif
-				surfaceData.tangentWS = Orthonormalize( surfaceData.tangentWS, surfaceData.normalWS );
+
+				#if defined(DEBUG_DISPLAY)
+					#if !defined(SHADER_STAGE_RAY_TRACING)
+					if (_DebugMipMapMode != DEBUGMIPMAPMODE_NONE)
+					{
+						#ifdef FRAG_INPUTS_USE_TEXCOORD0
+							surfaceData.baseColor = GET_TEXTURE_STREAMING_DEBUG(posInput.positionSS, fragInputs.texCoord0);
+						#else
+							surfaceData.baseColor = GET_TEXTURE_STREAMING_DEBUG_NO_UV(posInput.positionSS);
+						#endif
+						surfaceData.metallic = 0;
+					}
+					#endif
+					ApplyDebugToSurfaceData(fragInputs.tangentToWorld, surfaceData);
+				#endif
 
                 #if defined(_SPECULAR_OCCLUSION_CUSTOM)
                 #elif defined(_SPECULAR_OCCLUSION_FROM_AO_BENT_NORMAL)
-				surfaceData.specularOcclusion = GetSpecularOcclusionFromBentAO(V, bentNormalWS, surfaceData.normalWS, surfaceData.ambientOcclusion, PerceptualSmoothnessToPerceptualRoughness(surfaceData.perceptualSmoothness));
+                    surfaceData.specularOcclusion = GetSpecularOcclusionFromBentAO(V, bentNormalWS, surfaceData.normalWS, surfaceData.ambientOcclusion, PerceptualSmoothnessToPerceptualRoughness(surfaceData.perceptualSmoothness));
                 #elif defined(_AMBIENT_OCCLUSION) && defined(_SPECULAR_OCCLUSION_FROM_AO)
-				surfaceData.specularOcclusion = GetSpecularOcclusionFromAmbientOcclusion(ClampNdotV(dot(surfaceData.normalWS, V)), surfaceData.ambientOcclusion, PerceptualSmoothnessToRoughness(surfaceData.perceptualSmoothness));
+                    surfaceData.specularOcclusion = GetSpecularOcclusionFromAmbientOcclusion(ClampNdotV(dot(surfaceData.normalWS, V)), surfaceData.ambientOcclusion, PerceptualSmoothnessToRoughness(surfaceData.perceptualSmoothness));
                 #endif
 
-				#ifdef _ENABLE_GEOMETRIC_SPECULAR_AA
-				surfaceData.perceptualSmoothness = GeometricNormalFiltering( surfaceData.perceptualSmoothness, fragInputs.tangentToWorld[ 2 ], surfaceDescription.SpecularAAScreenSpaceVariance, surfaceDescription.SpecularAAThreshold );
-				#endif
-
-				// debug
-				#if defined(DEBUG_DISPLAY)
-				if (_DebugMipMapMode != DEBUGMIPMAPMODE_NONE)
-				{
-					surfaceData.metallic = 0;
-				}
-				ApplyDebugToSurfaceData(fragInputs.tangentToWorld, surfaceData);
-				#endif
+                #ifdef _ENABLE_GEOMETRIC_SPECULAR_AA
+                    surfaceData.perceptualSmoothness = GeometricNormalFiltering(surfaceData.perceptualSmoothness, fragInputs.tangentToWorld[2], surfaceDescription.SpecularAAScreenSpaceVariance, surfaceDescription.SpecularAAThreshold);
+                #endif
 			}
 
+			// Get Surface And BuiltinData
 			void GetSurfaceAndBuiltinData(GlobalSurfaceDescription surfaceDescription, FragInputs fragInputs, float3 V, inout PositionInputs posInput, out SurfaceData surfaceData, out BuiltinData builtinData)
 			{
 				#ifdef LOD_FADE_CROSSFADE
-				LODDitheringTransition(ComputeFadeMaskSeed(V, posInput.positionSS), unity_LODFade.x);
+                    LODDitheringTransition(ComputeFadeMaskSeed(V, posInput.positionSS), unity_LODFade.x);
 				#endif
 
-				#ifdef _DOUBLESIDED_ON
-				float3 doubleSidedConstants = _DoubleSidedConstants.xyz;
-				#else
-				float3 doubleSidedConstants = float3( 1.0, 1.0, 1.0 );
-				#endif
-
-				ApplyDoubleSidedFlipOrMirror( fragInputs, doubleSidedConstants );
+                #ifdef _DOUBLESIDED_ON
+                    float3 doubleSidedConstants = _DoubleSidedConstants.xyz;
+                #else
+                    float3 doubleSidedConstants = float3(1.0, 1.0, 1.0);
+                #endif
+                ApplyDoubleSidedFlipOrMirror(fragInputs, doubleSidedConstants);
 
 				#ifdef _ALPHATEST_ON
-				DoAlphaTest( surfaceDescription.Alpha, surfaceDescription.AlphaClipThreshold );
+                    DoAlphaTest( surfaceDescription.Alpha, surfaceDescription.AlphaClipThreshold );
+				#endif
+
+				#ifdef _ALPHATEST_SHADOW_ON
+                    DoAlphaTest( surfaceDescription.Alpha, surfaceDescription.AlphaClipThresholdShadow);
 				#endif
 
 				#ifdef _DEPTHOFFSET_ON
-				ApplyDepthOffsetPositionInput( V, surfaceDescription.DepthOffset, GetViewForwardDir(), GetWorldToHClipMatrix(), posInput );
+                    ApplyDepthOffsetPositionInput(V, surfaceDescription.DepthOffset, GetViewForwardDir(), GetWorldToHClipMatrix(), posInput);
 				#endif
 
 				float3 bentNormalWS;
-				BuildSurfaceData( fragInputs, surfaceDescription, V, posInput, surfaceData, bentNormalWS );
-
-				InitBuiltinData( posInput, surfaceDescription.Alpha, bentNormalWS, -fragInputs.tangentToWorld[ 2 ], fragInputs.texCoord1, fragInputs.texCoord2, builtinData );
+                BuildSurfaceData(fragInputs, surfaceDescription, V, posInput, surfaceData, bentNormalWS);
+                InitBuiltinData(posInput, surfaceDescription.Alpha, bentNormalWS, -fragInputs.tangentToWorld[2], fragInputs.texCoord1, fragInputs.texCoord2, builtinData);
 
 				#ifdef _DEPTHOFFSET_ON
-				builtinData.depthOffset = surfaceDescription.DepthOffset;
+                    builtinData.depthOffset = surfaceDescription.DepthOffset;
 				#endif
 
-				#ifdef _ALPHATEST_ON
-				builtinData.alphaClipTreshold = surfaceDescription.AlphaClipThreshold;
+                #ifdef _ALPHATEST_ON
+                    builtinData.alphaClipTreshold = surfaceDescription.AlphaClipThreshold;
                 #endif
 
-				#ifdef UNITY_VIRTUAL_TEXTURING
-                builtinData.vtPackedFeedback = surfaceDescription.VTPackedFeedback;
+                #ifdef UNITY_VIRTUAL_TEXTURING
+                    builtinData.vtPackedFeedback = surfaceDescription.VTPackedFeedback;
                 #endif
 
 				#ifdef ASE_BAKEDGI
-				builtinData.bakeDiffuseLighting = surfaceDescription.BakedGI;
+                    builtinData.bakeDiffuseLighting = surfaceDescription.BakedGI;
 				#endif
 
 				#ifdef ASE_BAKEDBACKGI
-				builtinData.backBakeDiffuseLighting = surfaceDescription.BakedBackGI;
+                    builtinData.backBakeDiffuseLighting = surfaceDescription.BakedBackGI;
 				#endif
 
-				builtinData.emissiveColor = surfaceDescription.Emission;
+                builtinData.emissiveColor = surfaceDescription.Emission;
 
 				PostInitBuiltinData(V, posInput, surfaceData, builtinData);
 			}
 
 			PackedVaryingsMeshToPS VertexFunction(AttributesMesh inputMesh )
 			{
-				PackedVaryingsMeshToPS outputPackedVaryingsMeshToPS;
+				PackedVaryingsMeshToPS output;
 
 				UNITY_SETUP_INSTANCE_ID(inputMesh);
-				UNITY_TRANSFER_INSTANCE_ID(inputMesh, outputPackedVaryingsMeshToPS);
-				UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO( outputPackedVaryingsMeshToPS );
+				UNITY_TRANSFER_INSTANCE_ID(inputMesh, output);
+				UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO( output );
 
-				float4 ase_clipPos = TransformWorldToHClip( TransformObjectToWorld(inputMesh.positionOS));
-				float4 screenPos = ComputeScreenPos( ase_clipPos , _ProjectionParams.x );
-				outputPackedVaryingsMeshToPS.ase_texcoord6 = screenPos;
+				float3 ase_positionWS = GetAbsolutePositionWS( TransformObjectToWorld( ( inputMesh.positionOS ).xyz ) );
+				float2 appendResult4_g12 = (float2(ase_positionWS.x , ase_positionWS.z));
+				float2 panner8_g12 = ( 1.0 * _Time.y * _WindSpeed + ( appendResult4_g12 / _Size ));
+				float4 tex2DNode9_g12 = tex2Dlod( _Noisetexture, float4( panner8_g12, 0, 0.0) );
+				float2 texCoord17_g12 = inputMesh.uv0.xy * float2( 1,1 ) + float2( 0,0 );
 				
-				outputPackedVaryingsMeshToPS.ase_texcoord5.xy = inputMesh.ase_texcoord.xy;
+				float3 objectToViewPos = TransformWorldToView( TransformObjectToWorld( inputMesh.positionOS ) );
+				float eyeDepth = -objectToViewPos.z;
+				output.ase_texcoord5.z = eyeDepth;
+				
+				output.ase_texcoord5.xy = inputMesh.uv0.xy;
 				
 				//setting value to unused interpolator channels and avoid initialization warnings
-				outputPackedVaryingsMeshToPS.ase_texcoord5.zw = 0;
+				output.ase_texcoord5.w = 0;
 
 				#ifdef ASE_ABSOLUTE_VERTEX_POS
 				float3 defaultVertexValue = inputMesh.positionOS.xyz;
 				#else
 				float3 defaultVertexValue = float3( 0, 0, 0 );
 				#endif
-				float3 vertexValue =  defaultVertexValue ;
+				float3 vertexValue = ( tex2DNode9_g12 * _Windintensity * texCoord17_g12.y ).rgb;
 
 				#ifdef ASE_ABSOLUTE_VERTEX_POS
 				inputMesh.positionOS.xyz = vertexValue;
@@ -751,20 +907,25 @@ Shader "Grass Test"
 				inputMesh.positionOS.xyz += vertexValue;
 				#endif
 
-				inputMesh.normalOS =  inputMesh.normalOS ;
-				inputMesh.tangentOS =  inputMesh.tangentOS ;
+				inputMesh.normalOS = inputMesh.normalOS;
+				inputMesh.tangentOS = inputMesh.tangentOS;
 
 				float3 positionRWS = TransformObjectToWorld(inputMesh.positionOS);
 				float3 normalWS = TransformObjectToWorldNormal(inputMesh.normalOS);
 				float4 tangentWS = float4(TransformObjectToWorldDir(inputMesh.tangentOS.xyz), inputMesh.tangentOS.w);
 
-				outputPackedVaryingsMeshToPS.positionCS = TransformWorldToHClip(positionRWS);
-				outputPackedVaryingsMeshToPS.positionRWS.xyz = positionRWS;
-				outputPackedVaryingsMeshToPS.normalWS.xyz = normalWS;
-				outputPackedVaryingsMeshToPS.tangentWS.xyzw = tangentWS;
-				outputPackedVaryingsMeshToPS.uv1.xyzw = inputMesh.uv1;
-				outputPackedVaryingsMeshToPS.uv2.xyzw = inputMesh.uv2;
-				return outputPackedVaryingsMeshToPS;
+				output.positionCS = TransformWorldToHClip(positionRWS);
+				output.positionRWS = positionRWS;
+				output.normalWS = normalWS;
+				output.tangentWS = tangentWS;
+				output.uv1 = inputMesh.uv1;
+				output.uv2 = inputMesh.uv2;
+
+				#if defined( ENABLE_TERRAIN_PERPIXEL_NORMAL )
+					output.tangentWS.zw = inputMesh.uv0.xy;
+					output.tangentWS.xy = inputMesh.uv0.xy * unity_LightmapST.xy + unity_LightmapST.zw;
+				#endif
+				return output;
 			}
 
 			#if defined(ASE_TESSELLATION)
@@ -773,10 +934,10 @@ Shader "Grass Test"
 				float3 positionOS : INTERNALTESSPOS;
 				float3 normalOS : NORMAL;
 				float4 tangentOS : TANGENT;
+				float4 uv0 : TEXCOORD0;
 				float4 uv1 : TEXCOORD1;
 				float4 uv2 : TEXCOORD2;
-				float4 ase_texcoord : TEXCOORD0;
-
+				
 				UNITY_VERTEX_INPUT_INSTANCE_ID
 			};
 
@@ -794,9 +955,10 @@ Shader "Grass Test"
 				o.positionOS = v.positionOS;
 				o.normalOS = v.normalOS;
 				o.tangentOS = v.tangentOS;
+				o.uv0 = v.uv0;
 				o.uv1 = v.uv1;
 				o.uv2 = v.uv2;
-				o.ase_texcoord = v.ase_texcoord;
+				
 				return o;
 			}
 
@@ -841,9 +1003,10 @@ Shader "Grass Test"
 				o.positionOS = patch[0].positionOS * bary.x + patch[1].positionOS * bary.y + patch[2].positionOS * bary.z;
 				o.normalOS = patch[0].normalOS * bary.x + patch[1].normalOS * bary.y + patch[2].normalOS * bary.z;
 				o.tangentOS = patch[0].tangentOS * bary.x + patch[1].tangentOS * bary.y + patch[2].tangentOS * bary.z;
+				o.uv0 = patch[0].uv0 * bary.x + patch[1].uv0 * bary.y + patch[2].uv0 * bary.z;
 				o.uv1 = patch[0].uv1 * bary.x + patch[1].uv1 * bary.y + patch[2].uv1 * bary.z;
 				o.uv2 = patch[0].uv2 * bary.x + patch[1].uv2 * bary.y + patch[2].uv2 * bary.z;
-				o.ase_texcoord = patch[0].ase_texcoord * bary.x + patch[1].ase_texcoord * bary.y + patch[2].ase_texcoord * bary.z;
+				
 				#if defined(ASE_PHONG_TESSELLATION)
 				float3 pp[3];
 				for (int i = 0; i < 3; ++i)
@@ -863,53 +1026,68 @@ Shader "Grass Test"
 
 			void Frag( PackedVaryingsMeshToPS packedInput,
 						OUTPUT_GBUFFER(outGBuffer)
-						#ifdef _DEPTHOFFSET_ON
-						, out float outputDepth : DEPTH_OFFSET_SEMANTIC
+						#if defined( ASE_DEPTH_WRITE_ON )
+							, out float outputDepth : DEPTH_OFFSET_SEMANTIC
 						#endif
-						
-						)
+						 )
 			{
 				UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX( packedInput );
 				UNITY_SETUP_INSTANCE_ID( packedInput );
+
 				FragInputs input;
 				ZERO_INITIALIZE(FragInputs, input);
-				input.tangentToWorld = k_identity3x3;
-				float3 positionRWS = packedInput.positionRWS.xyz;
-				float3 normalWS = packedInput.normalWS.xyz;
-				float4 tangentWS = packedInput.tangentWS.xyzw;
-
 				input.positionSS = packedInput.positionCS;
-				input.positionRWS = positionRWS;
-				input.tangentToWorld = BuildTangentToWorld(tangentWS, normalWS);
+				input.positionRWS = packedInput.positionRWS;
+				input.tangentToWorld = BuildTangentToWorld(packedInput.tangentWS, packedInput.normalWS);
 				input.texCoord1 = packedInput.uv1.xyzw;
 				input.texCoord2 = packedInput.uv2.xyzw;
 
-				#if _DOUBLESIDED_ON && SHADER_STAGE_FRAGMENT
-				input.isFrontFace = IS_FRONT_VFACE( packedInput.cullFace, true, false);
-				#elif SHADER_STAGE_FRAGMENT
-				#if defined(ASE_NEED_CULLFACE)
-				input.isFrontFace = IS_FRONT_VFACE( packedInput.cullFace, true, false );
-				#endif
-				#endif
-				half isFrontFace = input.isFrontFace;
-
 				PositionInputs posInput = GetPositionInput(input.positionSS.xy, _ScreenSize.zw, input.positionSS.z, input.positionSS.w, input.positionRWS);
-				float3 V = GetWorldSpaceNormalizeViewDir(input.positionRWS);
-				SurfaceData surfaceData;
-				BuiltinData builtinData;
+
+				#if _DOUBLESIDED_ON && SHADER_STAGE_FRAGMENT
+					input.isFrontFace = IS_FRONT_VFACE(packedInput.cullFace, true, false);
+				#elif SHADER_STAGE_FRAGMENT
+					#if defined(ASE_NEED_CULLFACE)
+						input.isFrontFace = IS_FRONT_VFACE(packedInput.cullFace, true, false);
+					#endif
+				#endif
+
+				half IsFrontFace = input.isFrontFace;
+				float3 PositionRWS = posInput.positionWS;
+				float3 PositionWS = GetAbsolutePositionWS( posInput.positionWS );
+				float3 V = GetWorldSpaceNormalizeViewDir( packedInput.positionRWS );
+				float4 ScreenPosNorm = float4( posInput.positionNDC, packedInput.positionCS.zw );
+				float4 ClipPos = ComputeClipSpacePosition( ScreenPosNorm.xy, packedInput.positionCS.z ) * packedInput.positionCS.w;
+				float4 ScreenPos = ComputeScreenPos( ClipPos, _ProjectionParams.x );
+				float3 NormalWS = packedInput.normalWS;
+				float3 TangentWS = packedInput.tangentWS.xyz;
+				float3 BitangentWS = input.tangentToWorld[ 1 ];
+
+				#if defined( ENABLE_TERRAIN_PERPIXEL_NORMAL )
+					float2 sampleCoords = (packedInput.tangentWS.zw / _TerrainHeightmapRecipSize.zw + 0.5f) * _TerrainHeightmapRecipSize.xy;
+					NormalWS = TransformObjectToWorldNormal(normalize(SAMPLE_TEXTURE2D(_TerrainNormalmapTexture, sampler_TerrainNormalmapTexture, sampleCoords).rgb * 2 - 1));
+					TangentWS = -cross(GetObjectToWorldMatrix()._13_23_33, NormalWS);
+					input.tangentToWorld = BuildTangentToWorld( float4( TangentWS, -1 ), NormalWS );
+					BitangentWS = input.tangentToWorld[ 1 ];
+				#endif
+
+				float2 uv_TextureSample0 = packedInput.ase_texcoord5.xy * _TextureSample0_ST.xy + _TextureSample0_ST.zw;
+				float4 ase_positionSS_Pixel = ASEScreenPositionNormalizedToPixel( ScreenPosNorm, _ScreenParams );
+				float dither66 = Dither4x4Bayer( fmod( ase_positionSS_Pixel.x, 4 ), fmod( ase_positionSS_Pixel.y, 4 ) );
+				float2 texCoord16 = packedInput.ase_texcoord5.xy * float2( 1,1 ) + float2( 0,0 );
+				float smoothstepResult23 = smoothstep( 0.0 , _BottomGradientsize , texCoord16.y);
+				float lerpResult55 = lerp( 1.0 , smoothstepResult23 , _BottomGradient);
+				float fresnelNdotV59 = dot( NormalWS, V );
+				float fresnelNode59 = ( -1.0 + 5.0 * pow( 1.0 - fresnelNdotV59, 2.0 ) );
+				float lerpResult63 = lerp( 1.0 , ( 1.0 - saturate( fresnelNode59 ) ) , _Fresneldither);
+				float eyeDepth = packedInput.ase_texcoord5.z;
+				float cameraDepthFade65 = (( eyeDepth -_ProjectionParams.y - 100.0 ) / 20.0);
+				dither66 = step( dither66, saturate( ( saturate( lerpResult55 ) * saturate( lerpResult63 ) * ( 1.0 - saturate( cameraDepthFade65 ) ) ) * 1.00001 ) );
+				
 
 				GlobalSurfaceDescription surfaceDescription = (GlobalSurfaceDescription)0;
-				float2 uv_TextureSample0 = packedInput.ase_texcoord5.xy * _TextureSample0_ST.xy + _TextureSample0_ST.zw;
-				float4 screenPos = packedInput.ase_texcoord6;
-				float4 ase_screenPosNorm = screenPos / screenPos.w;
-				ase_screenPosNorm.z = ( UNITY_NEAR_CLIP_VALUE >= 0 ) ? ase_screenPosNorm.z : ase_screenPosNorm.z * 0.5 + 0.5;
-				float2 clipScreen17 = ase_screenPosNorm.xy * _ScreenParams.xy;
-				float dither17 = Dither4x4Bayer( fmod(clipScreen17.x, 4), fmod(clipScreen17.y, 4) );
-				float2 texCoord16 = packedInput.ase_texcoord5.xy * float2( 1,1 ) + float2( 0,0 );
-				float smoothstepResult23 = smoothstep( 0.0 , 0.5 , texCoord16.y);
-				dither17 = step( dither17, smoothstepResult23 );
-				
-				surfaceDescription.BaseColor = _Color0.rgb;
+
+				surfaceDescription.BaseColor = ( _Color.rgb + ( ( 0.0 - 1.0 ) * _Windinalbedo ) );
 				surfaceDescription.Normal = float3( 0, 0, 1 );
 				surfaceDescription.BentNormal = float3( 0, 0, 1 );
 				surfaceDescription.CoatMask = 0;
@@ -919,10 +1097,10 @@ Shader "Grass Test"
 				surfaceDescription.Specular = 0;
 				#endif
 
-				surfaceDescription.Emission = 0;
 				surfaceDescription.Smoothness = _Smoothness;
 				surfaceDescription.Occlusion = 1;
-				surfaceDescription.Alpha = ( tex2D( _TextureSample0, uv_TextureSample0 ).a * dither17 );
+				surfaceDescription.Emission = 0;
+				surfaceDescription.Alpha = ( tex2D( _TextureSample0, uv_TextureSample0 ).a * dither66 );
 
 				#ifdef _ALPHATEST_ON
 				surfaceDescription.AlphaClipThreshold = _AlphaCutoff;
@@ -945,7 +1123,7 @@ Shader "Grass Test"
 				#endif
 
 				#if defined(_HAS_REFRACTION) || defined(_MATERIAL_FEATURE_TRANSMISSION)
-				surfaceDescription.Thickness = 0;
+				surfaceDescription.Thickness = 1;
 				#endif
 
 				#ifdef _HAS_REFRACTION
@@ -983,18 +1161,30 @@ Shader "Grass Test"
 				surfaceDescription.BakedBackGI = 0;
 				#endif
 
-				#ifdef _DEPTHOFFSET_ON
-				surfaceDescription.DepthOffset = 0;
+				#if defined( ASE_CHANGES_WORLD_POS )
+					posInput.positionWS = PositionRWS;
+				#endif
+
+				#if defined( ASE_DEPTH_WRITE_ON )
+					#if !defined( _DEPTHOFFSET_ON )
+						posInput.deviceDepth = input.positionSS.z;
+					#else
+						surfaceDescription.DepthOffset = 0;
+					#endif
 				#endif
 
 				#ifdef UNITY_VIRTUAL_TEXTURING
 				surfaceDescription.VTPackedFeedback = float4(1.0f,1.0f,1.0f,1.0f);
 				#endif
 
+				SurfaceData surfaceData;
+				BuiltinData builtinData;
 				GetSurfaceAndBuiltinData( surfaceDescription, input, V, posInput, surfaceData, builtinData );
+
 				ENCODE_INTO_GBUFFER( surfaceData, builtinData, posInput.positionSS, outGBuffer );
-				#ifdef _DEPTHOFFSET_ON
-				outputDepth = posInput.deviceDepth;
+
+				#if defined( ASE_DEPTH_WRITE_ON )
+					outputDepth = posInput.deviceDepth;
 				#endif
 			}
 
@@ -1011,23 +1201,30 @@ Shader "Grass Test"
 			Cull Off
 
 			HLSLPROGRAM
-
+			#define ASE_GEOMETRY
+			#pragma shader_feature_local _ _DOUBLESIDED_ON
+			#define ASE_FRAGMENT_NORMAL 0
+			#pragma shader_feature_local_fragment _ _DISABLE_DECALS
 			#define _SPECULAR_OCCLUSION_FROM_AO 1
 			#pragma multi_compile_instancing
 			#pragma instancing_options renderinglayer
-			#define ASE_SRP_VERSION 140012
+			#pragma shader_feature_local _ _ALPHATEST_ON
+			#define HAVE_MESH_MODIFICATION
+			#define ASE_VERSION 19904
+			#define ASE_SRP_VERSION 170200
 
+			#pragma shader_feature _ EDITOR_VISUALIZATION
+			#pragma multi_compile _ DOTS_INSTANCING_ON
 
-			#pragma shader_feature _SURFACE_TYPE_TRANSPARENT
-			#pragma shader_feature_local _TRANSPARENT_WRITES_MOTION_VEC
-			#pragma shader_feature_local_fragment _ENABLE_FOG_ON_TRANSPARENT
-			#pragma shader_feature_local _DOUBLESIDED_ON
-			#pragma shader_feature_local _ALPHATEST_ON
-
-			#pragma shader_feature EDITOR_VISUALIZATION
+            #pragma shader_feature _ _SURFACE_TYPE_TRANSPARENT
+            #pragma shader_feature_local _ _TRANSPARENT_WRITES_MOTION_VEC _TRANSPARENT_REFRACTIVE_SORT
+            #pragma shader_feature_local_fragment _ _ENABLE_FOG_ON_TRANSPARENT
 
 			#pragma vertex Vert
 			#pragma fragment Frag
+
+            #define SHADERPASS SHADERPASS_LIGHT_TRANSPORT
+            #define SCENEPICKINGPASS 1
 
 			#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
 			#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/GeometricTools.hlsl"
@@ -1036,55 +1233,88 @@ Shader "Grass Test"
 			#include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/ShaderVariables.hlsl"
 			#include "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/ShaderPass/ShaderPass.cs.hlsl"
 			#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/TextureStack.hlsl"
+			#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/DebugMipmapStreamingMacros.hlsl"
             #include "Packages/com.unity.shadergraph/ShaderGraphLibrary/Functions.hlsl"
 
 			#include "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/ShaderPass/FragInputs.hlsl"
+			#include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/PickingSpaceTransforms.hlsl"
 
-			#define SHADERPASS SHADERPASS_LIGHT_TRANSPORT
+            #ifdef RAYTRACING_SHADER_GRAPH_DEFAULT
+                #define RAYTRACING_SHADER_GRAPH_HIGH
+            #endif
 
-			#ifndef SHADER_UNLIT
-			#if defined(_DOUBLESIDED_ON) && !defined(VARYINGS_NEED_CULLFACE)
-			#define VARYINGS_NEED_CULLFACE
+            #ifdef RAYTRACING_SHADER_GRAPH_RAYTRACED
+                #define RAYTRACING_SHADER_GRAPH_LOW
+            #endif
+
+            #ifndef SHADER_UNLIT
+            #if defined(_DOUBLESIDED_ON) && !defined(VARYINGS_NEED_CULLFACE)
+                #define VARYINGS_NEED_CULLFACE
+            #endif
+            #endif
+
+			#if defined(_DOUBLESIDED_ON) && !defined(ASE_NEED_CULLFACE)
+			    #define ASE_NEED_CULLFACE 1
 			#endif
-			#endif
+
+            #if _MATERIAL_FEATURE_COLORED_TRANSMISSION
+            #undef _MATERIAL_FEATURE_CLEAR_COAT
+            #endif
 
 		    #if defined(_MATERIAL_FEATURE_SUBSURFACE_SCATTERING) && !defined(_SURFACE_TYPE_TRANSPARENT)
 			#define OUTPUT_SPLIT_LIGHTING
 		    #endif
 
-			#if SHADERPASS == SHADERPASS_TRANSPARENT_DEPTH_PREPASS
-			#if !defined(_DISABLE_SSR_TRANSPARENT) && !defined(SHADER_UNLIT)
-				#define WRITE_NORMAL_BUFFER
-			#endif
-			#endif
+            #if (SHADERPASS == SHADERPASS_PATH_TRACING) && !defined(_DOUBLESIDED_ON) && (defined(_REFRACTION_PLANE) || defined(_REFRACTION_SPHERE))
+            #undef  _REFRACTION_PLANE
+            #undef  _REFRACTION_SPHERE
+            #define _REFRACTION_THIN
+            #endif
 
-			#ifndef DEBUG_DISPLAY
-				#if !defined(_SURFACE_TYPE_TRANSPARENT)
-					#if SHADERPASS == SHADERPASS_FORWARD
-					#define SHADERPASS_FORWARD_BYPASS_ALPHA_TEST
-					#elif SHADERPASS == SHADERPASS_GBUFFER
-					#define SHADERPASS_GBUFFER_BYPASS_ALPHA_TEST
-					#endif
-				#endif
-			#endif
+            #if SHADERPASS == SHADERPASS_TRANSPARENT_DEPTH_PREPASS
+            #if !defined(_DISABLE_SSR_TRANSPARENT) && !defined(SHADER_UNLIT)
+                #define WRITE_NORMAL_BUFFER
+            #endif
+            #endif
 
-			#if defined(SHADER_LIT) && !defined(_SURFACE_TYPE_TRANSPARENT)
-			#define _DEFERRED_CAPABLE_MATERIAL
-			#endif
+            #if SHADERPASS == SHADERPASS_MOTION_VECTORS && defined(WRITE_DECAL_BUFFER_AND_RENDERING_LAYER)
+                #define WRITE_DECAL_BUFFER
+            #endif
 
-			#if defined(_TRANSPARENT_WRITES_MOTION_VEC) && defined(_SURFACE_TYPE_TRANSPARENT)
-			#define _WRITE_TRANSPARENT_MOTION_VECTOR
-			#endif
+            #ifndef DEBUG_DISPLAY
+                #if !defined(_SURFACE_TYPE_TRANSPARENT)
+                    #if SHADERPASS == SHADERPASS_FORWARD
+                    #define SHADERPASS_FORWARD_BYPASS_ALPHA_TEST
+                    #elif SHADERPASS == SHADERPASS_GBUFFER
+                    #define SHADERPASS_GBUFFER_BYPASS_ALPHA_TEST
+                    #endif
+                #endif
+            #endif
+
+            #if defined(SHADER_LIT) && !defined(_SURFACE_TYPE_TRANSPARENT)
+                #define _DEFERRED_CAPABLE_MATERIAL
+            #endif
+
+            #if (defined(_TRANSPARENT_WRITES_MOTION_VEC) || defined(_TRANSPARENT_REFRACTIVE_SORT)) && defined(_SURFACE_TYPE_TRANSPARENT)
+                #define _WRITE_TRANSPARENT_MOTION_VECTOR
+            #endif
 
 			CBUFFER_START( UnityPerMaterial )
-			float4 _Color0;
+			float4 _Color;
 			float4 _TextureSample0_ST;
+			float2 _WindSpeed;
+			float _Size;
+			float _Windintensity;
+			float _Windinalbedo;
 			float _Smoothness;
+			float _BottomGradientsize;
+			float _BottomGradient;
+			float _Fresneldither;
 			float4 _EmissionColor;
 			float _AlphaCutoff;
 			float _RenderQueueType;
 			#ifdef _ADD_PRECOMPUTED_VELOCITY
-			float _AddPrecomputedVelocity;
+			    float _AddPrecomputedVelocity;
 			#endif
 			float _StencilRef;
 			float _StencilWriteMask;
@@ -1092,6 +1322,8 @@ Shader "Grass Test"
 			float _StencilWriteMaskDepth;
 			float _StencilRefMV;
 			float _StencilWriteMaskMV;
+			float _StencilRefDistortionVec;
+			float _StencilWriteMaskDistortionVec;
 			float _StencilWriteMaskGBuffer;
 			float _StencilRefGBuffer;
 			float _ZTestGBuffer;
@@ -1100,10 +1332,11 @@ Shader "Grass Test"
 			float _SurfaceType;
 			float _BlendMode;
             #ifdef SUPPORT_BLENDMODE_PRESERVE_SPECULAR_LIGHTING
-			float _EnableBlendModePreserveSpecularLighting;
+			    float _EnableBlendModePreserveSpecularLighting;
             #endif
 			float _SrcBlend;
 			float _DstBlend;
+			float _DstBlend2;
 			float _AlphaSrcBlend;
 			float _AlphaDstBlend;
 			float _ZWrite;
@@ -1122,32 +1355,38 @@ Shader "Grass Test"
 			float _DoubleSidedNormalMode;
 			float4 _DoubleSidedConstants;
 			#ifdef ASE_TESSELLATION
-			float _TessPhongStrength;
-			float _TessValue;
-			float _TessMin;
-			float _TessMax;
-			float _TessEdgeLength;
-			float _TessMaxDisp;
+			    float _TessPhongStrength;
+			    float _TessValue;
+			    float _TessMin;
+			    float _TessMax;
+			    float _TessEdgeLength;
+			    float _TessMaxDisp;
 			#endif
+			UNITY_TEXTURE_STREAMING_DEBUG_VARS;
 			CBUFFER_END
 
-			// Property used by ScenePickingPass
             #ifdef SCENEPICKINGPASS
 			float4 _SelectionID;
             #endif
 
-			// Properties used by SceneSelectionPass
             #ifdef SCENESELECTIONPASS
 			int _ObjectId;
 			int _PassValue;
             #endif
 
+			sampler2D _Noisetexture;
 			sampler2D _TextureSample0;
 
 
             #ifdef DEBUG_DISPLAY
             #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Debug/DebugDisplay.hlsl"
             #endif
+
+			#if SHADERPASS == SHADERPASS_LIGHT_TRANSPORT
+			#include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/PickingSpaceTransforms.hlsl"
+			#endif
+
+			#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/MetaPass.hlsl"
 
 			#include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Material.hlsl"
 			#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/NormalSurfaceGradient.hlsl"
@@ -1156,16 +1395,19 @@ Shader "Grass Test"
 			#include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/MaterialUtilities.hlsl"
 			#include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/ShaderGraphFunctions.hlsl"
 
-			// Setup DECALS_OFF so the shader stripper can remove variants
-            #define HAVE_DECALS ( (defined(DECALS_3RT) || defined(DECALS_4RT)) && !defined(_DISABLE_DECALS) )
             #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Decal/DecalUtilities.hlsl"
             #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Lit/LitDecalData.hlsl"
 
-			
+        	#ifdef HAVE_VFX_MODIFICATION
+			#include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/VisualEffectVertex.hlsl"
+        	#endif
 
-			#if defined(_DOUBLESIDED_ON) && !defined(ASE_NEED_CULLFACE)
-			#define ASE_NEED_CULLFACE 1
-			#endif
+			#define ASE_NEEDS_TEXTURE_COORDINATES0
+			#define ASE_NEEDS_VERT_TEXTURE_COORDINATES0
+			#define ASE_NEEDS_FRAG_TEXTURE_COORDINATES0
+			#define ASE_NEEDS_VERT_NORMAL
+			#define ASE_NEEDS_VERT_POSITION
+
 
 			struct AttributesMesh
 			{
@@ -1189,21 +1431,34 @@ Shader "Grass Test"
 				#endif
 				float4 ase_texcoord2 : TEXCOORD2;
 				float4 ase_texcoord3 : TEXCOORD3;
+				float4 ase_texcoord4 : TEXCOORD4;
+				float4 ase_texcoord5 : TEXCOORD5;
 				UNITY_VERTEX_INPUT_INSTANCE_ID
 				#if defined(SHADER_STAGE_FRAGMENT) && defined(ASE_NEED_CULLFACE)
 				FRONT_FACE_TYPE cullFace : FRONT_FACE_SEMANTIC;
 				#endif
 			};
 
-			inline float Dither4x4Bayer( int x, int y )
+			float4 ASEScreenPositionNormalizedToPixel( float4 screenPosNorm, float4 screenParams )
+			{
+				float4 screenPosPixel = screenPosNorm * float4( screenParams.xy, 1, 1 );
+				#if UNITY_UV_STARTS_AT_TOP
+					screenPosPixel.xy = float2( screenPosPixel.x, ( _ProjectionParams.x < 0 ) ? screenParams.y - screenPosPixel.y : screenPosPixel.y );
+				#else
+					screenPosPixel.xy = float2( screenPosPixel.x, ( _ProjectionParams.x > 0 ) ? screenParams.y - screenPosPixel.y : screenPosPixel.y );
+				#endif
+				return screenPosPixel;
+			}
+			
+			inline float Dither4x4Bayer( uint x, uint y )
 			{
 				const float dither[ 16 ] = {
-			 1,  9,  3, 11,
-			13,  5, 15,  7,
-			 4, 12,  2, 10,
-			16,  8, 14,  6 };
-				int r = y * 4 + x;
-				return dither[r] / 16; // same # of instructions as pre-dividing due to compiler magic
+				     1,  9,  3, 11,
+				    13,  5, 15,  7,
+				     4, 12,  2, 10,
+				    16,  8, 14,  6 };
+				uint r = y * 4 + x;
+				return dither[ min( r, 15 ) ] / 16; // same # of instructions as pre-dividing due to compiler magic
 			}
 			
 
@@ -1212,8 +1467,8 @@ Shader "Grass Test"
 				ZERO_INITIALIZE(SurfaceData, surfaceData);
 
 				surfaceData.specularOcclusion = 1.0;
+				surfaceData.thickness = 0.0;
 
-				// surface data
 				surfaceData.baseColor =					surfaceDescription.BaseColor;
 				surfaceData.perceptualSmoothness =		surfaceDescription.Smoothness;
 				surfaceData.ambientOcclusion =			surfaceDescription.Occlusion;
@@ -1223,214 +1478,283 @@ Shader "Grass Test"
 				#ifdef _SPECULAR_OCCLUSION_CUSTOM
 				surfaceData.specularOcclusion =			surfaceDescription.SpecularOcclusion;
 				#endif
+
 				#ifdef _MATERIAL_FEATURE_SUBSURFACE_SCATTERING
 				surfaceData.subsurfaceMask =			surfaceDescription.SubsurfaceMask;
 				#endif
+
 				#if defined(_HAS_REFRACTION) || defined(_MATERIAL_FEATURE_TRANSMISSION)
 				surfaceData.thickness = 				surfaceDescription.Thickness;
 				#endif
+
 				#ifdef _MATERIAL_FEATURE_TRANSMISSION
 				surfaceData.transmissionMask =			surfaceDescription.TransmissionMask;
 				#endif
+
+				#ifdef _MATERIAL_FEATURE_COLORED_TRANSMISSION
+				surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_LIT_TRANSMISSION;
+				surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_LIT_COLORED_TRANSMISSION;
+				#endif
+
 				#if defined( _MATERIAL_FEATURE_SUBSURFACE_SCATTERING ) || defined( _MATERIAL_FEATURE_TRANSMISSION )
 				surfaceData.diffusionProfileHash =		asuint(surfaceDescription.DiffusionProfile);
 				#endif
+
 				#ifdef _MATERIAL_FEATURE_SPECULAR_COLOR
 				surfaceData.specularColor =				surfaceDescription.Specular;
 				#endif
+
 				#ifdef _MATERIAL_FEATURE_ANISOTROPY
 				surfaceData.anisotropy =				surfaceDescription.Anisotropy;
 				#endif
+
 				#ifdef _MATERIAL_FEATURE_IRIDESCENCE
 				surfaceData.iridescenceMask =			surfaceDescription.IridescenceMask;
 				surfaceData.iridescenceThickness =		surfaceDescription.IridescenceThickness;
 				#endif
 
 				// refraction
-				#ifdef _HAS_REFRACTION
-				if( _EnableSSRefraction )
-				{
-					surfaceData.ior = surfaceDescription.RefractionIndex;
-					surfaceData.transmittanceColor = surfaceDescription.RefractionColor;
-					surfaceData.atDistance = surfaceDescription.RefractionDistance;
-
-					surfaceData.transmittanceMask = ( 1.0 - surfaceDescription.Alpha );
-					surfaceDescription.Alpha = 1.0;
-				}
-				else
-				{
-					surfaceData.ior = 1.0;
-					surfaceData.transmittanceColor = float3( 1.0, 1.0, 1.0 );
-					surfaceData.atDistance = 1.0;
-					surfaceData.transmittanceMask = 0.0;
-					surfaceDescription.Alpha = 1.0;
-				}
-				#else
-				surfaceData.ior = 1.0;
-				surfaceData.transmittanceColor = float3( 1.0, 1.0, 1.0 );
-				surfaceData.atDistance = 1.0;
-				surfaceData.transmittanceMask = 0.0;
-				#endif
-
-				// material features
-				surfaceData.materialFeatures = MATERIALFEATUREFLAGS_LIT_STANDARD;
-				#ifdef _MATERIAL_FEATURE_SUBSURFACE_SCATTERING
-				surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_LIT_SUBSURFACE_SCATTERING;
-				#endif
-				#ifdef _MATERIAL_FEATURE_TRANSMISSION
-				surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_LIT_TRANSMISSION;
-				#endif
-                #ifdef _MATERIAL_FEATURE_ANISOTROPY
-				surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_LIT_ANISOTROPY;
-				surfaceData.normalWS = float3(0, 1, 0);
+                #if defined(_REFRACTION_PLANE) || defined(_REFRACTION_SPHERE) || defined(_REFRACTION_THIN)
+                    if (_EnableSSRefraction)
+                    {
+                        surfaceData.ior =                       surfaceDescription.RefractionIndex;
+                        surfaceData.transmittanceColor =        surfaceDescription.RefractionColor;
+                        surfaceData.atDistance =                surfaceDescription.RefractionDistance;
+                        surfaceData.transmittanceMask = (1.0 - surfaceDescription.Alpha);
+                        surfaceDescription.Alpha = 1.0;
+                    }
+                    else
+                    {
+                        surfaceData.ior = 1.0;
+                        surfaceData.transmittanceColor = float3(1.0, 1.0, 1.0);
+                        surfaceData.atDistance = 1.0;
+                        surfaceData.transmittanceMask = 0.0;
+                        surfaceDescription.Alpha = 1.0;
+                    }
+                #else
+                    surfaceData.ior = 1.0;
+                    surfaceData.transmittanceColor = float3(1.0, 1.0, 1.0);
+                    surfaceData.atDistance = 1.0;
+                    surfaceData.transmittanceMask = 0.0;
                 #endif
+
+				surfaceData.materialFeatures = MATERIALFEATUREFLAGS_LIT_STANDARD;
+
+                #ifdef _MATERIAL_FEATURE_SUBSURFACE_SCATTERING
+				if (surfaceData.subsurfaceMask > 0)
+                    surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_LIT_SUBSURFACE_SCATTERING;
+				#endif
+
+				#ifdef _MATERIAL_FEATURE_TRANSMISSION
+                    surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_LIT_TRANSMISSION;
+				#endif
+
+				#ifdef _MATERIAL_FEATURE_COLORED_TRANSMISSION
+                    surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_LIT_TRANSMISSION;
+                    surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_LIT_COLORED_TRANSMISSION;
+				#endif
+
+                #ifdef _MATERIAL_FEATURE_ANISOTROPY
+                    surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_LIT_ANISOTROPY;
+                    surfaceData.normalWS = float3(0, 1, 0);
+                #endif
+
 				#ifdef _MATERIAL_FEATURE_CLEAR_COAT
-				surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_LIT_CLEAR_COAT;
+                    surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_LIT_CLEAR_COAT;
 				#endif
+
 				#ifdef _MATERIAL_FEATURE_IRIDESCENCE
-				surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_LIT_IRIDESCENCE;
-				#endif
-				#ifdef _MATERIAL_FEATURE_SPECULAR_COLOR
-				surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_LIT_SPECULAR_COLOR;
+                    surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_LIT_IRIDESCENCE;
 				#endif
 
-				// others
+                #ifdef _MATERIAL_FEATURE_SPECULAR_COLOR
+                    surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_LIT_SPECULAR_COLOR;
+                #endif
+
 				#if defined (_MATERIAL_FEATURE_SPECULAR_COLOR) && defined (_ENERGY_CONSERVING_SPECULAR)
-				surfaceData.baseColor *= ( 1.0 - Max3( surfaceData.specularColor.r, surfaceData.specularColor.g, surfaceData.specularColor.b ) );
+                    surfaceData.baseColor *= ( 1.0 - Max3( surfaceData.specularColor.r, surfaceData.specularColor.g, surfaceData.specularColor.b ) );
 				#endif
+
 				#ifdef _DOUBLESIDED_ON
-				float3 doubleSidedConstants = _DoubleSidedConstants.xyz;
+					float3 doubleSidedConstants = _DoubleSidedConstants.xyz;
 				#else
-				float3 doubleSidedConstants = float3( 1.0, 1.0, 1.0 );
+					float3 doubleSidedConstants = float3( 1.0, 1.0, 1.0 );
 				#endif
 
-				// normals
-				float3 normalTS = float3(0.0f, 0.0f, 1.0f);
-				normalTS = surfaceDescription.Normal;
+				float3 normal = surfaceDescription.Normal;
 
-				surfaceData.geomNormalWS = fragInputs.tangentToWorld[2];
-				surfaceData.tangentWS = normalize( fragInputs.tangentToWorld[ 0 ].xyz );
-
-				// decals
-			#ifdef DECAL_NORMAL_BLENDING
-				if (_EnableDecals)
-				{
+				#ifdef DECAL_NORMAL_BLENDING
 					#ifndef SURFACE_GRADIENT
-					normalTS = SurfaceGradientFromTangentSpaceNormalAndFromTBN(normalTS, fragInputs.tangentToWorld[0], fragInputs.tangentToWorld[1]);
+					#if ( ASE_FRAGMENT_NORMAL == 1 )
+						normal = SurfaceGradientFromPerturbedNormal(TransformWorldToObjectNormal(fragInputs.tangentToWorld[2]), normal);
+					#elif ( ASE_FRAGMENT_NORMAL == 2 )
+						normal = SurfaceGradientFromPerturbedNormal(fragInputs.tangentToWorld[2], normal);
+					#else
+						normal = SurfaceGradientFromTangentSpaceNormalAndFromTBN(normal, fragInputs.tangentToWorld[0], fragInputs.tangentToWorld[1]);
+					#endif
 					#endif
 
-					DecalSurfaceData decalSurfaceData = GetDecalSurfaceData(posInput, fragInputs, surfaceDescription.Alpha);
-					ApplyDecalToSurfaceData(decalSurfaceData, fragInputs.tangentToWorld[2], surfaceData, normalTS);
-				}
+					#if HAVE_DECALS
+					if (_EnableDecals)
+					{
+						DecalSurfaceData decalSurfaceData = GetDecalSurfaceData(posInput, fragInputs, surfaceDescription.Alpha);
+						ApplyDecalToSurfaceNormal(decalSurfaceData, fragInputs.tangentToWorld[2], normal);
+						ApplyDecalToSurfaceDataNoNormal(decalSurfaceData, surfaceData);
+					}
+					#endif
 
-				GetNormalWS_SG(fragInputs, normalTS, surfaceData.normalWS, doubleSidedConstants);
-			#else
-				GetNormalWS(fragInputs, normalTS, surfaceData.normalWS, doubleSidedConstants);
+					GetNormalWS_SG(fragInputs, normal, surfaceData.normalWS, doubleSidedConstants);
+				#else
+					#if ( ASE_FRAGMENT_NORMAL == 1 )
+						GetNormalWS_SrcOS(fragInputs, normal, surfaceData.normalWS, doubleSidedConstants);
+					#elif ( ASE_FRAGMENT_NORMAL == 2 )
+						GetNormalWS_SrcWS(fragInputs, normal, surfaceData.normalWS, doubleSidedConstants);
+					#else
+						GetNormalWS(fragInputs, normal, surfaceData.normalWS, doubleSidedConstants);
+					#endif
 
-				#if HAVE_DECALS
-				if (_EnableDecals)
-				{
-					// Both uses and modifies 'surfaceData.normalWS'.
-					DecalSurfaceData decalSurfaceData = GetDecalSurfaceData(posInput, fragInputs, surfaceDescription.Alpha);
-					ApplyDecalToSurfaceData(decalSurfaceData, fragInputs.tangentToWorld[2], surfaceData);
-				}
+					#if HAVE_DECALS
+					if (_EnableDecals)
+					{
+						DecalSurfaceData decalSurfaceData = GetDecalSurfaceData(posInput, fragInputs, surfaceDescription.Alpha);
+						ApplyDecalToSurfaceNormal(decalSurfaceData, surfaceData.normalWS.xyz);
+						ApplyDecalToSurfaceDataNoNormal(decalSurfaceData, surfaceData);
+					}
+					#endif
 				#endif
-			#endif
+
+				surfaceData.geomNormalWS = fragInputs.tangentToWorld[2];
+                surfaceData.tangentWS = normalize(fragInputs.tangentToWorld[0].xyz );
+                surfaceData.tangentWS = Orthonormalize(surfaceData.tangentWS, surfaceData.normalWS);
 
 				bentNormalWS = surfaceData.normalWS;
 
 				#ifdef ASE_BENT_NORMAL
-				GetNormalWS( fragInputs, surfaceDescription.BentNormal, bentNormalWS, doubleSidedConstants );
+                    GetNormalWS( fragInputs, surfaceDescription.BentNormal, bentNormalWS, doubleSidedConstants );
 				#endif
 
 				#ifdef _MATERIAL_FEATURE_ANISOTROPY
-				surfaceData.tangentWS = TransformTangentToWorld( surfaceDescription.Tangent, fragInputs.tangentToWorld );
+                    surfaceData.tangentWS = TransformTangentToWorld(surfaceDescription.Tangent, fragInputs.tangentToWorld);
 				#endif
-				surfaceData.tangentWS = Orthonormalize( surfaceData.tangentWS, surfaceData.normalWS );
+
+				#if defined(DEBUG_DISPLAY)
+					#if !defined(SHADER_STAGE_RAY_TRACING)
+					if (_DebugMipMapMode != DEBUGMIPMAPMODE_NONE)
+					{
+						#ifdef FRAG_INPUTS_USE_TEXCOORD0
+							surfaceData.baseColor = GET_TEXTURE_STREAMING_DEBUG(posInput.positionSS, fragInputs.texCoord0);
+						#else
+							surfaceData.baseColor = GET_TEXTURE_STREAMING_DEBUG_NO_UV(posInput.positionSS);
+						#endif
+						surfaceData.metallic = 0;
+					}
+					#endif
+					ApplyDebugToSurfaceData(fragInputs.tangentToWorld, surfaceData);
+				#endif
 
                 #if defined(_SPECULAR_OCCLUSION_CUSTOM)
                 #elif defined(_SPECULAR_OCCLUSION_FROM_AO_BENT_NORMAL)
-				surfaceData.specularOcclusion = GetSpecularOcclusionFromBentAO(V, bentNormalWS, surfaceData.normalWS, surfaceData.ambientOcclusion, PerceptualSmoothnessToPerceptualRoughness(surfaceData.perceptualSmoothness));
+                    surfaceData.specularOcclusion = GetSpecularOcclusionFromBentAO(V, bentNormalWS, surfaceData.normalWS, surfaceData.ambientOcclusion, PerceptualSmoothnessToPerceptualRoughness(surfaceData.perceptualSmoothness));
                 #elif defined(_AMBIENT_OCCLUSION) && defined(_SPECULAR_OCCLUSION_FROM_AO)
-				surfaceData.specularOcclusion = GetSpecularOcclusionFromAmbientOcclusion(ClampNdotV(dot(surfaceData.normalWS, V)), surfaceData.ambientOcclusion, PerceptualSmoothnessToRoughness(surfaceData.perceptualSmoothness));
+                    surfaceData.specularOcclusion = GetSpecularOcclusionFromAmbientOcclusion(ClampNdotV(dot(surfaceData.normalWS, V)), surfaceData.ambientOcclusion, PerceptualSmoothnessToRoughness(surfaceData.perceptualSmoothness));
                 #endif
 
-				#ifdef _ENABLE_GEOMETRIC_SPECULAR_AA
-				surfaceData.perceptualSmoothness = GeometricNormalFiltering( surfaceData.perceptualSmoothness, fragInputs.tangentToWorld[ 2 ], surfaceDescription.SpecularAAScreenSpaceVariance, surfaceDescription.SpecularAAThreshold );
-				#endif
-
-				// debug
-				#if defined(DEBUG_DISPLAY)
-				if (_DebugMipMapMode != DEBUGMIPMAPMODE_NONE)
-				{
-					surfaceData.metallic = 0;
-				}
-				ApplyDebugToSurfaceData(fragInputs.tangentToWorld, surfaceData);
-				#endif
+                #ifdef _ENABLE_GEOMETRIC_SPECULAR_AA
+                    surfaceData.perceptualSmoothness = GeometricNormalFiltering(surfaceData.perceptualSmoothness, fragInputs.tangentToWorld[2], surfaceDescription.SpecularAAScreenSpaceVariance, surfaceDescription.SpecularAAThreshold);
+                #endif
 			}
 
+			// Get Surface And BuiltinData
 			void GetSurfaceAndBuiltinData(GlobalSurfaceDescription surfaceDescription, FragInputs fragInputs, float3 V, inout PositionInputs posInput, out SurfaceData surfaceData, out BuiltinData builtinData)
 			{
 				#ifdef LOD_FADE_CROSSFADE
-				LODDitheringTransition(ComputeFadeMaskSeed(V, posInput.positionSS), unity_LODFade.x);
+                    LODDitheringTransition(ComputeFadeMaskSeed(V, posInput.positionSS), unity_LODFade.x);
 				#endif
 
-				#ifdef _DOUBLESIDED_ON
-				float3 doubleSidedConstants = _DoubleSidedConstants.xyz;
-				#else
-				float3 doubleSidedConstants = float3( 1.0, 1.0, 1.0 );
-				#endif
-
-				ApplyDoubleSidedFlipOrMirror( fragInputs, doubleSidedConstants );
+                #ifdef _DOUBLESIDED_ON
+                    float3 doubleSidedConstants = _DoubleSidedConstants.xyz;
+                #else
+                    float3 doubleSidedConstants = float3(1.0, 1.0, 1.0);
+                #endif
+                ApplyDoubleSidedFlipOrMirror(fragInputs, doubleSidedConstants);
 
 				#ifdef _ALPHATEST_ON
-				DoAlphaTest( surfaceDescription.Alpha, surfaceDescription.AlphaClipThreshold );
+                    DoAlphaTest( surfaceDescription.Alpha, surfaceDescription.AlphaClipThreshold );
+				#endif
+
+				#ifdef _ALPHATEST_SHADOW_ON
+                    DoAlphaTest( surfaceDescription.Alpha, surfaceDescription.AlphaClipThresholdShadow);
 				#endif
 
 				#ifdef _DEPTHOFFSET_ON
-				builtinData.depthOffset = surfaceDescription.DepthOffset;
-				ApplyDepthOffsetPositionInput( V, surfaceDescription.DepthOffset, GetViewForwardDir(), GetWorldToHClipMatrix(), posInput );
+                    ApplyDepthOffsetPositionInput(V, surfaceDescription.DepthOffset, GetViewForwardDir(), GetWorldToHClipMatrix(), posInput);
 				#endif
 
-				float3 bentNormalWS;
-				BuildSurfaceData( fragInputs, surfaceDescription, V, posInput, surfaceData, bentNormalWS );
+                float3 bentNormalWS;
+                BuildSurfaceData(fragInputs, surfaceDescription, V, posInput, surfaceData, bentNormalWS);
+                InitBuiltinData(posInput, surfaceDescription.Alpha, bentNormalWS, -fragInputs.tangentToWorld[2], fragInputs.texCoord1, fragInputs.texCoord2, builtinData);
 
-				InitBuiltinData( posInput, surfaceDescription.Alpha, bentNormalWS, -fragInputs.tangentToWorld[ 2 ], fragInputs.texCoord1, fragInputs.texCoord2, builtinData );
+				#ifdef _DEPTHOFFSET_ON
+                    builtinData.depthOffset = surfaceDescription.DepthOffset;
+				#endif
 
-				builtinData.emissiveColor = surfaceDescription.Emission;
+                #ifdef _ALPHATEST_ON
+                    builtinData.alphaClipTreshold = surfaceDescription.AlphaClipThreshold;
+                #endif
 
-				PostInitBuiltinData(V, posInput, surfaceData, builtinData);
+                #ifdef UNITY_VIRTUAL_TEXTURING
+                    builtinData.vtPackedFeedback = surfaceDescription.VTPackedFeedback;
+                #endif
+
+				#ifdef ASE_BAKEDGI
+                    builtinData.bakeDiffuseLighting = surfaceDescription.BakedGI;
+				#endif
+
+				#ifdef ASE_BAKEDBACKGI
+                    builtinData.backBakeDiffuseLighting = surfaceDescription.BakedBackGI;
+				#endif
+
+                builtinData.emissiveColor = surfaceDescription.Emission;
+
+                PostInitBuiltinData(V, posInput, surfaceData, builtinData);
 			}
-
-			#if SHADERPASS == SHADERPASS_LIGHT_TRANSPORT
-			#define SCENEPICKINGPASS
-			#include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/PickingSpaceTransforms.hlsl"
-			#endif
-
-			#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/MetaPass.hlsl"
 
 			PackedVaryingsMeshToPS VertexFunction(AttributesMesh inputMesh  )
 			{
-				PackedVaryingsMeshToPS outputPackedVaryingsMeshToPS;
+				PackedVaryingsMeshToPS output;
 
 				UNITY_SETUP_INSTANCE_ID(inputMesh);
-				UNITY_TRANSFER_INSTANCE_ID(inputMesh, outputPackedVaryingsMeshToPS);
+				UNITY_TRANSFER_INSTANCE_ID(inputMesh, output);
 
-				float4 ase_clipPos = TransformWorldToHClip( TransformObjectToWorld(inputMesh.positionOS));
-				float4 screenPos = ComputeScreenPos( ase_clipPos , _ProjectionParams.x );
-				outputPackedVaryingsMeshToPS.ase_texcoord3 = screenPos;
+				float3 ase_positionWS = GetAbsolutePositionWS( TransformObjectToWorld( ( inputMesh.positionOS ).xyz ) );
+				float2 appendResult4_g12 = (float2(ase_positionWS.x , ase_positionWS.z));
+				float2 panner8_g12 = ( 1.0 * _Time.y * _WindSpeed + ( appendResult4_g12 / _Size ));
+				float4 tex2DNode9_g12 = tex2Dlod( _Noisetexture, float4( panner8_g12, 0, 0.0) );
+				float2 texCoord17_g12 = inputMesh.uv0.xy * float2( 1,1 ) + float2( 0,0 );
 				
-				outputPackedVaryingsMeshToPS.ase_texcoord2.xy = inputMesh.uv0.xy;
+				float4 ase_positionCS = TransformWorldToHClip( TransformObjectToWorld( ( inputMesh.positionOS ).xyz ) );
+				float4 screenPos = ComputeScreenPos( ase_positionCS, _ProjectionParams.x );
+				output.ase_texcoord3 = screenPos;
+				output.ase_texcoord4.xyz = ase_positionWS;
+				float3 ase_normalWS = TransformObjectToWorldNormal( inputMesh.normalOS );
+				output.ase_texcoord5.xyz = ase_normalWS;
+				float3 objectToViewPos = TransformWorldToView( TransformObjectToWorld( inputMesh.positionOS ) );
+				float eyeDepth = -objectToViewPos.z;
+				output.ase_texcoord2.z = eyeDepth;
+				
+				output.ase_texcoord2.xy = inputMesh.uv0.xy;
 				
 				//setting value to unused interpolator channels and avoid initialization warnings
-				outputPackedVaryingsMeshToPS.ase_texcoord2.zw = 0;
+				output.ase_texcoord2.w = 0;
+				output.ase_texcoord4.w = 0;
+				output.ase_texcoord5.w = 0;
 
 				#ifdef ASE_ABSOLUTE_VERTEX_POS
 				float3 defaultVertexValue = inputMesh.positionOS.xyz;
 				#else
 				float3 defaultVertexValue = float3( 0, 0, 0 );
 				#endif
-				float3 vertexValue =  defaultVertexValue ;
+				float3 vertexValue = ( tex2DNode9_g12 * _Windintensity * texCoord17_g12.y ).rgb;
 
 				#ifdef ASE_ABSOLUTE_VERTEX_POS
 				inputMesh.positionOS.xyz = vertexValue;
@@ -1438,22 +1762,21 @@ Shader "Grass Test"
 				inputMesh.positionOS.xyz += vertexValue;
 				#endif
 
-				inputMesh.normalOS =  inputMesh.normalOS ;
-				inputMesh.tangentOS =  inputMesh.tangentOS ;
+				inputMesh.normalOS = inputMesh.normalOS;
+				inputMesh.tangentOS = inputMesh.tangentOS;
 
-				outputPackedVaryingsMeshToPS.positionCS = UnityMetaVertexPosition(inputMesh.positionOS, inputMesh.uv1.xy, inputMesh.uv2.xy, unity_LightmapST, unity_DynamicLightmapST);
-
+				output.positionCS = UnityMetaVertexPosition(inputMesh.positionOS, inputMesh.uv1.xy, inputMesh.uv2.xy, unity_LightmapST, unity_DynamicLightmapST);
 
 				#ifdef EDITOR_VISUALIZATION
 					float2 vizUV = 0;
 					float4 lightCoord = 0;
 					UnityEditorVizData(inputMesh.positionOS.xyz, inputMesh.uv0.xy, inputMesh.uv1.xy, inputMesh.uv2.xy, vizUV, lightCoord);
 
-					outputPackedVaryingsMeshToPS.VizUV.xy = vizUV;
-					outputPackedVaryingsMeshToPS.LightCoord = lightCoord;
+					output.VizUV.xy = vizUV;
+					output.LightCoord = lightCoord;
 				#endif
 
-				return outputPackedVaryingsMeshToPS;
+				return output;
 			}
 
 			#if defined(ASE_TESSELLATION)
@@ -1563,32 +1886,44 @@ Shader "Grass Test"
 				input.tangentToWorld = k_identity3x3;
 				input.positionSS = packedInput.positionCS;
 
+				PositionInputs posInput = GetPositionInput(input.positionSS.xy, _ScreenSize.zw, input.positionSS.z, input.positionSS.w, input.positionRWS);
+
 				#if _DOUBLESIDED_ON && SHADER_STAGE_FRAGMENT
-				input.isFrontFace = IS_FRONT_VFACE( packedInput.cullFace, true, false);
+					input.isFrontFace = IS_FRONT_VFACE(packedInput.cullFace, true, false);
 				#elif SHADER_STAGE_FRAGMENT
-				#if defined(ASE_NEED_CULLFACE)
-				input.isFrontFace = IS_FRONT_VFACE(packedInput.cullFace, true, false);
+					#if defined(ASE_NEED_CULLFACE)
+						input.isFrontFace = IS_FRONT_VFACE(packedInput.cullFace, true, false);
+					#endif
 				#endif
-				#endif
+
 				half isFrontFace = input.isFrontFace;
 
-				PositionInputs posInput = GetPositionInput(input.positionSS.xy, _ScreenSize.zw, input.positionSS.z, input.positionSS.w, input.positionRWS);
 				float3 V = float3(1.0, 1.0, 1.0);
 
-				SurfaceData surfaceData;
-				BuiltinData builtinData;
-				GlobalSurfaceDescription surfaceDescription = (GlobalSurfaceDescription)0;
 				float2 uv_TextureSample0 = packedInput.ase_texcoord2.xy * _TextureSample0_ST.xy + _TextureSample0_ST.zw;
 				float4 screenPos = packedInput.ase_texcoord3;
-				float4 ase_screenPosNorm = screenPos / screenPos.w;
-				ase_screenPosNorm.z = ( UNITY_NEAR_CLIP_VALUE >= 0 ) ? ase_screenPosNorm.z : ase_screenPosNorm.z * 0.5 + 0.5;
-				float2 clipScreen17 = ase_screenPosNorm.xy * _ScreenParams.xy;
-				float dither17 = Dither4x4Bayer( fmod(clipScreen17.x, 4), fmod(clipScreen17.y, 4) );
+				float4 ase_positionSSNorm = screenPos / screenPos.w;
+				ase_positionSSNorm.z = ( UNITY_NEAR_CLIP_VALUE >= 0 ) ? ase_positionSSNorm.z : ase_positionSSNorm.z * 0.5 + 0.5;
+				float4 ase_positionSS_Pixel = ASEScreenPositionNormalizedToPixel( ase_positionSSNorm, _ScreenParams );
+				float dither66 = Dither4x4Bayer( fmod( ase_positionSS_Pixel.x, 4 ), fmod( ase_positionSS_Pixel.y, 4 ) );
 				float2 texCoord16 = packedInput.ase_texcoord2.xy * float2( 1,1 ) + float2( 0,0 );
-				float smoothstepResult23 = smoothstep( 0.0 , 0.5 , texCoord16.y);
-				dither17 = step( dither17, smoothstepResult23 );
+				float smoothstepResult23 = smoothstep( 0.0 , _BottomGradientsize , texCoord16.y);
+				float lerpResult55 = lerp( 1.0 , smoothstepResult23 , _BottomGradient);
+				float3 ase_positionWS = packedInput.ase_texcoord4.xyz;
+				float3 ase_viewVectorWS = ( _WorldSpaceCameraPos.xyz - ase_positionWS );
+				float3 ase_viewDirWS = normalize( ase_viewVectorWS );
+				float3 ase_normalWS = packedInput.ase_texcoord5.xyz;
+				float fresnelNdotV59 = dot( ase_normalWS, ase_viewDirWS );
+				float fresnelNode59 = ( -1.0 + 5.0 * pow( 1.0 - fresnelNdotV59, 2.0 ) );
+				float lerpResult63 = lerp( 1.0 , ( 1.0 - saturate( fresnelNode59 ) ) , _Fresneldither);
+				float eyeDepth = packedInput.ase_texcoord2.z;
+				float cameraDepthFade65 = (( eyeDepth -_ProjectionParams.y - 100.0 ) / 20.0);
+				dither66 = step( dither66, saturate( ( saturate( lerpResult55 ) * saturate( lerpResult63 ) * ( 1.0 - saturate( cameraDepthFade65 ) ) ) * 1.00001 ) );
 				
-				surfaceDescription.BaseColor = _Color0.rgb;
+
+				GlobalSurfaceDescription surfaceDescription = (GlobalSurfaceDescription)0;
+
+				surfaceDescription.BaseColor = ( _Color.rgb + ( ( 0.0 - 1.0 ) * _Windinalbedo ) );
 				surfaceDescription.Normal = float3( 0, 0, 1 );
 				surfaceDescription.BentNormal = float3( 0, 0, 1 );
 				surfaceDescription.CoatMask = 0;
@@ -1598,10 +1933,10 @@ Shader "Grass Test"
 				surfaceDescription.Specular = 0;
 				#endif
 
-				surfaceDescription.Emission = 0;
 				surfaceDescription.Smoothness = _Smoothness;
 				surfaceDescription.Occlusion = 1;
-				surfaceDescription.Alpha = ( tex2D( _TextureSample0, uv_TextureSample0 ).a * dither17 );
+				surfaceDescription.Emission = 0;
+				surfaceDescription.Alpha = ( tex2D( _TextureSample0, uv_TextureSample0 ).a * dither66 );
 
 				#ifdef _ALPHATEST_ON
 				surfaceDescription.AlphaClipThreshold = _AlphaCutoff;
@@ -1648,8 +1983,9 @@ Shader "Grass Test"
 				surfaceDescription.IridescenceThickness = 0;
 				#endif
 
+				SurfaceData surfaceData;
+				BuiltinData builtinData;
 				GetSurfaceAndBuiltinData(surfaceDescription,input, V, posInput, surfaceData, builtinData);
-
 				BSDFData bsdfData = ConvertSurfaceDataToBSDFData(input.positionSS.xy, surfaceData);
 				LightTransportData lightTransportData = GetLightTransportData(surfaceData, builtinData, bsdfData);
 
@@ -1684,23 +2020,30 @@ Shader "Grass Test"
 			ColorMask 0
 
 			HLSLPROGRAM
-
+			#define ASE_GEOMETRY
+			#pragma shader_feature_local _ _DOUBLESIDED_ON
+			#define ASE_FRAGMENT_NORMAL 0
+			#pragma shader_feature_local_fragment _ _DISABLE_DECALS
 			#define _SPECULAR_OCCLUSION_FROM_AO 1
 			#pragma multi_compile_instancing
 			#pragma instancing_options renderinglayer
-			#define ASE_SRP_VERSION 140012
+			#pragma shader_feature_local _ _ALPHATEST_ON
+			#define HAVE_MESH_MODIFICATION
+			#define ASE_VERSION 19904
+			#define ASE_SRP_VERSION 170200
 
+			#pragma multi_compile _ DOTS_INSTANCING_ON
 
-			#pragma shader_feature _SURFACE_TYPE_TRANSPARENT
-			#pragma shader_feature_local _TRANSPARENT_WRITES_MOTION_VEC
-			#pragma shader_feature_local_fragment _ENABLE_FOG_ON_TRANSPARENT
-			#pragma shader_feature_local _DOUBLESIDED_ON
-			#pragma shader_feature_local _ALPHATEST_ON
+            #pragma shader_feature _ _SURFACE_TYPE_TRANSPARENT
+            #pragma shader_feature_local _ _TRANSPARENT_WRITES_MOTION_VEC _TRANSPARENT_REFRACTIVE_SORT
+            #pragma shader_feature_local_fragment _ _ENABLE_FOG_ON_TRANSPARENT
 
 			#pragma multi_compile_fragment _ SHADOWS_SHADOWMASK
 
 			#pragma vertex Vert
 			#pragma fragment Frag
+
+			#define SHADERPASS SHADERPASS_SHADOWS
 
 			#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
         	#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/GeometricTools.hlsl"
@@ -1710,19 +2053,32 @@ Shader "Grass Test"
 			#include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/ShaderVariables.hlsl"
 			#include "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/ShaderPass/ShaderPass.cs.hlsl"
 			#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/TextureStack.hlsl"
+			#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/DebugMipmapStreamingMacros.hlsl"
             #include "Packages/com.unity.shadergraph/ShaderGraphLibrary/Functions.hlsl"
-
-			//#define USE_LEGACY_UNITY_MATRIX_VARIABLES
 
 			#include "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/ShaderPass/FragInputs.hlsl"
 
-			#define SHADERPASS SHADERPASS_SHADOWS
+            #ifdef RAYTRACING_SHADER_GRAPH_DEFAULT
+                #define RAYTRACING_SHADER_GRAPH_HIGH
+            #endif
 
-			#ifndef SHADER_UNLIT
-			#if defined(_DOUBLESIDED_ON) && !defined(VARYINGS_NEED_CULLFACE)
-			#define VARYINGS_NEED_CULLFACE
+            #ifdef RAYTRACING_SHADER_GRAPH_RAYTRACED
+                #define RAYTRACING_SHADER_GRAPH_LOW
+            #endif
+
+            #ifndef SHADER_UNLIT
+            #if defined(_DOUBLESIDED_ON) && !defined(VARYINGS_NEED_CULLFACE)
+                #define VARYINGS_NEED_CULLFACE
+            #endif
+            #endif
+
+			#if defined(_DOUBLESIDED_ON) && !defined(ASE_NEED_CULLFACE)
+			    #define ASE_NEED_CULLFACE 1
 			#endif
-			#endif
+
+            #if _MATERIAL_FEATURE_COLORED_TRANSMISSION
+            #undef _MATERIAL_FEATURE_CLEAR_COAT
+            #endif
 
 		    #if defined(_MATERIAL_FEATURE_SUBSURFACE_SCATTERING) && !defined(_SURFACE_TYPE_TRANSPARENT)
 			#define OUTPUT_SPLIT_LIGHTING
@@ -1734,39 +2090,50 @@ Shader "Grass Test"
 			#define _REFRACTION_THIN
 		    #endif
 
-			#if SHADERPASS == SHADERPASS_TRANSPARENT_DEPTH_PREPASS
-			#if !defined(_DISABLE_SSR_TRANSPARENT) && !defined(SHADER_UNLIT)
-			#define WRITE_NORMAL_BUFFER
-			#endif
-			#endif
+            #if SHADERPASS == SHADERPASS_TRANSPARENT_DEPTH_PREPASS
+            #if !defined(_DISABLE_SSR_TRANSPARENT) && !defined(SHADER_UNLIT)
+                #define WRITE_NORMAL_BUFFER
+            #endif
+            #endif
 
-			#ifndef DEBUG_DISPLAY
-				#if !defined(_SURFACE_TYPE_TRANSPARENT)
-					#if SHADERPASS == SHADERPASS_FORWARD
-					#define SHADERPASS_FORWARD_BYPASS_ALPHA_TEST
-					#elif SHADERPASS == SHADERPASS_GBUFFER
-					#define SHADERPASS_GBUFFER_BYPASS_ALPHA_TEST
-					#endif
-				#endif
-			#endif
+            #if SHADERPASS == SHADERPASS_MOTION_VECTORS && defined(WRITE_DECAL_BUFFER_AND_RENDERING_LAYER)
+                #define WRITE_DECAL_BUFFER
+            #endif
 
-			#if defined(SHADER_LIT) && !defined(_SURFACE_TYPE_TRANSPARENT)
-			#define _DEFERRED_CAPABLE_MATERIAL
-			#endif
+            #ifndef DEBUG_DISPLAY
+                #if !defined(_SURFACE_TYPE_TRANSPARENT)
+                    #if SHADERPASS == SHADERPASS_FORWARD
+                    #define SHADERPASS_FORWARD_BYPASS_ALPHA_TEST
+                    #elif SHADERPASS == SHADERPASS_GBUFFER
+                    #define SHADERPASS_GBUFFER_BYPASS_ALPHA_TEST
+                    #endif
+                #endif
+            #endif
 
-			#if defined(_TRANSPARENT_WRITES_MOTION_VEC) && defined(_SURFACE_TYPE_TRANSPARENT)
-			#define _WRITE_TRANSPARENT_MOTION_VECTOR
-			#endif
+            #if defined(SHADER_LIT) && !defined(_SURFACE_TYPE_TRANSPARENT)
+                #define _DEFERRED_CAPABLE_MATERIAL
+            #endif
+
+            #if (defined(_TRANSPARENT_WRITES_MOTION_VEC) || defined(_TRANSPARENT_REFRACTIVE_SORT)) && defined(_SURFACE_TYPE_TRANSPARENT)
+                #define _WRITE_TRANSPARENT_MOTION_VECTOR
+            #endif
 
 			CBUFFER_START( UnityPerMaterial )
-			float4 _Color0;
+			float4 _Color;
 			float4 _TextureSample0_ST;
+			float2 _WindSpeed;
+			float _Size;
+			float _Windintensity;
+			float _Windinalbedo;
 			float _Smoothness;
+			float _BottomGradientsize;
+			float _BottomGradient;
+			float _Fresneldither;
 			float4 _EmissionColor;
 			float _AlphaCutoff;
 			float _RenderQueueType;
 			#ifdef _ADD_PRECOMPUTED_VELOCITY
-			float _AddPrecomputedVelocity;
+			    float _AddPrecomputedVelocity;
 			#endif
 			float _StencilRef;
 			float _StencilWriteMask;
@@ -1774,6 +2141,8 @@ Shader "Grass Test"
 			float _StencilWriteMaskDepth;
 			float _StencilRefMV;
 			float _StencilWriteMaskMV;
+			float _StencilRefDistortionVec;
+			float _StencilWriteMaskDistortionVec;
 			float _StencilWriteMaskGBuffer;
 			float _StencilRefGBuffer;
 			float _ZTestGBuffer;
@@ -1782,10 +2151,11 @@ Shader "Grass Test"
 			float _SurfaceType;
 			float _BlendMode;
             #ifdef SUPPORT_BLENDMODE_PRESERVE_SPECULAR_LIGHTING
-			float _EnableBlendModePreserveSpecularLighting;
+			    float _EnableBlendModePreserveSpecularLighting;
             #endif
 			float _SrcBlend;
 			float _DstBlend;
+			float _DstBlend2;
 			float _AlphaSrcBlend;
 			float _AlphaDstBlend;
 			float _ZWrite;
@@ -1804,26 +2174,26 @@ Shader "Grass Test"
 			float _DoubleSidedNormalMode;
 			float4 _DoubleSidedConstants;
 			#ifdef ASE_TESSELLATION
-			float _TessPhongStrength;
-			float _TessValue;
-			float _TessMin;
-			float _TessMax;
-			float _TessEdgeLength;
-			float _TessMaxDisp;
+			    float _TessPhongStrength;
+			    float _TessValue;
+			    float _TessMin;
+			    float _TessMax;
+			    float _TessEdgeLength;
+			    float _TessMaxDisp;
 			#endif
+			UNITY_TEXTURE_STREAMING_DEBUG_VARS;
 			CBUFFER_END
 
-			// Property used by ScenePickingPass
             #ifdef SCENEPICKINGPASS
 			float4 _SelectionID;
             #endif
 
-			// Properties used by SceneSelectionPass
             #ifdef SCENESELECTIONPASS
 			int _ObjectId;
 			int _PassValue;
             #endif
 
+			sampler2D _Noisetexture;
 			sampler2D _TextureSample0;
 
 
@@ -1838,1174 +2208,21 @@ Shader "Grass Test"
             #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/MaterialUtilities.hlsl"
             #include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/ShaderGraphFunctions.hlsl"
 
-			// Setup DECALS_OFF so the shader stripper can remove variants
-            #define HAVE_DECALS ( (defined(DECALS_3RT) || defined(DECALS_4RT)) && !defined(_DISABLE_DECALS) )
             #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Decal/DecalUtilities.hlsl"
             #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Lit/LitDecalData.hlsl"
 
-			
+        	#ifdef HAVE_VFX_MODIFICATION
+            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/VisualEffectVertex.hlsl"
+        	#endif
+
+			#define ASE_NEEDS_TEXTURE_COORDINATES0
+			#define ASE_NEEDS_FRAG_SCREEN_POSITION_NORMALIZED
+			#define ASE_NEEDS_FRAG_TEXTURE_COORDINATES0
+			#define ASE_NEEDS_FRAG_WORLD_VIEW_DIR
+			#define ASE_NEEDS_WORLD_NORMAL
+			#define ASE_NEEDS_FRAG_WORLD_NORMAL
+			#define ASE_NEEDS_VERT_POSITION
 
-			#if defined(_DOUBLESIDED_ON) && !defined(ASE_NEED_CULLFACE)
-			#define ASE_NEED_CULLFACE 1
-			#endif
-
-			struct AttributesMesh
-			{
-				float3 positionOS : POSITION;
-				float3 normalOS : NORMAL;
-				float4 ase_texcoord : TEXCOORD0;
-				UNITY_VERTEX_INPUT_INSTANCE_ID
-			};
-
-			struct PackedVaryingsMeshToPS
-			{
-				SV_POSITION_QUALIFIERS float4 positionCS : SV_Position;
-				float3 positionRWS : TEXCOORD0;
-				float4 ase_texcoord1 : TEXCOORD1;
-				float4 ase_texcoord2 : TEXCOORD2;
-				UNITY_VERTEX_INPUT_INSTANCE_ID
-				UNITY_VERTEX_OUTPUT_STEREO
-				#if defined(SHADER_STAGE_FRAGMENT) && defined(ASE_NEED_CULLFACE)
-				FRONT_FACE_TYPE cullFace : FRONT_FACE_SEMANTIC;
-				#endif
-			};
-
-			inline float Dither4x4Bayer( int x, int y )
-			{
-				const float dither[ 16 ] = {
-			 1,  9,  3, 11,
-			13,  5, 15,  7,
-			 4, 12,  2, 10,
-			16,  8, 14,  6 };
-				int r = y * 4 + x;
-				return dither[r] / 16; // same # of instructions as pre-dividing due to compiler magic
-			}
-			
-
-			void BuildSurfaceData(FragInputs fragInputs, inout AlphaSurfaceDescription surfaceDescription, float3 V, PositionInputs posInput, out SurfaceData surfaceData, out float3 bentNormalWS)
-			{
-				ZERO_INITIALIZE(SurfaceData, surfaceData);
-
-				surfaceData.specularOcclusion = 1.0;
-
-				// surface data
-
-				// refraction
-				#ifdef _HAS_REFRACTION
-				if( _EnableSSRefraction )
-				{
-					surfaceData.transmittanceMask = ( 1.0 - surfaceDescription.Alpha );
-					surfaceDescription.Alpha = 1.0;
-				}
-				else
-				{
-					surfaceData.ior = 1.0;
-					surfaceData.transmittanceColor = float3( 1.0, 1.0, 1.0 );
-					surfaceData.atDistance = 1.0;
-					surfaceData.transmittanceMask = 0.0;
-					surfaceDescription.Alpha = 1.0;
-				}
-				#else
-				surfaceData.ior = 1.0;
-				surfaceData.transmittanceColor = float3( 1.0, 1.0, 1.0 );
-				surfaceData.atDistance = 1.0;
-				surfaceData.transmittanceMask = 0.0;
-				#endif
-
-
-				// material features
-				surfaceData.materialFeatures = MATERIALFEATUREFLAGS_LIT_STANDARD;
-				#ifdef _MATERIAL_FEATURE_SUBSURFACE_SCATTERING
-				surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_LIT_SUBSURFACE_SCATTERING;
-				#endif
-				#ifdef _MATERIAL_FEATURE_TRANSMISSION
-				surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_LIT_TRANSMISSION;
-				#endif
-                #ifdef _MATERIAL_FEATURE_ANISOTROPY
-				surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_LIT_ANISOTROPY;
-				surfaceData.normalWS = float3(0, 1, 0);
-                #endif
-				#ifdef _MATERIAL_FEATURE_CLEAR_COAT
-				surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_LIT_CLEAR_COAT;
-				#endif
-				#ifdef _MATERIAL_FEATURE_IRIDESCENCE
-				surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_LIT_IRIDESCENCE;
-				#endif
-				#ifdef _MATERIAL_FEATURE_SPECULAR_COLOR
-				surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_LIT_SPECULAR_COLOR;
-				#endif
-
-				// others
-				#if defined (_MATERIAL_FEATURE_SPECULAR_COLOR) && defined (_ENERGY_CONSERVING_SPECULAR)
-				surfaceData.baseColor *= ( 1.0 - Max3( surfaceData.specularColor.r, surfaceData.specularColor.g, surfaceData.specularColor.b ) );
-				#endif
-				#ifdef _DOUBLESIDED_ON
-				float3 doubleSidedConstants = _DoubleSidedConstants.xyz;
-				#else
-				float3 doubleSidedConstants = float3( 1.0, 1.0, 1.0 );
-				#endif
-
-				// normals
-				float3 normalTS = float3(0.0f, 0.0f, 1.0f);
-
-				surfaceData.geomNormalWS = fragInputs.tangentToWorld[2];
-				surfaceData.tangentWS = normalize( fragInputs.tangentToWorld[ 0 ].xyz );
-
-				// decals
-			#ifdef DECAL_NORMAL_BLENDING
-				if (_EnableDecals)
-				{
-					#ifndef SURFACE_GRADIENT
-					normalTS = SurfaceGradientFromTangentSpaceNormalAndFromTBN(normalTS, fragInputs.tangentToWorld[0], fragInputs.tangentToWorld[1]);
-					#endif
-
-					DecalSurfaceData decalSurfaceData = GetDecalSurfaceData(posInput, fragInputs, surfaceDescription.Alpha);
-					ApplyDecalToSurfaceData(decalSurfaceData, fragInputs.tangentToWorld[2], surfaceData, normalTS);
-				}
-
-				GetNormalWS_SG(fragInputs, normalTS, surfaceData.normalWS, doubleSidedConstants);
-			#else
-				GetNormalWS(fragInputs, normalTS, surfaceData.normalWS, doubleSidedConstants);
-
-				#if HAVE_DECALS
-				if (_EnableDecals)
-				{
-					// Both uses and modifies 'surfaceData.normalWS'.
-					DecalSurfaceData decalSurfaceData = GetDecalSurfaceData(posInput, fragInputs, surfaceDescription.Alpha);
-					ApplyDecalToSurfaceData(decalSurfaceData, fragInputs.tangentToWorld[2], surfaceData);
-				}
-				#endif
-			#endif
-
-				bentNormalWS = surfaceData.normalWS;
-				surfaceData.tangentWS = Orthonormalize( surfaceData.tangentWS, surfaceData.normalWS );
-
-                #if defined(_SPECULAR_OCCLUSION_CUSTOM)
-                #elif defined(_SPECULAR_OCCLUSION_FROM_AO_BENT_NORMAL)
-				surfaceData.specularOcclusion = GetSpecularOcclusionFromBentAO(V, bentNormalWS, surfaceData.normalWS, surfaceData.ambientOcclusion, PerceptualSmoothnessToPerceptualRoughness(surfaceData.perceptualSmoothness));
-                #elif defined(_AMBIENT_OCCLUSION) && defined(_SPECULAR_OCCLUSION_FROM_AO)
-				surfaceData.specularOcclusion = GetSpecularOcclusionFromAmbientOcclusion(ClampNdotV(dot(surfaceData.normalWS, V)), surfaceData.ambientOcclusion, PerceptualSmoothnessToRoughness(surfaceData.perceptualSmoothness));
-                #endif
-
-				// debug
-				#if defined(DEBUG_DISPLAY)
-				if (_DebugMipMapMode != DEBUGMIPMAPMODE_NONE)
-				{
-					surfaceData.metallic = 0;
-				}
-				ApplyDebugToSurfaceData(fragInputs.tangentToWorld, surfaceData);
-				#endif
-			}
-
-			void GetSurfaceAndBuiltinData(AlphaSurfaceDescription surfaceDescription, FragInputs fragInputs, float3 V, inout PositionInputs posInput, out SurfaceData surfaceData, out BuiltinData builtinData)
-			{
-				#ifdef LOD_FADE_CROSSFADE
-				LODDitheringTransition(ComputeFadeMaskSeed(V, posInput.positionSS), unity_LODFade.x);
-				#endif
-
-				#ifdef _DOUBLESIDED_ON
-				float3 doubleSidedConstants = _DoubleSidedConstants.xyz;
-				#else
-				float3 doubleSidedConstants = float3( 1.0, 1.0, 1.0 );
-				#endif
-
-				ApplyDoubleSidedFlipOrMirror( fragInputs, doubleSidedConstants );
-
-				#ifdef _ALPHATEST_ON
-				#ifdef _ALPHATEST_SHADOW_ON
-				DoAlphaTest( surfaceDescription.Alpha, surfaceDescription.AlphaClipThresholdShadow );
-				#else
-				DoAlphaTest( surfaceDescription.Alpha, surfaceDescription.AlphaClipThreshold );
-				#endif
-				#endif
-
-				#ifdef _DEPTHOFFSET_ON
-				builtinData.depthOffset = surfaceDescription.DepthOffset;
-				ApplyDepthOffsetPositionInput( V, surfaceDescription.DepthOffset, GetViewForwardDir(), GetWorldToHClipMatrix(), posInput );
-				#endif
-
-				float3 bentNormalWS;
-				BuildSurfaceData( fragInputs, surfaceDescription, V, posInput, surfaceData, bentNormalWS );
-
-				InitBuiltinData( posInput, surfaceDescription.Alpha, bentNormalWS, -fragInputs.tangentToWorld[ 2 ], fragInputs.texCoord1, fragInputs.texCoord2, builtinData );
-
-				PostInitBuiltinData(V, posInput, surfaceData, builtinData);
-			}
-
-			PackedVaryingsMeshToPS VertexFunction(AttributesMesh inputMesh )
-			{
-				PackedVaryingsMeshToPS outputPackedVaryingsMeshToPS;
-				UNITY_SETUP_INSTANCE_ID(inputMesh);
-				UNITY_TRANSFER_INSTANCE_ID(inputMesh, outputPackedVaryingsMeshToPS);
-				UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO( outputPackedVaryingsMeshToPS );
-
-				float4 ase_clipPos = TransformWorldToHClip( TransformObjectToWorld(inputMesh.positionOS));
-				float4 screenPos = ComputeScreenPos( ase_clipPos , _ProjectionParams.x );
-				outputPackedVaryingsMeshToPS.ase_texcoord2 = screenPos;
-				
-				outputPackedVaryingsMeshToPS.ase_texcoord1.xy = inputMesh.ase_texcoord.xy;
-				
-				//setting value to unused interpolator channels and avoid initialization warnings
-				outputPackedVaryingsMeshToPS.ase_texcoord1.zw = 0;
-
-				#ifdef ASE_ABSOLUTE_VERTEX_POS
-				float3 defaultVertexValue = inputMesh.positionOS.xyz;
-				#else
-				float3 defaultVertexValue = float3( 0, 0, 0 );
-				#endif
-				float3 vertexValue =  defaultVertexValue ;
-
-				#ifdef ASE_ABSOLUTE_VERTEX_POS
-				inputMesh.positionOS.xyz = vertexValue;
-				#else
-				inputMesh.positionOS.xyz += vertexValue;
-				#endif
-
-				inputMesh.normalOS =  inputMesh.normalOS ;
-
-				float3 positionRWS = TransformObjectToWorld(inputMesh.positionOS);
-				outputPackedVaryingsMeshToPS.positionCS = TransformWorldToHClip(positionRWS);
-				outputPackedVaryingsMeshToPS.positionRWS.xyz = positionRWS;
-				return outputPackedVaryingsMeshToPS;
-			}
-
-			#if defined(ASE_TESSELLATION)
-			struct VertexControl
-			{
-				float3 positionOS : INTERNALTESSPOS;
-				float3 normalOS : NORMAL;
-				float4 ase_texcoord : TEXCOORD0;
-
-				UNITY_VERTEX_INPUT_INSTANCE_ID
-			};
-
-			struct TessellationFactors
-			{
-				float edge[3] : SV_TessFactor;
-				float inside : SV_InsideTessFactor;
-			};
-
-			VertexControl Vert ( AttributesMesh v )
-			{
-				VertexControl o;
-				UNITY_SETUP_INSTANCE_ID(v);
-				UNITY_TRANSFER_INSTANCE_ID(v, o);
-				o.positionOS = v.positionOS;
-				o.normalOS = v.normalOS;
-				o.ase_texcoord = v.ase_texcoord;
-				return o;
-			}
-
-			TessellationFactors TessellationFunction (InputPatch<VertexControl,3> v)
-			{
-				TessellationFactors o;
-				float4 tf = 1;
-				float tessValue = _TessValue; float tessMin = _TessMin; float tessMax = _TessMax;
-				float edgeLength = _TessEdgeLength; float tessMaxDisp = _TessMaxDisp;
-				#if (SHADEROPTIONS_CAMERA_RELATIVE_RENDERING != 0)
-				float3 cameraPos = 0;
-				#else
-				float3 cameraPos = _WorldSpaceCameraPos;
-				#endif
-				#if defined(ASE_FIXED_TESSELLATION)
-				tf = FixedTess( tessValue );
-				#elif defined(ASE_DISTANCE_TESSELLATION)
-				tf = DistanceBasedTess(float4(v[0].positionOS,1), float4(v[1].positionOS,1), float4(v[2].positionOS,1), tessValue, tessMin, tessMax, GetObjectToWorldMatrix(), cameraPos );
-				#elif defined(ASE_LENGTH_TESSELLATION)
-				tf = EdgeLengthBasedTess(float4(v[0].positionOS,1), float4(v[1].positionOS,1), float4(v[2].positionOS,1), edgeLength, GetObjectToWorldMatrix(), cameraPos, _ScreenParams );
-				#elif defined(ASE_LENGTH_CULL_TESSELLATION)
-				tf = EdgeLengthBasedTessCull(float4(v[0].positionOS,1), float4(v[1].positionOS,1), float4(v[2].positionOS,1), edgeLength, tessMaxDisp, GetObjectToWorldMatrix(), cameraPos, _ScreenParams, _FrustumPlanes );
-				#endif
-				o.edge[0] = tf.x; o.edge[1] = tf.y; o.edge[2] = tf.z; o.inside = tf.w;
-				return o;
-			}
-
-			[domain("tri")]
-			[partitioning("fractional_odd")]
-			[outputtopology("triangle_cw")]
-			[patchconstantfunc("TessellationFunction")]
-			[outputcontrolpoints(3)]
-			VertexControl HullFunction(InputPatch<VertexControl, 3> patch, uint id : SV_OutputControlPointID)
-			{
-			   return patch[id];
-			}
-
-			[domain("tri")]
-			PackedVaryingsMeshToPS DomainFunction(TessellationFactors factors, OutputPatch<VertexControl, 3> patch, float3 bary : SV_DomainLocation)
-			{
-				AttributesMesh o = (AttributesMesh) 0;
-				o.positionOS = patch[0].positionOS * bary.x + patch[1].positionOS * bary.y + patch[2].positionOS * bary.z;
-				o.normalOS = patch[0].normalOS * bary.x + patch[1].normalOS * bary.y + patch[2].normalOS * bary.z;
-				o.ase_texcoord = patch[0].ase_texcoord * bary.x + patch[1].ase_texcoord * bary.y + patch[2].ase_texcoord * bary.z;
-				#if defined(ASE_PHONG_TESSELLATION)
-				float3 pp[3];
-				for (int i = 0; i < 3; ++i)
-					pp[i] = o.positionOS.xyz - patch[i].normalOS * (dot(o.positionOS.xyz, patch[i].normalOS) - dot(patch[i].positionOS.xyz, patch[i].normalOS));
-				float phongStrength = _TessPhongStrength;
-				o.positionOS.xyz = phongStrength * (pp[0]*bary.x + pp[1]*bary.y + pp[2]*bary.z) + (1.0f-phongStrength) * o.positionOS.xyz;
-				#endif
-				UNITY_TRANSFER_INSTANCE_ID(patch[0], o);
-				return VertexFunction(o);
-			}
-			#else
-			PackedVaryingsMeshToPS Vert ( AttributesMesh v )
-			{
-				return VertexFunction( v );
-			}
-			#endif
-
-			#if defined(WRITE_NORMAL_BUFFER) && defined(WRITE_MSAA_DEPTH)
-			#define SV_TARGET_DECAL SV_Target2
-			#elif defined(WRITE_NORMAL_BUFFER) || defined(WRITE_MSAA_DEPTH)
-			#define SV_TARGET_DECAL SV_Target1
-			#else
-			#define SV_TARGET_DECAL SV_Target0
-			#endif
-
-			void Frag( PackedVaryingsMeshToPS packedInput
-						#if defined(SCENESELECTIONPASS) || defined(SCENEPICKINGPASS)
-						, out float4 outColor : SV_Target0
-						#else
-							#ifdef WRITE_MSAA_DEPTH
-							, out float4 depthColor : SV_Target0
-								#ifdef WRITE_NORMAL_BUFFER
-								, out float4 outNormalBuffer : SV_Target1
-								#endif
-							#else
-								#ifdef WRITE_NORMAL_BUFFER
-								, out float4 outNormalBuffer : SV_Target0
-								#endif
-							#endif
-
-							#if defined(WRITE_DECAL_BUFFER) && !defined(_DISABLE_DECALS)
-							, out float4 outDecalBuffer : SV_TARGET_DECAL
-							#endif
-						#endif
-
-						#if defined(_DEPTHOFFSET_ON) && !defined(SCENEPICKINGPASS)
-						, out float outputDepth : DEPTH_OFFSET_SEMANTIC
-						#endif
-						
-					)
-			{
-				UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX( packedInput );
-				UNITY_SETUP_INSTANCE_ID( packedInput );
-
-				float3 positionRWS = packedInput.positionRWS.xyz;
-
-				FragInputs input;
-				ZERO_INITIALIZE(FragInputs, input);
-
-				input.tangentToWorld = k_identity3x3;
-				input.positionSS = packedInput.positionCS;
-
-				input.positionRWS = positionRWS;
-
-				#if _DOUBLESIDED_ON && SHADER_STAGE_FRAGMENT
-				input.isFrontFace = IS_FRONT_VFACE( packedInput.cullFace, true, false);
-				#elif SHADER_STAGE_FRAGMENT
-				#if defined(ASE_NEED_CULLFACE)
-				input.isFrontFace = IS_FRONT_VFACE( packedInput.cullFace, true, false );
-				#endif
-				#endif
-				half isFrontFace = input.isFrontFace;
-
-				PositionInputs posInput = GetPositionInput(input.positionSS.xy, _ScreenSize.zw, input.positionSS.z, input.positionSS.w, input.positionRWS);
-
-				float3 V = GetWorldSpaceNormalizeViewDir(input.positionRWS);
-
-				AlphaSurfaceDescription surfaceDescription = (AlphaSurfaceDescription)0;
-				float2 uv_TextureSample0 = packedInput.ase_texcoord1.xy * _TextureSample0_ST.xy + _TextureSample0_ST.zw;
-				float4 screenPos = packedInput.ase_texcoord2;
-				float4 ase_screenPosNorm = screenPos / screenPos.w;
-				ase_screenPosNorm.z = ( UNITY_NEAR_CLIP_VALUE >= 0 ) ? ase_screenPosNorm.z : ase_screenPosNorm.z * 0.5 + 0.5;
-				float2 clipScreen17 = ase_screenPosNorm.xy * _ScreenParams.xy;
-				float dither17 = Dither4x4Bayer( fmod(clipScreen17.x, 4), fmod(clipScreen17.y, 4) );
-				float2 texCoord16 = packedInput.ase_texcoord1.xy * float2( 1,1 ) + float2( 0,0 );
-				float smoothstepResult23 = smoothstep( 0.0 , 0.5 , texCoord16.y);
-				dither17 = step( dither17, smoothstepResult23 );
-				
-				surfaceDescription.Alpha = ( tex2D( _TextureSample0, uv_TextureSample0 ).a * dither17 );
-
-				#ifdef _ALPHATEST_ON
-				surfaceDescription.AlphaClipThreshold = _AlphaCutoff;
-				#endif
-
-				#ifdef _ALPHATEST_SHADOW_ON
-				surfaceDescription.AlphaClipThresholdShadow = 0.5;
-				#endif
-
-				#ifdef _DEPTHOFFSET_ON
-				surfaceDescription.DepthOffset = 0;
-				#endif
-
-				SurfaceData surfaceData;
-				BuiltinData builtinData;
-				GetSurfaceAndBuiltinData(surfaceDescription, input, V, posInput, surfaceData, builtinData);
-
-				#ifdef _DEPTHOFFSET_ON
-				outputDepth = posInput.deviceDepth;
-				float bias = max(abs(ddx(posInput.deviceDepth)), abs(ddy(posInput.deviceDepth))) * _SlopeScaleDepthBias;
-				outputDepth += bias;
-				#endif
-
-				#ifdef WRITE_MSAA_DEPTH
-				depthColor = packedInput.vmesh.positionCS.z;
-
-				#ifdef _ALPHATOMASK_ON
-				depthColor.a = SharpenAlpha(builtinData.opacity, builtinData.alphaClipTreshold);
-				#endif
-				#endif
-
-				#if defined(WRITE_NORMAL_BUFFER)
-				EncodeIntoNormalBuffer(ConvertSurfaceDataToNormalData(surfaceData), outNormalBuffer);
-				#endif
-
-				#if defined(WRITE_DECAL_BUFFER) && !defined(_DISABLE_DECALS)
-				DecalPrepassData decalPrepassData;
-				decalPrepassData.geomNormalWS = surfaceData.geomNormalWS;
-				decalPrepassData.decalLayerMask = GetMeshRenderingDecalLayer();
-				EncodeIntoDecalPrepassBuffer(decalPrepassData, outDecalBuffer);
-				#endif
-			}
-			ENDHLSL
-		}
-
-		
-		Pass
-		{
-			
-			Name "SceneSelectionPass"
-			Tags { "LightMode"="SceneSelectionPass" }
-
-			Cull Off
-
-			HLSLPROGRAM
-
-            #define _SPECULAR_OCCLUSION_FROM_AO 1
-            #pragma multi_compile_instancing
-            #pragma instancing_options renderinglayer
-            #define ASE_SRP_VERSION 140012
-
-
-            #pragma shader_feature _SURFACE_TYPE_TRANSPARENT
-			#pragma shader_feature_local _TRANSPARENT_WRITES_MOTION_VEC
-			#pragma shader_feature_local_fragment _ENABLE_FOG_ON_TRANSPARENT
-			#pragma shader_feature_local _DOUBLESIDED_ON
-			#pragma shader_feature_local _ALPHATEST_ON
-
-			#pragma editor_sync_compilation
-
-			#pragma vertex Vert
-			#pragma fragment Frag
-
-			#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
-			#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/GeometricTools.hlsl"
-			#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Tessellation.hlsl"
-			#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Texture.hlsl"
-			#include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/ShaderVariables.hlsl"
-			#include "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/ShaderPass/ShaderPass.cs.hlsl"
-			#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/TextureStack.hlsl"
-            #include "Packages/com.unity.shadergraph/ShaderGraphLibrary/Functions.hlsl"
-
-			#include "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/ShaderPass/FragInputs.hlsl"
-
-			#define SHADERPASS SHADERPASS_DEPTH_ONLY
-		    #define SCENESELECTIONPASS 1
-
-			#ifndef SHADER_UNLIT
-			#if defined(_DOUBLESIDED_ON) && !defined(VARYINGS_NEED_CULLFACE)
-			#define VARYINGS_NEED_CULLFACE
-			#endif
-			#endif
-
-		    #if defined(_MATERIAL_FEATURE_SUBSURFACE_SCATTERING) && !defined(_SURFACE_TYPE_TRANSPARENT)
-			#define OUTPUT_SPLIT_LIGHTING
-		    #endif
-
-		    #if (SHADERPASS == SHADERPASS_PATH_TRACING) && !defined(_DOUBLESIDED_ON) && (defined(_REFRACTION_PLANE) || defined(_REFRACTION_SPHERE))
-			#undef  _REFRACTION_PLANE
-			#undef  _REFRACTION_SPHERE
-			#define _REFRACTION_THIN
-		    #endif
-
-			#if SHADERPASS == SHADERPASS_TRANSPARENT_DEPTH_PREPASS
-			#if !defined(_DISABLE_SSR_TRANSPARENT) && !defined(SHADER_UNLIT)
-				#define WRITE_NORMAL_BUFFER
-			#endif
-			#endif
-
-			#ifndef DEBUG_DISPLAY
-				#if !defined(_SURFACE_TYPE_TRANSPARENT)
-					#if SHADERPASS == SHADERPASS_FORWARD
-					#define SHADERPASS_FORWARD_BYPASS_ALPHA_TEST
-					#elif SHADERPASS == SHADERPASS_GBUFFER
-					#define SHADERPASS_GBUFFER_BYPASS_ALPHA_TEST
-					#endif
-				#endif
-			#endif
-
-			#if defined(SHADER_LIT) && !defined(_SURFACE_TYPE_TRANSPARENT)
-			#define _DEFERRED_CAPABLE_MATERIAL
-			#endif
-
-			#if defined(_TRANSPARENT_WRITES_MOTION_VEC) && defined(_SURFACE_TYPE_TRANSPARENT)
-			#define _WRITE_TRANSPARENT_MOTION_VECTOR
-			#endif
-
-			CBUFFER_START( UnityPerMaterial )
-			float4 _Color0;
-			float4 _TextureSample0_ST;
-			float _Smoothness;
-			float4 _EmissionColor;
-			float _AlphaCutoff;
-			float _RenderQueueType;
-			#ifdef _ADD_PRECOMPUTED_VELOCITY
-			float _AddPrecomputedVelocity;
-			#endif
-			float _StencilRef;
-			float _StencilWriteMask;
-			float _StencilRefDepth;
-			float _StencilWriteMaskDepth;
-			float _StencilRefMV;
-			float _StencilWriteMaskMV;
-			float _StencilWriteMaskGBuffer;
-			float _StencilRefGBuffer;
-			float _ZTestGBuffer;
-			float _RequireSplitLighting;
-			float _ReceivesSSR;
-			float _SurfaceType;
-			float _BlendMode;
-            #ifdef SUPPORT_BLENDMODE_PRESERVE_SPECULAR_LIGHTING
-			float _EnableBlendModePreserveSpecularLighting;
-            #endif
-			float _SrcBlend;
-			float _DstBlend;
-			float _AlphaSrcBlend;
-			float _AlphaDstBlend;
-			float _ZWrite;
-			float _TransparentZWrite;
-			float _CullMode;
-			float _TransparentSortPriority;
-			float _EnableFogOnTransparent;
-			float _CullModeForward;
-			float _TransparentCullMode;
-			float _ZTestDepthEqualForOpaque;
-			float _ZTestTransparent;
-			float _TransparentBackfaceEnable;
-			float _AlphaCutoffEnable;
-			float _UseShadowThreshold;
-			float _DoubleSidedEnable;
-			float _DoubleSidedNormalMode;
-			float4 _DoubleSidedConstants;
-			#ifdef ASE_TESSELLATION
-			float _TessPhongStrength;
-			float _TessValue;
-			float _TessMin;
-			float _TessMax;
-			float _TessEdgeLength;
-			float _TessMaxDisp;
-			#endif
-			CBUFFER_END
-
-			// Property used by ScenePickingPass
-            #ifdef SCENEPICKINGPASS
-			float4 _SelectionID;
-            #endif
-
-			// Properties used by SceneSelectionPass
-            #ifdef SCENESELECTIONPASS
-			int _ObjectId;
-			int _PassValue;
-            #endif
-
-			sampler2D _TextureSample0;
-
-
-            #ifdef DEBUG_DISPLAY
-            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Debug/DebugDisplay.hlsl"
-            #endif
-
-			#include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/PickingSpaceTransforms.hlsl"
-			#include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Material.hlsl"
-			#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/NormalSurfaceGradient.hlsl"
-			#include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Lit/Lit.hlsl"
-			#include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/BuiltinUtilities.hlsl"
-			#include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/MaterialUtilities.hlsl"
-			#include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/ShaderGraphFunctions.hlsl"
-
-			// Setup DECALS_OFF so the shader stripper can remove variants
-            #define HAVE_DECALS ( (defined(DECALS_3RT) || defined(DECALS_4RT)) && !defined(_DISABLE_DECALS) )
-            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Decal/DecalUtilities.hlsl"
-            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Lit/LitDecalData.hlsl"
-
-			
-
-			#if defined(_DOUBLESIDED_ON) && !defined(ASE_NEED_CULLFACE)
-			#define ASE_NEED_CULLFACE 1
-			#endif
-
-			struct AttributesMesh
-			{
-				float3 positionOS : POSITION;
-				float3 normalOS : NORMAL;
-				float4 ase_texcoord : TEXCOORD0;
-				UNITY_VERTEX_INPUT_INSTANCE_ID
-			};
-
-			struct PackedVaryingsMeshToPS
-			{
-				SV_POSITION_QUALIFIERS float4 positionCS : SV_Position;
-				float3 positionRWS : TEXCOORD0;
-				float4 ase_texcoord1 : TEXCOORD1;
-				float4 ase_texcoord2 : TEXCOORD2;
-				UNITY_VERTEX_INPUT_INSTANCE_ID
-				UNITY_VERTEX_OUTPUT_STEREO
-				#if defined(SHADER_STAGE_FRAGMENT) && defined(ASE_NEED_CULLFACE)
-				FRONT_FACE_TYPE cullFace : FRONT_FACE_SEMANTIC;
-				#endif
-			};
-
-			inline float Dither4x4Bayer( int x, int y )
-			{
-				const float dither[ 16 ] = {
-			 1,  9,  3, 11,
-			13,  5, 15,  7,
-			 4, 12,  2, 10,
-			16,  8, 14,  6 };
-				int r = y * 4 + x;
-				return dither[r] / 16; // same # of instructions as pre-dividing due to compiler magic
-			}
-			
-
-			void BuildSurfaceData(FragInputs fragInputs, inout SceneSurfaceDescription surfaceDescription, float3 V, PositionInputs posInput, out SurfaceData surfaceData, out float3 bentNormalWS)
-			{
-				ZERO_INITIALIZE(SurfaceData, surfaceData);
-
-				surfaceData.specularOcclusion = 1.0;
-
-				// surface data
-
-				// refraction
-				#ifdef _HAS_REFRACTION
-				if( _EnableSSRefraction )
-				{
-					surfaceData.transmittanceMask = ( 1.0 - surfaceDescription.Alpha );
-					surfaceDescription.Alpha = 1.0;
-				}
-				else
-				{
-					surfaceData.ior = 1.0;
-					surfaceData.transmittanceColor = float3( 1.0, 1.0, 1.0 );
-					surfaceData.atDistance = 1.0;
-					surfaceData.transmittanceMask = 0.0;
-					surfaceDescription.Alpha = 1.0;
-				}
-				#else
-				surfaceData.ior = 1.0;
-				surfaceData.transmittanceColor = float3( 1.0, 1.0, 1.0 );
-				surfaceData.atDistance = 1.0;
-				surfaceData.transmittanceMask = 0.0;
-				#endif
-
-
-				// material features
-				surfaceData.materialFeatures = MATERIALFEATUREFLAGS_LIT_STANDARD;
-				#ifdef _MATERIAL_FEATURE_SUBSURFACE_SCATTERING
-				surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_LIT_SUBSURFACE_SCATTERING;
-				#endif
-				#ifdef _MATERIAL_FEATURE_TRANSMISSION
-				surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_LIT_TRANSMISSION;
-				#endif
-                #ifdef _MATERIAL_FEATURE_ANISOTROPY
-				surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_LIT_ANISOTROPY;
-				surfaceData.normalWS = float3(0, 1, 0);
-                #endif
-				#ifdef _MATERIAL_FEATURE_CLEAR_COAT
-				surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_LIT_CLEAR_COAT;
-				#endif
-				#ifdef _MATERIAL_FEATURE_IRIDESCENCE
-				surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_LIT_IRIDESCENCE;
-				#endif
-				#ifdef _MATERIAL_FEATURE_SPECULAR_COLOR
-				surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_LIT_SPECULAR_COLOR;
-				#endif
-
-				// others
-				#if defined (_MATERIAL_FEATURE_SPECULAR_COLOR) && defined (_ENERGY_CONSERVING_SPECULAR)
-				surfaceData.baseColor *= ( 1.0 - Max3( surfaceData.specularColor.r, surfaceData.specularColor.g, surfaceData.specularColor.b ) );
-				#endif
-				#ifdef _DOUBLESIDED_ON
-				float3 doubleSidedConstants = _DoubleSidedConstants.xyz;
-				#else
-				float3 doubleSidedConstants = float3( 1.0, 1.0, 1.0 );
-				#endif
-
-				// normals
-				float3 normalTS = float3(0.0f, 0.0f, 1.0f);
-
-				surfaceData.geomNormalWS = fragInputs.tangentToWorld[2];
-				surfaceData.tangentWS = normalize( fragInputs.tangentToWorld[ 0 ].xyz );
-
-				// decals
-			#ifdef DECAL_NORMAL_BLENDING
-				if (_EnableDecals)
-				{
-					#ifndef SURFACE_GRADIENT
-					normalTS = SurfaceGradientFromTangentSpaceNormalAndFromTBN(normalTS, fragInputs.tangentToWorld[0], fragInputs.tangentToWorld[1]);
-					#endif
-
-					DecalSurfaceData decalSurfaceData = GetDecalSurfaceData(posInput, fragInputs, surfaceDescription.Alpha);
-					ApplyDecalToSurfaceData(decalSurfaceData, fragInputs.tangentToWorld[2], surfaceData, normalTS);
-				}
-
-				GetNormalWS_SG(fragInputs, normalTS, surfaceData.normalWS, doubleSidedConstants);
-			#else
-				GetNormalWS(fragInputs, normalTS, surfaceData.normalWS, doubleSidedConstants);
-
-				#if HAVE_DECALS
-				if (_EnableDecals)
-				{
-					// Both uses and modifies 'surfaceData.normalWS'.
-					DecalSurfaceData decalSurfaceData = GetDecalSurfaceData(posInput, fragInputs, surfaceDescription.Alpha);
-					ApplyDecalToSurfaceData(decalSurfaceData, fragInputs.tangentToWorld[2], surfaceData);
-				}
-				#endif
-			#endif
-
-				bentNormalWS = surfaceData.normalWS;
-				surfaceData.tangentWS = Orthonormalize( surfaceData.tangentWS, surfaceData.normalWS );
-
-                #if defined(_SPECULAR_OCCLUSION_CUSTOM)
-                #elif defined(_SPECULAR_OCCLUSION_FROM_AO_BENT_NORMAL)
-				surfaceData.specularOcclusion = GetSpecularOcclusionFromBentAO(V, bentNormalWS, surfaceData.normalWS, surfaceData.ambientOcclusion, PerceptualSmoothnessToPerceptualRoughness(surfaceData.perceptualSmoothness));
-                #elif defined(_AMBIENT_OCCLUSION) && defined(_SPECULAR_OCCLUSION_FROM_AO)
-				surfaceData.specularOcclusion = GetSpecularOcclusionFromAmbientOcclusion(ClampNdotV(dot(surfaceData.normalWS, V)), surfaceData.ambientOcclusion, PerceptualSmoothnessToRoughness(surfaceData.perceptualSmoothness));
-                #endif
-
-				// debug
-				#if defined(DEBUG_DISPLAY)
-				if (_DebugMipMapMode != DEBUGMIPMAPMODE_NONE)
-				{
-					surfaceData.metallic = 0;
-				}
-				ApplyDebugToSurfaceData(fragInputs.tangentToWorld, surfaceData);
-				#endif
-			}
-
-			void GetSurfaceAndBuiltinData(SceneSurfaceDescription surfaceDescription, FragInputs fragInputs, float3 V, inout PositionInputs posInput, out SurfaceData surfaceData, out BuiltinData builtinData)
-			{
-				#ifdef LOD_FADE_CROSSFADE
-				LODDitheringTransition(ComputeFadeMaskSeed(V, posInput.positionSS), unity_LODFade.x);
-				#endif
-
-				#ifdef _DOUBLESIDED_ON
-				float3 doubleSidedConstants = _DoubleSidedConstants.xyz;
-				#else
-				float3 doubleSidedConstants = float3( 1.0, 1.0, 1.0 );
-				#endif
-
-				ApplyDoubleSidedFlipOrMirror( fragInputs, doubleSidedConstants );
-
-				#ifdef _ALPHATEST_ON
-				DoAlphaTest( surfaceDescription.Alpha, surfaceDescription.AlphaClipThreshold );
-				#endif
-
-				#ifdef _DEPTHOFFSET_ON
-				builtinData.depthOffset = surfaceDescription.DepthOffset;
-				ApplyDepthOffsetPositionInput( V, surfaceDescription.DepthOffset, GetViewForwardDir(), GetWorldToHClipMatrix(), posInput );
-				#endif
-
-				float3 bentNormalWS;
-				BuildSurfaceData( fragInputs, surfaceDescription, V, posInput, surfaceData, bentNormalWS );
-
-				InitBuiltinData( posInput, surfaceDescription.Alpha, bentNormalWS, -fragInputs.tangentToWorld[ 2 ], fragInputs.texCoord1, fragInputs.texCoord2, builtinData );
-
-				PostInitBuiltinData(V, posInput, surfaceData, builtinData);
-			}
-
-			PackedVaryingsMeshToPS VertexFunction(AttributesMesh inputMesh )
-			{
-				PackedVaryingsMeshToPS outputPackedVaryingsMeshToPS;
-				UNITY_SETUP_INSTANCE_ID(inputMesh);
-				UNITY_TRANSFER_INSTANCE_ID(inputMesh, outputPackedVaryingsMeshToPS);
-				UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO( outputPackedVaryingsMeshToPS );
-
-				float4 ase_clipPos = TransformWorldToHClip( TransformObjectToWorld(inputMesh.positionOS));
-				float4 screenPos = ComputeScreenPos( ase_clipPos , _ProjectionParams.x );
-				outputPackedVaryingsMeshToPS.ase_texcoord2 = screenPos;
-				
-				outputPackedVaryingsMeshToPS.ase_texcoord1.xy = inputMesh.ase_texcoord.xy;
-				
-				//setting value to unused interpolator channels and avoid initialization warnings
-				outputPackedVaryingsMeshToPS.ase_texcoord1.zw = 0;
-
-				#ifdef ASE_ABSOLUTE_VERTEX_POS
-				float3 defaultVertexValue = inputMesh.positionOS.xyz;
-				#else
-				float3 defaultVertexValue = float3( 0, 0, 0 );
-				#endif
-				float3 vertexValue =  defaultVertexValue ;
-
-				#ifdef ASE_ABSOLUTE_VERTEX_POS
-				inputMesh.positionOS.xyz = vertexValue;
-				#else
-				inputMesh.positionOS.xyz += vertexValue;
-				#endif
-
-				inputMesh.normalOS =  inputMesh.normalOS ;
-
-				float3 positionRWS = TransformObjectToWorld(inputMesh.positionOS);
-				outputPackedVaryingsMeshToPS.positionCS = TransformWorldToHClip(positionRWS);
-				outputPackedVaryingsMeshToPS.positionRWS.xyz = positionRWS;
-				return outputPackedVaryingsMeshToPS;
-			}
-
-			#if defined(ASE_TESSELLATION)
-			struct VertexControl
-			{
-				float3 positionOS : INTERNALTESSPOS;
-				float3 normalOS : NORMAL;
-				float4 ase_texcoord : TEXCOORD0;
-
-				UNITY_VERTEX_INPUT_INSTANCE_ID
-			};
-
-			struct TessellationFactors
-			{
-				float edge[3] : SV_TessFactor;
-				float inside : SV_InsideTessFactor;
-			};
-
-			VertexControl Vert ( AttributesMesh v )
-			{
-				VertexControl o;
-				UNITY_SETUP_INSTANCE_ID(v);
-				UNITY_TRANSFER_INSTANCE_ID(v, o);
-				o.positionOS = v.positionOS;
-				o.normalOS = v.normalOS;
-				o.ase_texcoord = v.ase_texcoord;
-				return o;
-			}
-
-			TessellationFactors TessellationFunction (InputPatch<VertexControl,3> v)
-			{
-				TessellationFactors o;
-				float4 tf = 1;
-				float tessValue = _TessValue; float tessMin = _TessMin; float tessMax = _TessMax;
-				float edgeLength = _TessEdgeLength; float tessMaxDisp = _TessMaxDisp;
-				#if (SHADEROPTIONS_CAMERA_RELATIVE_RENDERING != 0)
-				float3 cameraPos = 0;
-				#else
-				float3 cameraPos = _WorldSpaceCameraPos;
-				#endif
-				#if defined(ASE_FIXED_TESSELLATION)
-				tf = FixedTess( tessValue );
-				#elif defined(ASE_DISTANCE_TESSELLATION)
-				tf = DistanceBasedTess(float4(v[0].positionOS,1), float4(v[1].positionOS,1), float4(v[2].positionOS,1), tessValue, tessMin, tessMax, GetObjectToWorldMatrix(), cameraPos );
-				#elif defined(ASE_LENGTH_TESSELLATION)
-				tf = EdgeLengthBasedTess(float4(v[0].positionOS,1), float4(v[1].positionOS,1), float4(v[2].positionOS,1), edgeLength, GetObjectToWorldMatrix(), cameraPos, _ScreenParams );
-				#elif defined(ASE_LENGTH_CULL_TESSELLATION)
-				tf = EdgeLengthBasedTessCull(float4(v[0].positionOS,1), float4(v[1].positionOS,1), float4(v[2].positionOS,1), edgeLength, tessMaxDisp, GetObjectToWorldMatrix(), cameraPos, _ScreenParams, _FrustumPlanes );
-				#endif
-				o.edge[0] = tf.x; o.edge[1] = tf.y; o.edge[2] = tf.z; o.inside = tf.w;
-				return o;
-			}
-
-			[domain("tri")]
-			[partitioning("fractional_odd")]
-			[outputtopology("triangle_cw")]
-			[patchconstantfunc("TessellationFunction")]
-			[outputcontrolpoints(3)]
-			VertexControl HullFunction(InputPatch<VertexControl, 3> patch, uint id : SV_OutputControlPointID)
-			{
-			   return patch[id];
-			}
-
-			[domain("tri")]
-			PackedVaryingsMeshToPS DomainFunction(TessellationFactors factors, OutputPatch<VertexControl, 3> patch, float3 bary : SV_DomainLocation)
-			{
-				AttributesMesh o = (AttributesMesh) 0;
-				o.positionOS = patch[0].positionOS * bary.x + patch[1].positionOS * bary.y + patch[2].positionOS * bary.z;
-				o.normalOS = patch[0].normalOS * bary.x + patch[1].normalOS * bary.y + patch[2].normalOS * bary.z;
-				o.ase_texcoord = patch[0].ase_texcoord * bary.x + patch[1].ase_texcoord * bary.y + patch[2].ase_texcoord * bary.z;
-				#if defined(ASE_PHONG_TESSELLATION)
-				float3 pp[3];
-				for (int i = 0; i < 3; ++i)
-					pp[i] = o.positionOS.xyz - patch[i].normalOS * (dot(o.positionOS.xyz, patch[i].normalOS) - dot(patch[i].positionOS.xyz, patch[i].normalOS));
-				float phongStrength = _TessPhongStrength;
-				o.positionOS.xyz = phongStrength * (pp[0]*bary.x + pp[1]*bary.y + pp[2]*bary.z) + (1.0f-phongStrength) * o.positionOS.xyz;
-				#endif
-				UNITY_TRANSFER_INSTANCE_ID(patch[0], o);
-				return VertexFunction(o);
-			}
-			#else
-			PackedVaryingsMeshToPS Vert ( AttributesMesh v )
-			{
-				return VertexFunction( v );
-			}
-			#endif
-
-			#if defined(WRITE_NORMAL_BUFFER) && defined(WRITE_MSAA_DEPTH)
-			#define SV_TARGET_DECAL SV_Target2
-			#elif defined(WRITE_NORMAL_BUFFER) || defined(WRITE_MSAA_DEPTH)
-			#define SV_TARGET_DECAL SV_Target1
-			#else
-			#define SV_TARGET_DECAL SV_Target0
-			#endif
-
-			void Frag( PackedVaryingsMeshToPS packedInput
-						, out float4 outColor : SV_Target0
-						#if defined(_DEPTHOFFSET_ON) && !defined(SCENEPICKINGPASS)
-						, out float outputDepth : DEPTH_OFFSET_SEMANTIC
-						#endif
-						
-					)
-			{
-				UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX( packedInput );
-				UNITY_SETUP_INSTANCE_ID( packedInput );
-
-				float3 positionRWS = packedInput.positionRWS.xyz;
-
-				FragInputs input;
-				ZERO_INITIALIZE(FragInputs, input);
-
-				input.tangentToWorld = k_identity3x3;
-				input.positionSS = packedInput.positionCS;
-
-				input.positionRWS = positionRWS;
-
-				#if _DOUBLESIDED_ON && SHADER_STAGE_FRAGMENT
-				input.isFrontFace = IS_FRONT_VFACE( packedInput.cullFace, true, false);
-				#elif SHADER_STAGE_FRAGMENT
-				#if defined(ASE_NEED_CULLFACE)
-				input.isFrontFace = IS_FRONT_VFACE( packedInput.cullFace, true, false );
-				#endif
-				#endif
-				half isFrontFace = input.isFrontFace;
-
-				PositionInputs posInput = GetPositionInput(input.positionSS.xy, _ScreenSize.zw, input.positionSS.z, input.positionSS.w, input.positionRWS);
-
-				float3 V = GetWorldSpaceNormalizeViewDir(input.positionRWS);
-
-				SceneSurfaceDescription surfaceDescription = (SceneSurfaceDescription)0;
-				float2 uv_TextureSample0 = packedInput.ase_texcoord1.xy * _TextureSample0_ST.xy + _TextureSample0_ST.zw;
-				float4 screenPos = packedInput.ase_texcoord2;
-				float4 ase_screenPosNorm = screenPos / screenPos.w;
-				ase_screenPosNorm.z = ( UNITY_NEAR_CLIP_VALUE >= 0 ) ? ase_screenPosNorm.z : ase_screenPosNorm.z * 0.5 + 0.5;
-				float2 clipScreen17 = ase_screenPosNorm.xy * _ScreenParams.xy;
-				float dither17 = Dither4x4Bayer( fmod(clipScreen17.x, 4), fmod(clipScreen17.y, 4) );
-				float2 texCoord16 = packedInput.ase_texcoord1.xy * float2( 1,1 ) + float2( 0,0 );
-				float smoothstepResult23 = smoothstep( 0.0 , 0.5 , texCoord16.y);
-				dither17 = step( dither17, smoothstepResult23 );
-				
-				surfaceDescription.Alpha = ( tex2D( _TextureSample0, uv_TextureSample0 ).a * dither17 );
-
-				#ifdef _ALPHATEST_ON
-				surfaceDescription.AlphaClipThreshold = _AlphaCutoff;
-				#endif
-
-				#ifdef _DEPTHOFFSET_ON
-				surfaceDescription.DepthOffset = 0;
-				#endif
-
-				SurfaceData surfaceData;
-				BuiltinData builtinData;
-				GetSurfaceAndBuiltinData(surfaceDescription, input, V, posInput, surfaceData, builtinData);
-
-				#ifdef _DEPTHOFFSET_ON
-				outputDepth = posInput.deviceDepth;
-				#endif
-
-				outColor = float4( _ObjectId, _PassValue, 1.0, 1.0 );
-			}
-			ENDHLSL
-		}
-
-		
-		Pass
-		{
-			
-			Name "DepthOnly"
-			Tags { "LightMode"="DepthOnly" }
-
-			Cull [_CullMode]
-
-			ZWrite On
-
-			Stencil
-			{
-				Ref [_StencilRefDepth]
-				WriteMask [_StencilWriteMaskDepth]
-				Comp Always
-				Pass Replace
-			}
-
-
-			HLSLPROGRAM
-
-            #define _SPECULAR_OCCLUSION_FROM_AO 1
-            #pragma multi_compile_instancing
-            #pragma instancing_options renderinglayer
-            #define ASE_SRP_VERSION 140012
-
-
-            #pragma shader_feature _SURFACE_TYPE_TRANSPARENT
-			#pragma shader_feature_local _TRANSPARENT_WRITES_MOTION_VEC
-			#pragma shader_feature_local_fragment _ENABLE_FOG_ON_TRANSPARENT
-			#pragma shader_feature_local _DOUBLESIDED_ON
-			#pragma shader_feature_local _ALPHATEST_ON
-
-			#pragma multi_compile _ WRITE_NORMAL_BUFFER
-			#pragma multi_compile_fragment _ WRITE_MSAA_DEPTH
-			#pragma multi_compile _ WRITE_DECAL_BUFFER
-
-			#pragma vertex Vert
-			#pragma fragment Frag
-
-			#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
-			#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/GeometricTools.hlsl"
-			#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Tessellation.hlsl"
-			#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Texture.hlsl"
-			#include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/ShaderVariables.hlsl"
-			#include "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/ShaderPass/ShaderPass.cs.hlsl"
-			#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/TextureStack.hlsl"
-            #include "Packages/com.unity.shadergraph/ShaderGraphLibrary/Functions.hlsl"
-
-			#include "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/ShaderPass/FragInputs.hlsl"
-
-			#define SHADERPASS SHADERPASS_DEPTH_ONLY
-
-			#ifndef SHADER_UNLIT
-			#if defined(_DOUBLESIDED_ON) && !defined(VARYINGS_NEED_CULLFACE)
-			#define VARYINGS_NEED_CULLFACE
-			#endif
-			#endif
-
-		    #if defined(_MATERIAL_FEATURE_SUBSURFACE_SCATTERING) && !defined(_SURFACE_TYPE_TRANSPARENT)
-			#define OUTPUT_SPLIT_LIGHTING
-		    #endif
-
-		    #if (SHADERPASS == SHADERPASS_PATH_TRACING) && !defined(_DOUBLESIDED_ON) && (defined(_REFRACTION_PLANE) || defined(_REFRACTION_SPHERE))
-			#undef  _REFRACTION_PLANE
-			#undef  _REFRACTION_SPHERE
-			#define _REFRACTION_THIN
-		    #endif
-
-			#if SHADERPASS == SHADERPASS_TRANSPARENT_DEPTH_PREPASS
-			#if !defined(_DISABLE_SSR_TRANSPARENT) && !defined(SHADER_UNLIT)
-				#define WRITE_NORMAL_BUFFER
-			#endif
-			#endif
-
-			#ifndef DEBUG_DISPLAY
-				#if !defined(_SURFACE_TYPE_TRANSPARENT)
-					#if SHADERPASS == SHADERPASS_FORWARD
-					#define SHADERPASS_FORWARD_BYPASS_ALPHA_TEST
-					#elif SHADERPASS == SHADERPASS_GBUFFER
-					#define SHADERPASS_GBUFFER_BYPASS_ALPHA_TEST
-					#endif
-				#endif
-			#endif
-
-			#if defined(SHADER_LIT) && !defined(_SURFACE_TYPE_TRANSPARENT)
-			#define _DEFERRED_CAPABLE_MATERIAL
-			#endif
-
-			#if defined(_TRANSPARENT_WRITES_MOTION_VEC) && defined(_SURFACE_TYPE_TRANSPARENT)
-			#define _WRITE_TRANSPARENT_MOTION_VECTOR
-			#endif
-
-			CBUFFER_START( UnityPerMaterial )
-			float4 _Color0;
-			float4 _TextureSample0_ST;
-			float _Smoothness;
-			float4 _EmissionColor;
-			float _AlphaCutoff;
-			float _RenderQueueType;
-			#ifdef _ADD_PRECOMPUTED_VELOCITY
-			float _AddPrecomputedVelocity;
-			#endif
-			float _StencilRef;
-			float _StencilWriteMask;
-			float _StencilRefDepth;
-			float _StencilWriteMaskDepth;
-			float _StencilRefMV;
-			float _StencilWriteMaskMV;
-			float _StencilWriteMaskGBuffer;
-			float _StencilRefGBuffer;
-			float _ZTestGBuffer;
-			float _RequireSplitLighting;
-			float _ReceivesSSR;
-			float _SurfaceType;
-			float _BlendMode;
-            #ifdef SUPPORT_BLENDMODE_PRESERVE_SPECULAR_LIGHTING
-			float _EnableBlendModePreserveSpecularLighting;
-            #endif
-			float _SrcBlend;
-			float _DstBlend;
-			float _AlphaSrcBlend;
-			float _AlphaDstBlend;
-			float _ZWrite;
-			float _TransparentZWrite;
-			float _CullMode;
-			float _TransparentSortPriority;
-			float _EnableFogOnTransparent;
-			float _CullModeForward;
-			float _TransparentCullMode;
-			float _ZTestDepthEqualForOpaque;
-			float _ZTestTransparent;
-			float _TransparentBackfaceEnable;
-			float _AlphaCutoffEnable;
-			float _UseShadowThreshold;
-			float _DoubleSidedEnable;
-			float _DoubleSidedNormalMode;
-			float4 _DoubleSidedConstants;
-			#ifdef ASE_TESSELLATION
-			float _TessPhongStrength;
-			float _TessValue;
-			float _TessMin;
-			float _TessMax;
-			float _TessEdgeLength;
-			float _TessMaxDisp;
-			#endif
-			CBUFFER_END
-
-			// Property used by ScenePickingPass
-            #ifdef SCENEPICKINGPASS
-			float4 _SelectionID;
-            #endif
-
-			// Properties used by SceneSelectionPass
-            #ifdef SCENESELECTIONPASS
-			int _ObjectId;
-			int _PassValue;
-            #endif
-
-			sampler2D _TextureSample0;
-
-
-            #ifdef DEBUG_DISPLAY
-            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Debug/DebugDisplay.hlsl"
-            #endif
-
-			#include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Material.hlsl"
-			#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/NormalSurfaceGradient.hlsl"
-			#include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Lit/Lit.hlsl"
-			#include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/BuiltinUtilities.hlsl"
-			#include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/MaterialUtilities.hlsl"
-			#include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/ShaderGraphFunctions.hlsl"
-
-			// Setup DECALS_OFF so the shader stripper can remove variants
-            #define HAVE_DECALS ( (defined(DECALS_3RT) || defined(DECALS_4RT)) && !defined(_DISABLE_DECALS) )
-			#include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Decal/DecalUtilities.hlsl"
-			#include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Lit/LitDecalData.hlsl"
-
-			
-
-			#if defined(_DOUBLESIDED_ON) && !defined(ASE_NEED_CULLFACE)
-			#define ASE_NEED_CULLFACE 1
-			#endif
 
 			struct AttributesMesh
 			{
@@ -3023,7 +2240,6 @@ Shader "Grass Test"
 				float3 normalWS : TEXCOORD1;
 				float4 tangentWS : TEXCOORD2;
 				float4 ase_texcoord3 : TEXCOORD3;
-				float4 ase_texcoord4 : TEXCOORD4;
 				UNITY_VERTEX_INPUT_INSTANCE_ID
 				UNITY_VERTEX_OUTPUT_STEREO
 				#if defined(SHADER_STAGE_FRAGMENT) && defined(ASE_NEED_CULLFACE)
@@ -3031,192 +2247,259 @@ Shader "Grass Test"
 				#endif
 			};
 
-			inline float Dither4x4Bayer( int x, int y )
+			float4 ASEScreenPositionNormalizedToPixel( float4 screenPosNorm, float4 screenParams )
+			{
+				float4 screenPosPixel = screenPosNorm * float4( screenParams.xy, 1, 1 );
+				#if UNITY_UV_STARTS_AT_TOP
+					screenPosPixel.xy = float2( screenPosPixel.x, ( _ProjectionParams.x < 0 ) ? screenParams.y - screenPosPixel.y : screenPosPixel.y );
+				#else
+					screenPosPixel.xy = float2( screenPosPixel.x, ( _ProjectionParams.x > 0 ) ? screenParams.y - screenPosPixel.y : screenPosPixel.y );
+				#endif
+				return screenPosPixel;
+			}
+			
+			inline float Dither4x4Bayer( uint x, uint y )
 			{
 				const float dither[ 16 ] = {
-			 1,  9,  3, 11,
-			13,  5, 15,  7,
-			 4, 12,  2, 10,
-			16,  8, 14,  6 };
-				int r = y * 4 + x;
-				return dither[r] / 16; // same # of instructions as pre-dividing due to compiler magic
+				     1,  9,  3, 11,
+				    13,  5, 15,  7,
+				     4, 12,  2, 10,
+				    16,  8, 14,  6 };
+				uint r = y * 4 + x;
+				return dither[ min( r, 15 ) ] / 16; // same # of instructions as pre-dividing due to compiler magic
 			}
 			
 
-			void BuildSurfaceData(FragInputs fragInputs, inout SmoothSurfaceDescription surfaceDescription, float3 V, PositionInputs posInput, out SurfaceData surfaceData, out float3 bentNormalWS)
+			void BuildSurfaceData(FragInputs fragInputs, inout AlphaSurfaceDescription surfaceDescription, float3 V, PositionInputs posInput, out SurfaceData surfaceData, out float3 bentNormalWS)
 			{
 				ZERO_INITIALIZE(SurfaceData, surfaceData);
 
 				surfaceData.specularOcclusion = 1.0;
+				surfaceData.thickness = 0.0;
 
-				// surface data
-				surfaceData.perceptualSmoothness =		surfaceDescription.Smoothness;
-
-				// refraction
-				#ifdef _HAS_REFRACTION
-				if( _EnableSSRefraction )
-				{
-					surfaceData.transmittanceMask = ( 1.0 - surfaceDescription.Alpha );
-					surfaceDescription.Alpha = 1.0;
-				}
-				else
-				{
-					surfaceData.ior = 1.0;
-					surfaceData.transmittanceColor = float3( 1.0, 1.0, 1.0 );
-					surfaceData.atDistance = 1.0;
-					surfaceData.transmittanceMask = 0.0;
-					surfaceDescription.Alpha = 1.0;
-				}
-				#else
-				surfaceData.ior = 1.0;
-				surfaceData.transmittanceColor = float3( 1.0, 1.0, 1.0 );
-				surfaceData.atDistance = 1.0;
-				surfaceData.transmittanceMask = 0.0;
-				#endif
-
-
-				// material features
-				surfaceData.materialFeatures = MATERIALFEATUREFLAGS_LIT_STANDARD;
-				#ifdef _MATERIAL_FEATURE_SUBSURFACE_SCATTERING
-				surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_LIT_SUBSURFACE_SCATTERING;
-				#endif
-				#ifdef _MATERIAL_FEATURE_TRANSMISSION
-				surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_LIT_TRANSMISSION;
-				#endif
-                #ifdef _MATERIAL_FEATURE_ANISOTROPY
-				surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_LIT_ANISOTROPY;
-				surfaceData.normalWS = float3(0, 1, 0);
+				// refraction ShadowCaster
+                #if defined(_REFRACTION_PLANE) || defined(_REFRACTION_SPHERE) || defined(_REFRACTION_THIN)
+                    if (_EnableSSRefraction)
+                    {
+                        surfaceData.transmittanceMask = (1.0 - surfaceDescription.Alpha);
+                        surfaceDescription.Alpha = 1.0;
+                    }
+                    else
+                    {
+                        surfaceData.ior = 1.0;
+                        surfaceData.transmittanceColor = float3(1.0, 1.0, 1.0);
+                        surfaceData.atDistance = 1.0;
+                        surfaceData.transmittanceMask = 0.0;
+                        surfaceDescription.Alpha = 1.0;
+                    }
+                    #else
+                    surfaceData.ior = 1.0;
+                    surfaceData.transmittanceColor = float3(1.0, 1.0, 1.0);
+                    surfaceData.atDistance = 1.0;
+                    surfaceData.transmittanceMask = 0.0;
                 #endif
-				#ifdef _MATERIAL_FEATURE_CLEAR_COAT
-				surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_LIT_CLEAR_COAT;
+
+				surfaceData.materialFeatures = MATERIALFEATUREFLAGS_LIT_STANDARD;
+
+				#ifdef _MATERIAL_FEATURE_SUBSURFACE_SCATTERING
+				if (surfaceData.subsurfaceMask > 0)
+                    surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_LIT_SUBSURFACE_SCATTERING;
 				#endif
+
+				#ifdef _MATERIAL_FEATURE_TRANSMISSION
+                    surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_LIT_TRANSMISSION;
+				#endif
+
+				#ifdef _MATERIAL_FEATURE_COLORED_TRANSMISSION
+                    surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_LIT_TRANSMISSION;
+                    surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_LIT_COLORED_TRANSMISSION;
+				#endif
+
+                #ifdef _MATERIAL_FEATURE_ANISOTROPY
+                    surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_LIT_ANISOTROPY;
+                    surfaceData.normalWS = float3(0, 1, 0);
+                #endif
+
 				#ifdef _MATERIAL_FEATURE_IRIDESCENCE
-				surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_LIT_IRIDESCENCE;
+                    surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_LIT_IRIDESCENCE;
 				#endif
+
 				#ifdef _MATERIAL_FEATURE_SPECULAR_COLOR
-				surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_LIT_SPECULAR_COLOR;
+                    surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_LIT_SPECULAR_COLOR;
 				#endif
 
-				// others
+				#ifdef _MATERIAL_FEATURE_CLEAR_COAT
+                    surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_LIT_CLEAR_COAT;
+				#endif
+
 				#if defined (_MATERIAL_FEATURE_SPECULAR_COLOR) && defined (_ENERGY_CONSERVING_SPECULAR)
-				surfaceData.baseColor *= ( 1.0 - Max3( surfaceData.specularColor.r, surfaceData.specularColor.g, surfaceData.specularColor.b ) );
+                    surfaceData.baseColor *= ( 1.0 - Max3( surfaceData.specularColor.r, surfaceData.specularColor.g, surfaceData.specularColor.b ) );
 				#endif
+
 				#ifdef _DOUBLESIDED_ON
-				float3 doubleSidedConstants = _DoubleSidedConstants.xyz;
+					float3 doubleSidedConstants = _DoubleSidedConstants.xyz;
 				#else
-				float3 doubleSidedConstants = float3( 1.0, 1.0, 1.0 );
+					float3 doubleSidedConstants = float3( 1.0, 1.0, 1.0 );
 				#endif
 
-				// normals
-				float3 normalTS = float3(0.0f, 0.0f, 1.0f);
-				normalTS = surfaceDescription.Normal;
+				float3 normal = float3(0.0f, 0.0f, 1.0f);
 
-				surfaceData.geomNormalWS = fragInputs.tangentToWorld[2];
-				surfaceData.tangentWS = normalize( fragInputs.tangentToWorld[ 0 ].xyz );
-
-				// decals
-			#ifdef DECAL_NORMAL_BLENDING
-				if (_EnableDecals)
-				{
+				#ifdef DECAL_NORMAL_BLENDING
 					#ifndef SURFACE_GRADIENT
-					normalTS = SurfaceGradientFromTangentSpaceNormalAndFromTBN(normalTS, fragInputs.tangentToWorld[0], fragInputs.tangentToWorld[1]);
+					#if ( ASE_FRAGMENT_NORMAL == 1 )
+						normal = SurfaceGradientFromPerturbedNormal(TransformWorldToObjectNormal(fragInputs.tangentToWorld[2]), normal);
+					#elif ( ASE_FRAGMENT_NORMAL == 2 )
+						normal = SurfaceGradientFromPerturbedNormal(fragInputs.tangentToWorld[2], normal);
+					#else
+						normal = SurfaceGradientFromTangentSpaceNormalAndFromTBN(normal, fragInputs.tangentToWorld[0], fragInputs.tangentToWorld[1]);
+					#endif
 					#endif
 
-					DecalSurfaceData decalSurfaceData = GetDecalSurfaceData(posInput, fragInputs, surfaceDescription.Alpha);
-					ApplyDecalToSurfaceData(decalSurfaceData, fragInputs.tangentToWorld[2], surfaceData, normalTS);
-				}
+					#if HAVE_DECALS
+					if (_EnableDecals)
+					{
+						DecalSurfaceData decalSurfaceData = GetDecalSurfaceData(posInput, fragInputs, surfaceDescription.Alpha);
+						ApplyDecalToSurfaceNormal(decalSurfaceData, fragInputs.tangentToWorld[2], normal);
+						ApplyDecalToSurfaceDataNoNormal(decalSurfaceData, surfaceData);
+					}
+					#endif
 
-				GetNormalWS_SG(fragInputs, normalTS, surfaceData.normalWS, doubleSidedConstants);
-			#else
-				GetNormalWS(fragInputs, normalTS, surfaceData.normalWS, doubleSidedConstants);
+					GetNormalWS_SG(fragInputs, normal, surfaceData.normalWS, doubleSidedConstants);
+				#else
+					#if ( ASE_FRAGMENT_NORMAL == 1 )
+						GetNormalWS_SrcOS(fragInputs, normal, surfaceData.normalWS, doubleSidedConstants);
+					#elif ( ASE_FRAGMENT_NORMAL == 2 )
+						GetNormalWS_SrcWS(fragInputs, normal, surfaceData.normalWS, doubleSidedConstants);
+					#else
+						GetNormalWS(fragInputs, normal, surfaceData.normalWS, doubleSidedConstants);
+					#endif
 
-				#if HAVE_DECALS
-				if (_EnableDecals)
-				{
-					// Both uses and modifies 'surfaceData.normalWS'.
-					DecalSurfaceData decalSurfaceData = GetDecalSurfaceData(posInput, fragInputs, surfaceDescription.Alpha);
-					ApplyDecalToSurfaceData(decalSurfaceData, fragInputs.tangentToWorld[2], surfaceData);
-				}
+					#if HAVE_DECALS
+					if (_EnableDecals)
+					{
+						DecalSurfaceData decalSurfaceData = GetDecalSurfaceData(posInput, fragInputs, surfaceDescription.Alpha);
+						ApplyDecalToSurfaceNormal(decalSurfaceData, surfaceData.normalWS.xyz);
+						ApplyDecalToSurfaceDataNoNormal(decalSurfaceData, surfaceData);
+					}
+					#endif
 				#endif
-			#endif
+
+				surfaceData.geomNormalWS = fragInputs.tangentToWorld[2];
+                surfaceData.tangentWS = normalize(fragInputs.tangentToWorld[0].xyz );
+                surfaceData.tangentWS = Orthonormalize(surfaceData.tangentWS, surfaceData.normalWS);
 
 				bentNormalWS = surfaceData.normalWS;
-				surfaceData.tangentWS = Orthonormalize( surfaceData.tangentWS, surfaceData.normalWS );
+
+				#if defined(DEBUG_DISPLAY)
+					#if !defined(SHADER_STAGE_RAY_TRACING)
+					if (_DebugMipMapMode != DEBUGMIPMAPMODE_NONE)
+					{
+						#ifdef FRAG_INPUTS_USE_TEXCOORD0
+							surfaceData.baseColor = GET_TEXTURE_STREAMING_DEBUG(posInput.positionSS, fragInputs.texCoord0);
+						#else
+							surfaceData.baseColor = GET_TEXTURE_STREAMING_DEBUG_NO_UV(posInput.positionSS);
+						#endif
+						surfaceData.metallic = 0;
+					}
+					#endif
+					ApplyDebugToSurfaceData(fragInputs.tangentToWorld, surfaceData);
+				#endif
 
                 #if defined(_SPECULAR_OCCLUSION_CUSTOM)
                 #elif defined(_SPECULAR_OCCLUSION_FROM_AO_BENT_NORMAL)
-				surfaceData.specularOcclusion = GetSpecularOcclusionFromBentAO(V, bentNormalWS, surfaceData.normalWS, surfaceData.ambientOcclusion, PerceptualSmoothnessToPerceptualRoughness(surfaceData.perceptualSmoothness));
+                    surfaceData.specularOcclusion = GetSpecularOcclusionFromBentAO(V, bentNormalWS, surfaceData.normalWS, surfaceData.ambientOcclusion, PerceptualSmoothnessToPerceptualRoughness(surfaceData.perceptualSmoothness));
                 #elif defined(_AMBIENT_OCCLUSION) && defined(_SPECULAR_OCCLUSION_FROM_AO)
-				surfaceData.specularOcclusion = GetSpecularOcclusionFromAmbientOcclusion(ClampNdotV(dot(surfaceData.normalWS, V)), surfaceData.ambientOcclusion, PerceptualSmoothnessToRoughness(surfaceData.perceptualSmoothness));
+                    surfaceData.specularOcclusion = GetSpecularOcclusionFromAmbientOcclusion(ClampNdotV(dot(surfaceData.normalWS, V)), surfaceData.ambientOcclusion, PerceptualSmoothnessToRoughness(surfaceData.perceptualSmoothness));
                 #endif
 
-				// debug
-				#if defined(DEBUG_DISPLAY)
-				if (_DebugMipMapMode != DEBUGMIPMAPMODE_NONE)
-				{
-					surfaceData.metallic = 0;
-				}
-				ApplyDebugToSurfaceData(fragInputs.tangentToWorld, surfaceData);
-				#endif
+                #ifdef _ENABLE_GEOMETRIC_SPECULAR_AA
+                    surfaceData.perceptualSmoothness = GeometricNormalFiltering(surfaceData.perceptualSmoothness, fragInputs.tangentToWorld[2], surfaceDescription.SpecularAAScreenSpaceVariance, surfaceDescription.SpecularAAThreshold);
+                #endif
 			}
 
-			void GetSurfaceAndBuiltinData(SmoothSurfaceDescription surfaceDescription, FragInputs fragInputs, float3 V, inout PositionInputs posInput, out SurfaceData surfaceData, out BuiltinData builtinData)
+			// Get Surface And BuiltinData
+			void GetSurfaceAndBuiltinData(AlphaSurfaceDescription surfaceDescription, FragInputs fragInputs, float3 V, inout PositionInputs posInput, out SurfaceData surfaceData, out BuiltinData builtinData)
 			{
 				#ifdef LOD_FADE_CROSSFADE
-				LODDitheringTransition(ComputeFadeMaskSeed(V, posInput.positionSS), unity_LODFade.x);
+                    LODDitheringTransition(ComputeFadeMaskSeed(V, posInput.positionSS), unity_LODFade.x);
 				#endif
 
-				#ifdef _DOUBLESIDED_ON
-				float3 doubleSidedConstants = _DoubleSidedConstants.xyz;
-				#else
-				float3 doubleSidedConstants = float3( 1.0, 1.0, 1.0 );
-				#endif
-
-				ApplyDoubleSidedFlipOrMirror( fragInputs, doubleSidedConstants );
+                #ifdef _DOUBLESIDED_ON
+                    float3 doubleSidedConstants = _DoubleSidedConstants.xyz;
+                #else
+                    float3 doubleSidedConstants = float3(1.0, 1.0, 1.0);
+                #endif
+                ApplyDoubleSidedFlipOrMirror(fragInputs, doubleSidedConstants);
 
 				#ifdef _ALPHATEST_ON
-				DoAlphaTest( surfaceDescription.Alpha, surfaceDescription.AlphaClipThreshold );
+                    DoAlphaTest( surfaceDescription.Alpha, surfaceDescription.AlphaClipThreshold );
+				#endif
+
+				#ifdef _ALPHATEST_SHADOW_ON
+                    DoAlphaTest( surfaceDescription.Alpha, surfaceDescription.AlphaClipThresholdShadow);
 				#endif
 
 				#ifdef _DEPTHOFFSET_ON
-				builtinData.depthOffset = surfaceDescription.DepthOffset;
-				ApplyDepthOffsetPositionInput( V, surfaceDescription.DepthOffset, GetViewForwardDir(), GetWorldToHClipMatrix(), posInput );
+                    ApplyDepthOffsetPositionInput(V, surfaceDescription.DepthOffset, GetViewForwardDir(), GetWorldToHClipMatrix(), posInput);
 				#endif
 
-				float3 bentNormalWS;
-				BuildSurfaceData( fragInputs, surfaceDescription, V, posInput, surfaceData, bentNormalWS );
+                float3 bentNormalWS;
+                BuildSurfaceData(fragInputs, surfaceDescription, V, posInput, surfaceData, bentNormalWS);
+                InitBuiltinData(posInput, surfaceDescription.Alpha, bentNormalWS, -fragInputs.tangentToWorld[2], fragInputs.texCoord1, fragInputs.texCoord2, builtinData);
 
-				InitBuiltinData( posInput, surfaceDescription.Alpha, bentNormalWS, -fragInputs.tangentToWorld[ 2 ], fragInputs.texCoord1, fragInputs.texCoord2, builtinData );
+				#ifdef _DEPTHOFFSET_ON
+                    builtinData.depthOffset = surfaceDescription.DepthOffset;
+				#endif
 
-				PostInitBuiltinData(V, posInput, surfaceData, builtinData);
+                #ifdef _ALPHATEST_ON
+                    builtinData.alphaClipTreshold = surfaceDescription.AlphaClipThreshold;
+                #endif
+
+                #ifdef UNITY_VIRTUAL_TEXTURING
+                    builtinData.vtPackedFeedback = surfaceDescription.VTPackedFeedback;
+                #endif
+
+				#ifdef ASE_BAKEDGI
+                    builtinData.bakeDiffuseLighting = surfaceDescription.BakedGI;
+				#endif
+
+				#ifdef ASE_BAKEDBACKGI
+                    builtinData.backBakeDiffuseLighting = surfaceDescription.BakedBackGI;
+				#endif
+
+                builtinData.emissiveColor = surfaceDescription.Emission;
+
+                PostInitBuiltinData(V, posInput, surfaceData, builtinData);
 			}
 
-			#if defined(WRITE_DECAL_BUFFER) && !defined(_DISABLE_DECALS)
-				#include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Decal/DecalPrepassBuffer.hlsl"
-			#endif
 			PackedVaryingsMeshToPS VertexFunction(AttributesMesh inputMesh )
 			{
-				PackedVaryingsMeshToPS outputPackedVaryingsMeshToPS;
-
+				PackedVaryingsMeshToPS output;
 				UNITY_SETUP_INSTANCE_ID(inputMesh);
-				UNITY_TRANSFER_INSTANCE_ID(inputMesh, outputPackedVaryingsMeshToPS);
-				UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO( outputPackedVaryingsMeshToPS );
+				UNITY_TRANSFER_INSTANCE_ID(inputMesh, output);
+				UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO( output );
 
-				float4 ase_clipPos = TransformWorldToHClip( TransformObjectToWorld(inputMesh.positionOS));
-				float4 screenPos = ComputeScreenPos( ase_clipPos , _ProjectionParams.x );
-				outputPackedVaryingsMeshToPS.ase_texcoord4 = screenPos;
+				float3 ase_positionWS = GetAbsolutePositionWS( TransformObjectToWorld( ( inputMesh.positionOS ).xyz ) );
+				float2 appendResult4_g12 = (float2(ase_positionWS.x , ase_positionWS.z));
+				float2 panner8_g12 = ( 1.0 * _Time.y * _WindSpeed + ( appendResult4_g12 / _Size ));
+				float4 tex2DNode9_g12 = tex2Dlod( _Noisetexture, float4( panner8_g12, 0, 0.0) );
+				float2 texCoord17_g12 = inputMesh.ase_texcoord.xy * float2( 1,1 ) + float2( 0,0 );
 				
-				outputPackedVaryingsMeshToPS.ase_texcoord3.xy = inputMesh.ase_texcoord.xy;
+				float3 objectToViewPos = TransformWorldToView( TransformObjectToWorld( inputMesh.positionOS ) );
+				float eyeDepth = -objectToViewPos.z;
+				output.ase_texcoord3.z = eyeDepth;
+				
+				output.ase_texcoord3.xy = inputMesh.ase_texcoord.xy;
 				
 				//setting value to unused interpolator channels and avoid initialization warnings
-				outputPackedVaryingsMeshToPS.ase_texcoord3.zw = 0;
+				output.ase_texcoord3.w = 0;
 
 				#ifdef ASE_ABSOLUTE_VERTEX_POS
 				float3 defaultVertexValue = inputMesh.positionOS.xyz;
 				#else
 				float3 defaultVertexValue = float3( 0, 0, 0 );
 				#endif
-				float3 vertexValue =  defaultVertexValue ;
+				float3 vertexValue = ( tex2DNode9_g12 * _Windintensity * texCoord17_g12.y ).rgb;
 
 				#ifdef ASE_ABSOLUTE_VERTEX_POS
 				inputMesh.positionOS.xyz = vertexValue;
@@ -3224,18 +2507,18 @@ Shader "Grass Test"
 				inputMesh.positionOS.xyz += vertexValue;
 				#endif
 
-				inputMesh.normalOS =  inputMesh.normalOS ;
-				inputMesh.tangentOS =  inputMesh.tangentOS ;
+				inputMesh.normalOS = inputMesh.normalOS;
+				inputMesh.tangentOS = inputMesh.tangentOS;
 
 				float3 positionRWS = TransformObjectToWorld(inputMesh.positionOS);
 				float3 normalWS = TransformObjectToWorldNormal(inputMesh.normalOS);
 				float4 tangentWS = float4(TransformObjectToWorldDir(inputMesh.tangentOS.xyz), inputMesh.tangentOS.w);
 
-				outputPackedVaryingsMeshToPS.positionCS = TransformWorldToHClip(positionRWS);
-				outputPackedVaryingsMeshToPS.positionRWS.xyz = positionRWS;
-				outputPackedVaryingsMeshToPS.normalWS.xyz = normalWS;
-				outputPackedVaryingsMeshToPS.tangentWS.xyzw = tangentWS;
-				return outputPackedVaryingsMeshToPS;
+				output.positionCS = TransformWorldToHClip(positionRWS);
+				output.positionRWS = positionRWS;
+				output.normalWS = normalWS;
+				output.tangentWS = tangentWS;
+				return output;
 			}
 
 			#if defined(ASE_TESSELLATION)
@@ -3349,94 +2632,1587 @@ Shader "Grass Test"
 								#endif
 							#endif
 
-							#if defined(WRITE_DECAL_BUFFER) && !defined(_DISABLE_DECALS)
+							#if (defined(WRITE_DECAL_BUFFER) && !defined(_DISABLE_DECALS)) || defined(WRITE_RENDERING_LAYER)
 							, out float4 outDecalBuffer : SV_TARGET_DECAL
 							#endif
 						#endif
-
-						#if defined(_DEPTHOFFSET_ON) && !defined(SCENEPICKINGPASS)
-						, out float outputDepth : DEPTH_OFFSET_SEMANTIC
+						#if defined( ASE_DEPTH_WRITE_ON )
+							, out float outputDepth : DEPTH_OFFSET_SEMANTIC
 						#endif
-						
-					)
+						 )
 			{
-				UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX( packedInput );
-				UNITY_SETUP_INSTANCE_ID( packedInput );
-
-				float3 positionRWS = packedInput.positionRWS.xyz;
-				float3 normalWS = packedInput.normalWS.xyz;
-				float4 tangentWS = packedInput.tangentWS.xyzw;
+				UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(packedInput);
+				UNITY_SETUP_INSTANCE_ID(packedInput);
 
 				FragInputs input;
 				ZERO_INITIALIZE(FragInputs, input);
-
-				input.tangentToWorld = k_identity3x3;
 				input.positionSS = packedInput.positionCS;
-
-				input.positionRWS = positionRWS;
-				input.tangentToWorld = BuildTangentToWorld(tangentWS, normalWS);
-
-				#if _DOUBLESIDED_ON && SHADER_STAGE_FRAGMENT
-				input.isFrontFace = IS_FRONT_VFACE( packedInput.cullFace, true, false);
-				#elif SHADER_STAGE_FRAGMENT
-				#if defined(ASE_NEED_CULLFACE)
-				input.isFrontFace = IS_FRONT_VFACE( packedInput.cullFace, true, false );
-				#endif
-				#endif
-				half isFrontFace = input.isFrontFace;
+				input.positionRWS = packedInput.positionRWS;
+				input.tangentToWorld = BuildTangentToWorld(packedInput.tangentWS, packedInput.normalWS);
 
 				PositionInputs posInput = GetPositionInput(input.positionSS.xy, _ScreenSize.zw, input.positionSS.z, input.positionSS.w, input.positionRWS);
 
-				float3 V = GetWorldSpaceNormalizeViewDir(input.positionRWS);
+				#if _DOUBLESIDED_ON && SHADER_STAGE_FRAGMENT
+					input.isFrontFace = IS_FRONT_VFACE(packedInput.cullFace, true, false);
+				#elif SHADER_STAGE_FRAGMENT
+					#if defined(ASE_NEED_CULLFACE)
+						input.isFrontFace = IS_FRONT_VFACE(packedInput.cullFace, true, false);
+					#endif
+				#endif
 
-				SmoothSurfaceDescription surfaceDescription = (SmoothSurfaceDescription)0;
+				half IsFrontFace = input.isFrontFace;
+				float3 PositionRWS = posInput.positionWS;
+				float3 PositionWS = GetAbsolutePositionWS( posInput.positionWS );
+				float3 V = GetWorldSpaceNormalizeViewDir( packedInput.positionRWS );
+				float4 ScreenPosNorm = float4( posInput.positionNDC, packedInput.positionCS.zw );
+				float4 ClipPos = ComputeClipSpacePosition( ScreenPosNorm.xy, packedInput.positionCS.z ) * packedInput.positionCS.w;
+				float4 ScreenPos = ComputeScreenPos( ClipPos, _ProjectionParams.x );
+				float3 NormalWS = packedInput.normalWS;
+				float3 TangentWS = packedInput.tangentWS.xyz;
+				float3 BitangentWS = input.tangentToWorld[ 1 ];
+
 				float2 uv_TextureSample0 = packedInput.ase_texcoord3.xy * _TextureSample0_ST.xy + _TextureSample0_ST.zw;
-				float4 screenPos = packedInput.ase_texcoord4;
-				float4 ase_screenPosNorm = screenPos / screenPos.w;
-				ase_screenPosNorm.z = ( UNITY_NEAR_CLIP_VALUE >= 0 ) ? ase_screenPosNorm.z : ase_screenPosNorm.z * 0.5 + 0.5;
-				float2 clipScreen17 = ase_screenPosNorm.xy * _ScreenParams.xy;
-				float dither17 = Dither4x4Bayer( fmod(clipScreen17.x, 4), fmod(clipScreen17.y, 4) );
+				float4 ase_positionSS_Pixel = ASEScreenPositionNormalizedToPixel( ScreenPosNorm, _ScreenParams );
+				float dither66 = Dither4x4Bayer( fmod( ase_positionSS_Pixel.x, 4 ), fmod( ase_positionSS_Pixel.y, 4 ) );
 				float2 texCoord16 = packedInput.ase_texcoord3.xy * float2( 1,1 ) + float2( 0,0 );
-				float smoothstepResult23 = smoothstep( 0.0 , 0.5 , texCoord16.y);
-				dither17 = step( dither17, smoothstepResult23 );
+				float smoothstepResult23 = smoothstep( 0.0 , _BottomGradientsize , texCoord16.y);
+				float lerpResult55 = lerp( 1.0 , smoothstepResult23 , _BottomGradient);
+				float fresnelNdotV59 = dot( NormalWS, V );
+				float fresnelNode59 = ( -1.0 + 5.0 * pow( 1.0 - fresnelNdotV59, 2.0 ) );
+				float lerpResult63 = lerp( 1.0 , ( 1.0 - saturate( fresnelNode59 ) ) , _Fresneldither);
+				float eyeDepth = packedInput.ase_texcoord3.z;
+				float cameraDepthFade65 = (( eyeDepth -_ProjectionParams.y - 100.0 ) / 20.0);
+				dither66 = step( dither66, saturate( ( saturate( lerpResult55 ) * saturate( lerpResult63 ) * ( 1.0 - saturate( cameraDepthFade65 ) ) ) * 1.00001 ) );
 				
-				surfaceDescription.Normal = float3( 0, 0, 1 );
-				surfaceDescription.Smoothness = _Smoothness;
-				surfaceDescription.Alpha = ( tex2D( _TextureSample0, uv_TextureSample0 ).a * dither17 );
+
+				AlphaSurfaceDescription surfaceDescription = (AlphaSurfaceDescription)0;
+
+				surfaceDescription.Alpha = ( tex2D( _TextureSample0, uv_TextureSample0 ).a * dither66 );
 
 				#ifdef _ALPHATEST_ON
 				surfaceDescription.AlphaClipThreshold = _AlphaCutoff;
 				#endif
 
-				#ifdef _DEPTHOFFSET_ON
-				surfaceDescription.DepthOffset = 0;
+				#ifdef _ALPHATEST_SHADOW_ON
+				surfaceDescription.AlphaClipThresholdShadow = 0.5;
+				#endif
+
+				#if defined( ASE_CHANGES_WORLD_POS )
+					posInput.positionWS = PositionRWS;
+				#endif
+
+				#if defined( ASE_DEPTH_WRITE_ON )
+					#if !defined( _DEPTHOFFSET_ON )
+						posInput.deviceDepth = input.positionSS.z;
+					#else
+						surfaceDescription.DepthOffset = 0;
+					#endif
 				#endif
 
 				SurfaceData surfaceData;
 				BuiltinData builtinData;
 				GetSurfaceAndBuiltinData(surfaceDescription, input, V, posInput, surfaceData, builtinData);
 
-				#ifdef _DEPTHOFFSET_ON
-				outputDepth = posInput.deviceDepth;
+				#if defined( ASE_DEPTH_WRITE_ON )
+					outputDepth = posInput.deviceDepth;
+					float bias = max(abs(ddx(posInput.deviceDepth)), abs(ddy(posInput.deviceDepth))) * _SlopeScaleDepthBias;
+					outputDepth += bias;
 				#endif
 
 				#ifdef WRITE_MSAA_DEPTH
-					depthColor = packedInput.positionCS.z;
-					#ifdef _ALPHATOMASK_ON
-						depthColor.a = SharpenAlpha(builtinData.opacity, builtinData.alphaClipTreshold);
-					#endif
+					depthColor = packedInput.vmesh.positionCS.z;
+					depthColor.a = SharpenAlpha(builtinData.opacity, builtinData.alphaClipTreshold);
 				#endif
 
 				#if defined(WRITE_NORMAL_BUFFER)
 				EncodeIntoNormalBuffer(ConvertSurfaceDataToNormalData(surfaceData), outNormalBuffer);
 				#endif
 
-				#if defined(WRITE_DECAL_BUFFER) && !defined(_DISABLE_DECALS)
-				DecalPrepassData decalPrepassData;
-				decalPrepassData.geomNormalWS = surfaceData.geomNormalWS;
-				decalPrepassData.decalLayerMask = GetMeshRenderingDecalLayer();
-				EncodeIntoDecalPrepassBuffer(decalPrepassData, outDecalBuffer);
+				#if (defined(WRITE_DECAL_BUFFER) && !defined(_DISABLE_DECALS)) || defined(WRITE_RENDERING_LAYER)
+					DecalPrepassData decalPrepassData;
+					#ifdef _DISABLE_DECALS
+					ZERO_INITIALIZE(DecalPrepassData, decalPrepassData);
+					#else
+					decalPrepassData.geomNormalWS = surfaceData.geomNormalWS;
+					#endif
+					decalPrepassData.renderingLayerMask = GetMeshRenderingLayerMask();
+					EncodeIntoDecalPrepassBuffer(decalPrepassData, outDecalBuffer);
 				#endif
+			}
+			ENDHLSL
+		}
+
+		
+		Pass
+		{
+			
+			Name "SceneSelectionPass"
+			Tags { "LightMode"="SceneSelectionPass" }
+
+			Cull Off
+
+			HLSLPROGRAM
+			#define ASE_GEOMETRY
+			#pragma shader_feature_local _ _DOUBLESIDED_ON
+			#define ASE_FRAGMENT_NORMAL 0
+			#pragma shader_feature_local_fragment _ _DISABLE_DECALS
+			#define _SPECULAR_OCCLUSION_FROM_AO 1
+			#pragma multi_compile_instancing
+			#pragma instancing_options renderinglayer
+			#pragma shader_feature_local _ _ALPHATEST_ON
+			#define HAVE_MESH_MODIFICATION
+			#define ASE_VERSION 19904
+			#define ASE_SRP_VERSION 170200
+
+			#pragma editor_sync_compilation
+            #pragma multi_compile _ DOTS_INSTANCING_ON
+
+            #pragma shader_feature _ _SURFACE_TYPE_TRANSPARENT
+            #pragma shader_feature_local _ _TRANSPARENT_WRITES_MOTION_VEC _TRANSPARENT_REFRACTIVE_SORT
+            #pragma shader_feature_local_fragment _ _ENABLE_FOG_ON_TRANSPARENT
+
+			#pragma vertex Vert
+			#pragma fragment Frag
+
+			#define SHADERPASS SHADERPASS_DEPTH_ONLY
+		    #define SCENESELECTIONPASS 1
+
+			#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
+			#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/GeometricTools.hlsl"
+			#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Tessellation.hlsl"
+			#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Texture.hlsl"
+			#include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/ShaderVariables.hlsl"
+			#include "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/ShaderPass/ShaderPass.cs.hlsl"
+			#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/TextureStack.hlsl"
+			#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/DebugMipmapStreamingMacros.hlsl"
+            #include "Packages/com.unity.shadergraph/ShaderGraphLibrary/Functions.hlsl"
+
+			#include "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/ShaderPass/FragInputs.hlsl"
+
+            #ifdef RAYTRACING_SHADER_GRAPH_DEFAULT
+                #define RAYTRACING_SHADER_GRAPH_HIGH
+            #endif
+
+            #ifdef RAYTRACING_SHADER_GRAPH_RAYTRACED
+                #define RAYTRACING_SHADER_GRAPH_LOW
+            #endif
+
+            #ifndef SHADER_UNLIT
+            #if defined(_DOUBLESIDED_ON) && !defined(VARYINGS_NEED_CULLFACE)
+                #define VARYINGS_NEED_CULLFACE
+            #endif
+            #endif
+
+			#if defined(_DOUBLESIDED_ON) && !defined(ASE_NEED_CULLFACE)
+			    #define ASE_NEED_CULLFACE 1
+			#endif
+
+            #if _MATERIAL_FEATURE_COLORED_TRANSMISSION
+            #undef _MATERIAL_FEATURE_CLEAR_COAT
+            #endif
+
+		    #if defined(_MATERIAL_FEATURE_SUBSURFACE_SCATTERING) && !defined(_SURFACE_TYPE_TRANSPARENT)
+			#define OUTPUT_SPLIT_LIGHTING
+		    #endif
+
+		    #if (SHADERPASS == SHADERPASS_PATH_TRACING) && !defined(_DOUBLESIDED_ON) && (defined(_REFRACTION_PLANE) || defined(_REFRACTION_SPHERE))
+			#undef  _REFRACTION_PLANE
+			#undef  _REFRACTION_SPHERE
+			#define _REFRACTION_THIN
+		    #endif
+
+            #if SHADERPASS == SHADERPASS_TRANSPARENT_DEPTH_PREPASS
+            #if !defined(_DISABLE_SSR_TRANSPARENT) && !defined(SHADER_UNLIT)
+                #define WRITE_NORMAL_BUFFER
+            #endif
+            #endif
+
+            #if SHADERPASS == SHADERPASS_MOTION_VECTORS && defined(WRITE_DECAL_BUFFER_AND_RENDERING_LAYER)
+                #define WRITE_DECAL_BUFFER
+            #endif
+
+            #ifndef DEBUG_DISPLAY
+                #if !defined(_SURFACE_TYPE_TRANSPARENT)
+                    #if SHADERPASS == SHADERPASS_FORWARD
+                    #define SHADERPASS_FORWARD_BYPASS_ALPHA_TEST
+                    #elif SHADERPASS == SHADERPASS_GBUFFER
+                    #define SHADERPASS_GBUFFER_BYPASS_ALPHA_TEST
+                    #endif
+                #endif
+            #endif
+
+            #if defined(SHADER_LIT) && !defined(_SURFACE_TYPE_TRANSPARENT)
+                #define _DEFERRED_CAPABLE_MATERIAL
+            #endif
+
+            #if (defined(_TRANSPARENT_WRITES_MOTION_VEC) || defined(_TRANSPARENT_REFRACTIVE_SORT)) && defined(_SURFACE_TYPE_TRANSPARENT)
+                #define _WRITE_TRANSPARENT_MOTION_VECTOR
+            #endif
+
+			CBUFFER_START( UnityPerMaterial )
+			float4 _Color;
+			float4 _TextureSample0_ST;
+			float2 _WindSpeed;
+			float _Size;
+			float _Windintensity;
+			float _Windinalbedo;
+			float _Smoothness;
+			float _BottomGradientsize;
+			float _BottomGradient;
+			float _Fresneldither;
+			float4 _EmissionColor;
+			float _AlphaCutoff;
+			float _RenderQueueType;
+			#ifdef _ADD_PRECOMPUTED_VELOCITY
+			    float _AddPrecomputedVelocity;
+			#endif
+			float _StencilRef;
+			float _StencilWriteMask;
+			float _StencilRefDepth;
+			float _StencilWriteMaskDepth;
+			float _StencilRefMV;
+			float _StencilWriteMaskMV;
+			float _StencilRefDistortionVec;
+			float _StencilWriteMaskDistortionVec;
+			float _StencilWriteMaskGBuffer;
+			float _StencilRefGBuffer;
+			float _ZTestGBuffer;
+			float _RequireSplitLighting;
+			float _ReceivesSSR;
+			float _SurfaceType;
+			float _BlendMode;
+            #ifdef SUPPORT_BLENDMODE_PRESERVE_SPECULAR_LIGHTING
+			    float _EnableBlendModePreserveSpecularLighting;
+            #endif
+			float _SrcBlend;
+			float _DstBlend;
+			float _DstBlend2;
+			float _AlphaSrcBlend;
+			float _AlphaDstBlend;
+			float _ZWrite;
+			float _TransparentZWrite;
+			float _CullMode;
+			float _TransparentSortPriority;
+			float _EnableFogOnTransparent;
+			float _CullModeForward;
+			float _TransparentCullMode;
+			float _ZTestDepthEqualForOpaque;
+			float _ZTestTransparent;
+			float _TransparentBackfaceEnable;
+			float _AlphaCutoffEnable;
+			float _UseShadowThreshold;
+			float _DoubleSidedEnable;
+			float _DoubleSidedNormalMode;
+			float4 _DoubleSidedConstants;
+			#ifdef ASE_TESSELLATION
+			    float _TessPhongStrength;
+			    float _TessValue;
+			    float _TessMin;
+			    float _TessMax;
+			    float _TessEdgeLength;
+			    float _TessMaxDisp;
+			#endif
+			UNITY_TEXTURE_STREAMING_DEBUG_VARS;
+			CBUFFER_END
+
+            #ifdef SCENEPICKINGPASS
+			float4 _SelectionID;
+            #endif
+
+            #ifdef SCENESELECTIONPASS
+			int _ObjectId;
+			int _PassValue;
+            #endif
+
+			sampler2D _Noisetexture;
+			sampler2D _TextureSample0;
+
+
+            #ifdef DEBUG_DISPLAY
+            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Debug/DebugDisplay.hlsl"
+            #endif
+
+			#include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/PickingSpaceTransforms.hlsl"
+			#include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Material.hlsl"
+			#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/NormalSurfaceGradient.hlsl"
+			#include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Lit/Lit.hlsl"
+			#include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/BuiltinUtilities.hlsl"
+			#include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/MaterialUtilities.hlsl"
+			#include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/ShaderGraphFunctions.hlsl"
+
+            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Decal/DecalUtilities.hlsl"
+            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Lit/LitDecalData.hlsl"
+
+        	#ifdef HAVE_VFX_MODIFICATION
+            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/VisualEffectVertex.hlsl"
+        	#endif
+
+			#define ASE_NEEDS_TEXTURE_COORDINATES0
+			#define ASE_NEEDS_FRAG_SCREEN_POSITION_NORMALIZED
+			#define ASE_NEEDS_FRAG_TEXTURE_COORDINATES0
+			#define ASE_NEEDS_FRAG_WORLD_VIEW_DIR
+			#define ASE_NEEDS_WORLD_NORMAL
+			#define ASE_NEEDS_FRAG_WORLD_NORMAL
+			#define ASE_NEEDS_VERT_POSITION
+
+
+			struct AttributesMesh
+			{
+				float3 positionOS : POSITION;
+				float3 normalOS : NORMAL;
+				float4 tangentOS : TANGENT;
+				float4 ase_texcoord : TEXCOORD0;
+				UNITY_VERTEX_INPUT_INSTANCE_ID
+			};
+
+			struct PackedVaryingsMeshToPS
+			{
+				SV_POSITION_QUALIFIERS float4 positionCS : SV_Position;
+				float3 positionRWS : TEXCOORD0;
+				float3 normalWS : TEXCOORD1;
+				float4 tangentWS : TEXCOORD2;
+				float4 ase_texcoord3 : TEXCOORD3;
+				UNITY_VERTEX_INPUT_INSTANCE_ID
+				UNITY_VERTEX_OUTPUT_STEREO
+				#if defined(SHADER_STAGE_FRAGMENT) && defined(ASE_NEED_CULLFACE)
+				FRONT_FACE_TYPE cullFace : FRONT_FACE_SEMANTIC;
+				#endif
+			};
+
+			float4 ASEScreenPositionNormalizedToPixel( float4 screenPosNorm, float4 screenParams )
+			{
+				float4 screenPosPixel = screenPosNorm * float4( screenParams.xy, 1, 1 );
+				#if UNITY_UV_STARTS_AT_TOP
+					screenPosPixel.xy = float2( screenPosPixel.x, ( _ProjectionParams.x < 0 ) ? screenParams.y - screenPosPixel.y : screenPosPixel.y );
+				#else
+					screenPosPixel.xy = float2( screenPosPixel.x, ( _ProjectionParams.x > 0 ) ? screenParams.y - screenPosPixel.y : screenPosPixel.y );
+				#endif
+				return screenPosPixel;
+			}
+			
+			inline float Dither4x4Bayer( uint x, uint y )
+			{
+				const float dither[ 16 ] = {
+				     1,  9,  3, 11,
+				    13,  5, 15,  7,
+				     4, 12,  2, 10,
+				    16,  8, 14,  6 };
+				uint r = y * 4 + x;
+				return dither[ min( r, 15 ) ] / 16; // same # of instructions as pre-dividing due to compiler magic
+			}
+			
+
+			void BuildSurfaceData(FragInputs fragInputs, inout SceneSurfaceDescription surfaceDescription, float3 V, PositionInputs posInput, out SurfaceData surfaceData, out float3 bentNormalWS)
+			{
+				ZERO_INITIALIZE(SurfaceData, surfaceData);
+
+				surfaceData.specularOcclusion = 1.0;
+				surfaceData.thickness = 0.0;
+
+				//refraction SceneSelectionPass
+                #if defined(_REFRACTION_PLANE) || defined(_REFRACTION_SPHERE) || defined(_REFRACTION_THIN)
+                    if (_EnableSSRefraction)
+                    {
+                        surfaceData.ior =                       surfaceDescription.RefractionIndex;
+                        surfaceData.transmittanceColor =        surfaceDescription.RefractionColor;
+                        surfaceData.atDistance =                surfaceDescription.RefractionDistance;
+                        surfaceData.transmittanceMask = (1.0 - surfaceDescription.Alpha);
+                        surfaceDescription.Alpha = 1.0;
+                    }
+                    else
+                    {
+                        surfaceData.ior = 1.0;
+                        surfaceData.transmittanceColor = float3(1.0, 1.0, 1.0);
+                        surfaceData.atDistance = 1.0;
+                        surfaceData.transmittanceMask = 0.0;
+                        surfaceDescription.Alpha = 1.0;
+                    }
+                #else
+                    surfaceData.ior = 1.0;
+                    surfaceData.transmittanceColor = float3(1.0, 1.0, 1.0);
+                    surfaceData.atDistance = 1.0;
+                    surfaceData.transmittanceMask = 0.0;
+                #endif
+
+				surfaceData.materialFeatures = MATERIALFEATUREFLAGS_LIT_STANDARD;
+
+				#ifdef _MATERIAL_FEATURE_SUBSURFACE_SCATTERING
+				if (surfaceData.subsurfaceMask > 0)
+                    surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_LIT_SUBSURFACE_SCATTERING;
+				#endif
+
+				#ifdef _MATERIAL_FEATURE_TRANSMISSION
+                    surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_LIT_TRANSMISSION;
+				#endif
+
+				#ifdef _MATERIAL_FEATURE_COLORED_TRANSMISSION
+                    surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_LIT_TRANSMISSION;
+                    surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_LIT_COLORED_TRANSMISSION;
+				#endif
+
+                #ifdef _MATERIAL_FEATURE_ANISOTROPY
+                    surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_LIT_ANISOTROPY;
+                    surfaceData.normalWS = float3(0, 1, 0);
+                #endif
+
+				#ifdef _MATERIAL_FEATURE_CLEAR_COAT
+                    surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_LIT_CLEAR_COAT;
+				#endif
+
+				#ifdef _MATERIAL_FEATURE_IRIDESCENCE
+                    surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_LIT_IRIDESCENCE;
+				#endif
+
+				#ifdef _MATERIAL_FEATURE_SPECULAR_COLOR
+                    surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_LIT_SPECULAR_COLOR;
+				#endif
+
+				#if defined (_MATERIAL_FEATURE_SPECULAR_COLOR) && defined (_ENERGY_CONSERVING_SPECULAR)
+                    surfaceData.baseColor *= ( 1.0 - Max3( surfaceData.specularColor.r, surfaceData.specularColor.g, surfaceData.specularColor.b ) );
+				#endif
+
+				#ifdef _DOUBLESIDED_ON
+					float3 doubleSidedConstants = _DoubleSidedConstants.xyz;
+				#else
+					float3 doubleSidedConstants = float3( 1.0, 1.0, 1.0 );
+				#endif
+
+				float3 normal = float3(0.0f, 0.0f, 1.0f);
+
+				#ifdef DECAL_NORMAL_BLENDING
+					#ifndef SURFACE_GRADIENT
+					#if ( ASE_FRAGMENT_NORMAL == 1 )
+						normal = SurfaceGradientFromPerturbedNormal(TransformWorldToObjectNormal(fragInputs.tangentToWorld[2]), normal);
+					#elif ( ASE_FRAGMENT_NORMAL == 2 )
+						normal = SurfaceGradientFromPerturbedNormal(fragInputs.tangentToWorld[2], normal);
+					#else
+						normal = SurfaceGradientFromTangentSpaceNormalAndFromTBN(normal, fragInputs.tangentToWorld[0], fragInputs.tangentToWorld[1]);
+					#endif
+					#endif
+
+					#if HAVE_DECALS
+					if (_EnableDecals)
+					{
+						DecalSurfaceData decalSurfaceData = GetDecalSurfaceData(posInput, fragInputs, surfaceDescription.Alpha);
+						ApplyDecalToSurfaceNormal(decalSurfaceData, fragInputs.tangentToWorld[2], normal);
+						ApplyDecalToSurfaceDataNoNormal(decalSurfaceData, surfaceData);
+					}
+					#endif
+
+					GetNormalWS_SG(fragInputs, normal, surfaceData.normalWS, doubleSidedConstants);
+				#else
+					#if ( ASE_FRAGMENT_NORMAL == 1 )
+						GetNormalWS_SrcOS(fragInputs, normal, surfaceData.normalWS, doubleSidedConstants);
+					#elif ( ASE_FRAGMENT_NORMAL == 2 )
+						GetNormalWS_SrcWS(fragInputs, normal, surfaceData.normalWS, doubleSidedConstants);
+					#else
+						GetNormalWS(fragInputs, normal, surfaceData.normalWS, doubleSidedConstants);
+					#endif
+
+					#if HAVE_DECALS
+					if (_EnableDecals)
+					{
+						DecalSurfaceData decalSurfaceData = GetDecalSurfaceData(posInput, fragInputs, surfaceDescription.Alpha);
+						ApplyDecalToSurfaceNormal(decalSurfaceData, surfaceData.normalWS.xyz);
+						ApplyDecalToSurfaceDataNoNormal(decalSurfaceData, surfaceData);
+					}
+					#endif
+				#endif
+
+				surfaceData.geomNormalWS = fragInputs.tangentToWorld[2];
+                surfaceData.tangentWS = normalize(fragInputs.tangentToWorld[0].xyz );
+                surfaceData.tangentWS = Orthonormalize(surfaceData.tangentWS, surfaceData.normalWS);
+
+				bentNormalWS = surfaceData.normalWS;
+
+				#if defined(DEBUG_DISPLAY)
+					#if !defined(SHADER_STAGE_RAY_TRACING)
+					if (_DebugMipMapMode != DEBUGMIPMAPMODE_NONE)
+					{
+						#ifdef FRAG_INPUTS_USE_TEXCOORD0
+							surfaceData.baseColor = GET_TEXTURE_STREAMING_DEBUG(posInput.positionSS, fragInputs.texCoord0);
+						#else
+							surfaceData.baseColor = GET_TEXTURE_STREAMING_DEBUG_NO_UV(posInput.positionSS);
+						#endif
+						surfaceData.metallic = 0;
+					}
+					#endif
+					ApplyDebugToSurfaceData(fragInputs.tangentToWorld, surfaceData);
+				#endif
+
+                #if defined(_SPECULAR_OCCLUSION_CUSTOM)
+                #elif defined(_SPECULAR_OCCLUSION_FROM_AO_BENT_NORMAL)
+                    surfaceData.specularOcclusion = GetSpecularOcclusionFromBentAO(V, bentNormalWS, surfaceData.normalWS, surfaceData.ambientOcclusion, PerceptualSmoothnessToPerceptualRoughness(surfaceData.perceptualSmoothness));
+                #elif defined(_AMBIENT_OCCLUSION) && defined(_SPECULAR_OCCLUSION_FROM_AO)
+                    surfaceData.specularOcclusion = GetSpecularOcclusionFromAmbientOcclusion(ClampNdotV(dot(surfaceData.normalWS, V)), surfaceData.ambientOcclusion, PerceptualSmoothnessToRoughness(surfaceData.perceptualSmoothness));
+                #endif
+
+                #ifdef _ENABLE_GEOMETRIC_SPECULAR_AA
+                    surfaceData.perceptualSmoothness = GeometricNormalFiltering(surfaceData.perceptualSmoothness, fragInputs.tangentToWorld[2], surfaceDescription.SpecularAAScreenSpaceVariance, surfaceDescription.SpecularAAThreshold);
+                #endif
+			}
+
+			// Get Surface And BuiltinData
+			void GetSurfaceAndBuiltinData(SceneSurfaceDescription surfaceDescription, FragInputs fragInputs, float3 V, inout PositionInputs posInput, out SurfaceData surfaceData, out BuiltinData builtinData)
+			{
+				#ifdef LOD_FADE_CROSSFADE
+                    LODDitheringTransition(ComputeFadeMaskSeed(V, posInput.positionSS), unity_LODFade.x);
+				#endif
+
+                #ifdef _DOUBLESIDED_ON
+                    float3 doubleSidedConstants = _DoubleSidedConstants.xyz;
+                #else
+                    float3 doubleSidedConstants = float3(1.0, 1.0, 1.0);
+                #endif
+                ApplyDoubleSidedFlipOrMirror(fragInputs, doubleSidedConstants);
+
+				#ifdef _ALPHATEST_ON
+                    DoAlphaTest( surfaceDescription.Alpha, surfaceDescription.AlphaClipThreshold );
+				#endif
+
+				#ifdef _ALPHATEST_SHADOW_ON
+                    DoAlphaTest( surfaceDescription.Alpha, surfaceDescription.AlphaClipThresholdShadow);
+				#endif
+
+				#ifdef _DEPTHOFFSET_ON
+                    ApplyDepthOffsetPositionInput(V, surfaceDescription.DepthOffset, GetViewForwardDir(), GetWorldToHClipMatrix(), posInput);
+				#endif
+
+                float3 bentNormalWS;
+                BuildSurfaceData(fragInputs, surfaceDescription, V, posInput, surfaceData, bentNormalWS);
+                InitBuiltinData(posInput, surfaceDescription.Alpha, bentNormalWS, -fragInputs.tangentToWorld[2], fragInputs.texCoord1, fragInputs.texCoord2, builtinData);
+
+				#ifdef _DEPTHOFFSET_ON
+                    builtinData.depthOffset = surfaceDescription.DepthOffset;
+				#endif
+
+                #ifdef _ALPHATEST_ON
+                    builtinData.alphaClipTreshold = surfaceDescription.AlphaClipThreshold;
+                #endif
+
+                #ifdef UNITY_VIRTUAL_TEXTURING
+                    builtinData.vtPackedFeedback = surfaceDescription.VTPackedFeedback;
+                #endif
+
+				#ifdef ASE_BAKEDGI
+                    builtinData.bakeDiffuseLighting = surfaceDescription.BakedGI;
+				#endif
+
+				#ifdef ASE_BAKEDBACKGI
+                    builtinData.backBakeDiffuseLighting = surfaceDescription.BakedBackGI;
+				#endif
+
+                builtinData.emissiveColor = surfaceDescription.Emission;
+
+                PostInitBuiltinData(V, posInput, surfaceData, builtinData);
+			}
+
+			PackedVaryingsMeshToPS VertexFunction(AttributesMesh inputMesh )
+			{
+				PackedVaryingsMeshToPS output;
+				UNITY_SETUP_INSTANCE_ID(inputMesh);
+				UNITY_TRANSFER_INSTANCE_ID(inputMesh, output);
+				UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO( output );
+
+				float3 ase_positionWS = GetAbsolutePositionWS( TransformObjectToWorld( ( inputMesh.positionOS ).xyz ) );
+				float2 appendResult4_g12 = (float2(ase_positionWS.x , ase_positionWS.z));
+				float2 panner8_g12 = ( 1.0 * _Time.y * _WindSpeed + ( appendResult4_g12 / _Size ));
+				float4 tex2DNode9_g12 = tex2Dlod( _Noisetexture, float4( panner8_g12, 0, 0.0) );
+				float2 texCoord17_g12 = inputMesh.ase_texcoord.xy * float2( 1,1 ) + float2( 0,0 );
+				
+				float3 objectToViewPos = TransformWorldToView( TransformObjectToWorld( inputMesh.positionOS ) );
+				float eyeDepth = -objectToViewPos.z;
+				output.ase_texcoord3.z = eyeDepth;
+				
+				output.ase_texcoord3.xy = inputMesh.ase_texcoord.xy;
+				
+				//setting value to unused interpolator channels and avoid initialization warnings
+				output.ase_texcoord3.w = 0;
+
+				#ifdef ASE_ABSOLUTE_VERTEX_POS
+				float3 defaultVertexValue = inputMesh.positionOS.xyz;
+				#else
+				float3 defaultVertexValue = float3( 0, 0, 0 );
+				#endif
+				float3 vertexValue = ( tex2DNode9_g12 * _Windintensity * texCoord17_g12.y ).rgb;
+
+				#ifdef ASE_ABSOLUTE_VERTEX_POS
+				inputMesh.positionOS.xyz = vertexValue;
+				#else
+				inputMesh.positionOS.xyz += vertexValue;
+				#endif
+
+				inputMesh.normalOS = inputMesh.normalOS;
+				inputMesh.tangentOS = inputMesh.tangentOS;
+
+				float3 positionRWS = TransformObjectToWorld(inputMesh.positionOS);
+				float3 normalWS = TransformObjectToWorldNormal(inputMesh.normalOS);
+				float4 tangentWS = float4(TransformObjectToWorldDir(inputMesh.tangentOS.xyz), inputMesh.tangentOS.w);
+
+				output.positionCS = TransformWorldToHClip(positionRWS);
+				output.positionRWS = positionRWS;
+				output.normalWS = normalWS;
+				output.tangentWS = tangentWS;
+				return output;
+			}
+
+			#if defined(ASE_TESSELLATION)
+			struct VertexControl
+			{
+				float3 positionOS : INTERNALTESSPOS;
+				float3 normalOS : NORMAL;
+				float4 tangentOS : TANGENT;
+				float4 ase_texcoord : TEXCOORD0;
+
+				UNITY_VERTEX_INPUT_INSTANCE_ID
+			};
+
+			struct TessellationFactors
+			{
+				float edge[3] : SV_TessFactor;
+				float inside : SV_InsideTessFactor;
+			};
+
+			VertexControl Vert ( AttributesMesh v )
+			{
+				VertexControl o;
+				UNITY_SETUP_INSTANCE_ID(v);
+				UNITY_TRANSFER_INSTANCE_ID(v, o);
+				o.positionOS = v.positionOS;
+				o.normalOS = v.normalOS;
+				o.tangentOS = v.tangentOS;
+				o.ase_texcoord = v.ase_texcoord;
+				return o;
+			}
+
+			TessellationFactors TessellationFunction (InputPatch<VertexControl,3> v)
+			{
+				TessellationFactors o;
+				float4 tf = 1;
+				float tessValue = _TessValue; float tessMin = _TessMin; float tessMax = _TessMax;
+				float edgeLength = _TessEdgeLength; float tessMaxDisp = _TessMaxDisp;
+				#if (SHADEROPTIONS_CAMERA_RELATIVE_RENDERING != 0)
+				float3 cameraPos = 0;
+				#else
+				float3 cameraPos = _WorldSpaceCameraPos;
+				#endif
+				#if defined(ASE_FIXED_TESSELLATION)
+				tf = FixedTess( tessValue );
+				#elif defined(ASE_DISTANCE_TESSELLATION)
+				tf = DistanceBasedTess(float4(v[0].positionOS,1), float4(v[1].positionOS,1), float4(v[2].positionOS,1), tessValue, tessMin, tessMax, GetObjectToWorldMatrix(), cameraPos );
+				#elif defined(ASE_LENGTH_TESSELLATION)
+				tf = EdgeLengthBasedTess(float4(v[0].positionOS,1), float4(v[1].positionOS,1), float4(v[2].positionOS,1), edgeLength, GetObjectToWorldMatrix(), cameraPos, _ScreenParams );
+				#elif defined(ASE_LENGTH_CULL_TESSELLATION)
+				tf = EdgeLengthBasedTessCull(float4(v[0].positionOS,1), float4(v[1].positionOS,1), float4(v[2].positionOS,1), edgeLength, tessMaxDisp, GetObjectToWorldMatrix(), cameraPos, _ScreenParams, _FrustumPlanes );
+				#endif
+				o.edge[0] = tf.x; o.edge[1] = tf.y; o.edge[2] = tf.z; o.inside = tf.w;
+				return o;
+			}
+
+			[domain("tri")]
+			[partitioning("fractional_odd")]
+			[outputtopology("triangle_cw")]
+			[patchconstantfunc("TessellationFunction")]
+			[outputcontrolpoints(3)]
+			VertexControl HullFunction(InputPatch<VertexControl, 3> patch, uint id : SV_OutputControlPointID)
+			{
+			   return patch[id];
+			}
+
+			[domain("tri")]
+			PackedVaryingsMeshToPS DomainFunction(TessellationFactors factors, OutputPatch<VertexControl, 3> patch, float3 bary : SV_DomainLocation)
+			{
+				AttributesMesh o = (AttributesMesh) 0;
+				o.positionOS = patch[0].positionOS * bary.x + patch[1].positionOS * bary.y + patch[2].positionOS * bary.z;
+				o.normalOS = patch[0].normalOS * bary.x + patch[1].normalOS * bary.y + patch[2].normalOS * bary.z;
+				o.tangentOS = patch[0].tangentOS * bary.x + patch[1].tangentOS * bary.y + patch[2].tangentOS * bary.z;
+				o.ase_texcoord = patch[0].ase_texcoord * bary.x + patch[1].ase_texcoord * bary.y + patch[2].ase_texcoord * bary.z;
+				#if defined(ASE_PHONG_TESSELLATION)
+				float3 pp[3];
+				for (int i = 0; i < 3; ++i)
+					pp[i] = o.positionOS.xyz - patch[i].normalOS * (dot(o.positionOS.xyz, patch[i].normalOS) - dot(patch[i].positionOS.xyz, patch[i].normalOS));
+				float phongStrength = _TessPhongStrength;
+				o.positionOS.xyz = phongStrength * (pp[0]*bary.x + pp[1]*bary.y + pp[2]*bary.z) + (1.0f-phongStrength) * o.positionOS.xyz;
+				#endif
+				UNITY_TRANSFER_INSTANCE_ID(patch[0], o);
+				return VertexFunction(o);
+			}
+			#else
+			PackedVaryingsMeshToPS Vert ( AttributesMesh v )
+			{
+				return VertexFunction( v );
+			}
+			#endif
+
+			#if defined(WRITE_NORMAL_BUFFER) && defined(WRITE_MSAA_DEPTH)
+			#define SV_TARGET_DECAL SV_Target2
+			#elif defined(WRITE_NORMAL_BUFFER) || defined(WRITE_MSAA_DEPTH)
+			#define SV_TARGET_DECAL SV_Target1
+			#else
+			#define SV_TARGET_DECAL SV_Target0
+			#endif
+
+			void Frag( PackedVaryingsMeshToPS packedInput
+						, out float4 outColor : SV_Target0
+						#if defined( ASE_DEPTH_WRITE_ON )
+							, out float outputDepth : DEPTH_OFFSET_SEMANTIC
+						#endif
+						 )
+			{
+				UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX( packedInput );
+				UNITY_SETUP_INSTANCE_ID( packedInput );
+
+				FragInputs input;
+				ZERO_INITIALIZE(FragInputs, input);
+				input.positionSS = packedInput.positionCS;
+				input.positionRWS = packedInput.positionRWS;
+				input.tangentToWorld = BuildTangentToWorld(packedInput.tangentWS, packedInput.normalWS);
+
+				PositionInputs posInput = GetPositionInput(input.positionSS.xy, _ScreenSize.zw, input.positionSS.z, input.positionSS.w, input.positionRWS);
+
+				#if _DOUBLESIDED_ON && SHADER_STAGE_FRAGMENT
+					input.isFrontFace = IS_FRONT_VFACE(packedInput.cullFace, true, false);
+				#elif SHADER_STAGE_FRAGMENT
+					#if defined(ASE_NEED_CULLFACE)
+						input.isFrontFace = IS_FRONT_VFACE(packedInput.cullFace, true, false);
+					#endif
+				#endif
+
+				half IsFrontFace = input.isFrontFace;
+				float3 PositionRWS = posInput.positionWS;
+				float3 PositionWS = GetAbsolutePositionWS( posInput.positionWS );
+				float3 V = GetWorldSpaceNormalizeViewDir( packedInput.positionRWS );
+				float4 ScreenPosNorm = float4( posInput.positionNDC, packedInput.positionCS.zw );
+				float4 ClipPos = ComputeClipSpacePosition( ScreenPosNorm.xy, packedInput.positionCS.z ) * packedInput.positionCS.w;
+				float4 ScreenPos = ComputeScreenPos( ClipPos, _ProjectionParams.x );
+				float3 NormalWS = packedInput.normalWS;
+				float3 TangentWS = packedInput.tangentWS.xyz;
+				float3 BitangentWS = input.tangentToWorld[ 1 ];
+
+				float2 uv_TextureSample0 = packedInput.ase_texcoord3.xy * _TextureSample0_ST.xy + _TextureSample0_ST.zw;
+				float4 ase_positionSS_Pixel = ASEScreenPositionNormalizedToPixel( ScreenPosNorm, _ScreenParams );
+				float dither66 = Dither4x4Bayer( fmod( ase_positionSS_Pixel.x, 4 ), fmod( ase_positionSS_Pixel.y, 4 ) );
+				float2 texCoord16 = packedInput.ase_texcoord3.xy * float2( 1,1 ) + float2( 0,0 );
+				float smoothstepResult23 = smoothstep( 0.0 , _BottomGradientsize , texCoord16.y);
+				float lerpResult55 = lerp( 1.0 , smoothstepResult23 , _BottomGradient);
+				float fresnelNdotV59 = dot( NormalWS, V );
+				float fresnelNode59 = ( -1.0 + 5.0 * pow( 1.0 - fresnelNdotV59, 2.0 ) );
+				float lerpResult63 = lerp( 1.0 , ( 1.0 - saturate( fresnelNode59 ) ) , _Fresneldither);
+				float eyeDepth = packedInput.ase_texcoord3.z;
+				float cameraDepthFade65 = (( eyeDepth -_ProjectionParams.y - 100.0 ) / 20.0);
+				dither66 = step( dither66, saturate( ( saturate( lerpResult55 ) * saturate( lerpResult63 ) * ( 1.0 - saturate( cameraDepthFade65 ) ) ) * 1.00001 ) );
+				
+
+				SceneSurfaceDescription surfaceDescription = (SceneSurfaceDescription)0;
+
+				surfaceDescription.Alpha = ( tex2D( _TextureSample0, uv_TextureSample0 ).a * dither66 );
+
+				#ifdef _ALPHATEST_ON
+				surfaceDescription.AlphaClipThreshold = _AlphaCutoff;
+				#endif
+
+				#if defined( ASE_CHANGES_WORLD_POS )
+					posInput.positionWS = PositionRWS;
+				#endif
+
+				#if defined( ASE_DEPTH_WRITE_ON )
+					#if !defined( _DEPTHOFFSET_ON )
+						posInput.deviceDepth = input.positionSS.z;
+					#else
+						surfaceDescription.DepthOffset = 0;
+					#endif
+				#endif
+
+				SurfaceData surfaceData;
+				BuiltinData builtinData;
+				GetSurfaceAndBuiltinData(surfaceDescription, input, V, posInput, surfaceData, builtinData);
+
+				#if defined( ASE_DEPTH_WRITE_ON )
+					outputDepth = posInput.deviceDepth;
+				#endif
+
+				outColor = float4( _ObjectId, _PassValue, 1.0, 1.0 );
+			}
+			ENDHLSL
+		}
+
+		
+		Pass
+		{
+			
+			Name "DepthOnly"
+			Tags { "LightMode"="DepthOnly" }
+
+			Cull [_CullMode]
+			ZWrite On
+
+			Stencil
+			{
+				Ref [_StencilRefDepth]
+				WriteMask [_StencilWriteMaskDepth]
+				Comp Always
+				Pass Replace
+			}
+
+
+			HLSLPROGRAM
+			#define ASE_GEOMETRY
+			#pragma shader_feature_local _ _DOUBLESIDED_ON
+			#define ASE_FRAGMENT_NORMAL 0
+			#pragma shader_feature_local_fragment _ _DISABLE_DECALS
+			#define _SPECULAR_OCCLUSION_FROM_AO 1
+			#pragma multi_compile_instancing
+			#pragma instancing_options renderinglayer
+			#pragma shader_feature_local _ _ALPHATEST_ON
+			#define HAVE_MESH_MODIFICATION
+			#define ASE_VERSION 19904
+			#define ASE_SRP_VERSION 170200
+
+			#pragma multi_compile _ DOTS_INSTANCING_ON
+
+            #pragma shader_feature _ _SURFACE_TYPE_TRANSPARENT
+            #pragma shader_feature_local _ _TRANSPARENT_WRITES_MOTION_VEC _TRANSPARENT_REFRACTIVE_SORT
+            #pragma shader_feature_local_fragment _ _ENABLE_FOG_ON_TRANSPARENT
+
+            #pragma multi_compile _ WRITE_NORMAL_BUFFER
+            #pragma multi_compile_fragment _ WRITE_MSAA_DEPTH
+            #pragma multi_compile_fragment _ WRITE_DECAL_BUFFER WRITE_RENDERING_LAYER
+
+			#pragma vertex Vert
+			#pragma fragment Frag
+
+            #define SHADERPASS SHADERPASS_DEPTH_ONLY
+
+			#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
+			#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/GeometricTools.hlsl"
+			#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Tessellation.hlsl"
+			#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Texture.hlsl"
+			#include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/ShaderVariables.hlsl"
+			#include "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/ShaderPass/ShaderPass.cs.hlsl"
+			#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/TextureStack.hlsl"
+			#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/DebugMipmapStreamingMacros.hlsl"
+            #include "Packages/com.unity.shadergraph/ShaderGraphLibrary/Functions.hlsl"
+
+			#include "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/ShaderPass/FragInputs.hlsl"
+
+            #ifdef RAYTRACING_SHADER_GRAPH_DEFAULT
+                #define RAYTRACING_SHADER_GRAPH_HIGH
+            #endif
+
+            #ifdef RAYTRACING_SHADER_GRAPH_RAYTRACED
+                #define RAYTRACING_SHADER_GRAPH_LOW
+            #endif
+
+            #ifndef SHADER_UNLIT
+            #if defined(_DOUBLESIDED_ON) && !defined(VARYINGS_NEED_CULLFACE)
+                #define VARYINGS_NEED_CULLFACE
+            #endif
+            #endif
+
+			#if defined(_DOUBLESIDED_ON) && !defined(ASE_NEED_CULLFACE)
+			    #define ASE_NEED_CULLFACE 1
+			#endif
+
+            #if _MATERIAL_FEATURE_COLORED_TRANSMISSION
+            #undef _MATERIAL_FEATURE_CLEAR_COAT
+            #endif
+
+		    #if defined(_MATERIAL_FEATURE_SUBSURFACE_SCATTERING) && !defined(_SURFACE_TYPE_TRANSPARENT)
+			#define OUTPUT_SPLIT_LIGHTING
+		    #endif
+
+		    #if (SHADERPASS == SHADERPASS_PATH_TRACING) && !defined(_DOUBLESIDED_ON) && (defined(_REFRACTION_PLANE) || defined(_REFRACTION_SPHERE))
+			#undef  _REFRACTION_PLANE
+			#undef  _REFRACTION_SPHERE
+			#define _REFRACTION_THIN
+		    #endif
+
+            #if SHADERPASS == SHADERPASS_TRANSPARENT_DEPTH_PREPASS
+            #if !defined(_DISABLE_SSR_TRANSPARENT) && !defined(SHADER_UNLIT)
+                #define WRITE_NORMAL_BUFFER
+            #endif
+            #endif
+
+            #if SHADERPASS == SHADERPASS_MOTION_VECTORS && defined(WRITE_DECAL_BUFFER_AND_RENDERING_LAYER)
+                #define WRITE_DECAL_BUFFER
+            #endif
+
+            #ifndef DEBUG_DISPLAY
+                #if !defined(_SURFACE_TYPE_TRANSPARENT)
+                    #if SHADERPASS == SHADERPASS_FORWARD
+                    #define SHADERPASS_FORWARD_BYPASS_ALPHA_TEST
+                    #elif SHADERPASS == SHADERPASS_GBUFFER
+                    #define SHADERPASS_GBUFFER_BYPASS_ALPHA_TEST
+                    #endif
+                #endif
+            #endif
+
+            #if defined(SHADER_LIT) && !defined(_SURFACE_TYPE_TRANSPARENT)
+                #define _DEFERRED_CAPABLE_MATERIAL
+            #endif
+
+            #if (defined(_TRANSPARENT_WRITES_MOTION_VEC) || defined(_TRANSPARENT_REFRACTIVE_SORT)) && defined(_SURFACE_TYPE_TRANSPARENT)
+                #define _WRITE_TRANSPARENT_MOTION_VECTOR
+            #endif
+
+			CBUFFER_START( UnityPerMaterial )
+			float4 _Color;
+			float4 _TextureSample0_ST;
+			float2 _WindSpeed;
+			float _Size;
+			float _Windintensity;
+			float _Windinalbedo;
+			float _Smoothness;
+			float _BottomGradientsize;
+			float _BottomGradient;
+			float _Fresneldither;
+			float4 _EmissionColor;
+			float _AlphaCutoff;
+			float _RenderQueueType;
+			#ifdef _ADD_PRECOMPUTED_VELOCITY
+			    float _AddPrecomputedVelocity;
+			#endif
+			float _StencilRef;
+			float _StencilWriteMask;
+			float _StencilRefDepth;
+			float _StencilWriteMaskDepth;
+			float _StencilRefMV;
+			float _StencilWriteMaskMV;
+			float _StencilRefDistortionVec;
+			float _StencilWriteMaskDistortionVec;
+			float _StencilWriteMaskGBuffer;
+			float _StencilRefGBuffer;
+			float _ZTestGBuffer;
+			float _RequireSplitLighting;
+			float _ReceivesSSR;
+			float _SurfaceType;
+			float _BlendMode;
+            #ifdef SUPPORT_BLENDMODE_PRESERVE_SPECULAR_LIGHTING
+			    float _EnableBlendModePreserveSpecularLighting;
+            #endif
+			float _SrcBlend;
+			float _DstBlend;
+			float _DstBlend2;
+			float _AlphaSrcBlend;
+			float _AlphaDstBlend;
+			float _ZWrite;
+			float _TransparentZWrite;
+			float _CullMode;
+			float _TransparentSortPriority;
+			float _EnableFogOnTransparent;
+			float _CullModeForward;
+			float _TransparentCullMode;
+			float _ZTestDepthEqualForOpaque;
+			float _ZTestTransparent;
+			float _TransparentBackfaceEnable;
+			float _AlphaCutoffEnable;
+			float _UseShadowThreshold;
+			float _DoubleSidedEnable;
+			float _DoubleSidedNormalMode;
+			float4 _DoubleSidedConstants;
+			#ifdef ASE_TESSELLATION
+			    float _TessPhongStrength;
+			    float _TessValue;
+			    float _TessMin;
+			    float _TessMax;
+			    float _TessEdgeLength;
+			    float _TessMaxDisp;
+			#endif
+			UNITY_TEXTURE_STREAMING_DEBUG_VARS;
+			CBUFFER_END
+
+            #ifdef SCENEPICKINGPASS
+			float4 _SelectionID;
+            #endif
+
+            #ifdef SCENESELECTIONPASS
+			int _ObjectId;
+			int _PassValue;
+            #endif
+
+			sampler2D _Noisetexture;
+			sampler2D _TextureSample0;
+
+
+            #ifdef DEBUG_DISPLAY
+            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Debug/DebugDisplay.hlsl"
+            #endif
+
+			#include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Material.hlsl"
+			#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/NormalSurfaceGradient.hlsl"
+			#include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Lit/Lit.hlsl"
+			#include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/BuiltinUtilities.hlsl"
+			#include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/MaterialUtilities.hlsl"
+			#include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/ShaderGraphFunctions.hlsl"
+
+			#include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Decal/DecalUtilities.hlsl"
+			#include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Lit/LitDecalData.hlsl"
+
+        	#ifdef HAVE_VFX_MODIFICATION
+			#include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/VisualEffectVertex.hlsl"
+        	#endif
+
+			#if defined( UNITY_INSTANCING_ENABLED ) && defined( ASE_INSTANCED_TERRAIN ) && ( defined(_TERRAIN_INSTANCED_PERPIXEL_NORMAL) || defined(_INSTANCEDTERRAINNORMALS_PIXEL) )
+				#define ENABLE_TERRAIN_PERPIXEL_NORMAL
+			#endif
+
+			#define ASE_NEEDS_TEXTURE_COORDINATES0
+			#define ASE_NEEDS_VERT_TEXTURE_COORDINATES0
+			#define ASE_NEEDS_FRAG_SCREEN_POSITION_NORMALIZED
+			#define ASE_NEEDS_FRAG_TEXTURE_COORDINATES0
+			#define ASE_NEEDS_FRAG_WORLD_VIEW_DIR
+			#define ASE_NEEDS_WORLD_NORMAL
+			#define ASE_NEEDS_FRAG_WORLD_NORMAL
+			#define ASE_NEEDS_VERT_POSITION
+
+
+			struct AttributesMesh
+			{
+				float3 positionOS : POSITION;
+				float3 normalOS : NORMAL;
+				float4 tangentOS : TANGENT;
+				float4 uv0 : TEXCOORD0;
+				
+				UNITY_VERTEX_INPUT_INSTANCE_ID
+			};
+
+			struct PackedVaryingsMeshToPS
+			{
+				SV_POSITION_QUALIFIERS float4 positionCS : SV_Position;
+				float3 positionRWS : TEXCOORD0;
+				float3 normalWS : TEXCOORD1;
+				float4 tangentWS : TEXCOORD2; // holds terrainUV ifdef ENABLE_TERRAIN_PERPIXEL_NORMAL
+				float4 ase_texcoord3 : TEXCOORD3;
+				UNITY_VERTEX_INPUT_INSTANCE_ID
+				UNITY_VERTEX_OUTPUT_STEREO
+				#if defined(SHADER_STAGE_FRAGMENT) && defined(ASE_NEED_CULLFACE)
+				FRONT_FACE_TYPE cullFace : FRONT_FACE_SEMANTIC;
+				#endif
+			};
+
+			float4 ASEScreenPositionNormalizedToPixel( float4 screenPosNorm, float4 screenParams )
+			{
+				float4 screenPosPixel = screenPosNorm * float4( screenParams.xy, 1, 1 );
+				#if UNITY_UV_STARTS_AT_TOP
+					screenPosPixel.xy = float2( screenPosPixel.x, ( _ProjectionParams.x < 0 ) ? screenParams.y - screenPosPixel.y : screenPosPixel.y );
+				#else
+					screenPosPixel.xy = float2( screenPosPixel.x, ( _ProjectionParams.x > 0 ) ? screenParams.y - screenPosPixel.y : screenPosPixel.y );
+				#endif
+				return screenPosPixel;
+			}
+			
+			inline float Dither4x4Bayer( uint x, uint y )
+			{
+				const float dither[ 16 ] = {
+				     1,  9,  3, 11,
+				    13,  5, 15,  7,
+				     4, 12,  2, 10,
+				    16,  8, 14,  6 };
+				uint r = y * 4 + x;
+				return dither[ min( r, 15 ) ] / 16; // same # of instructions as pre-dividing due to compiler magic
+			}
+			
+
+			void BuildSurfaceData(FragInputs fragInputs, inout SmoothSurfaceDescription surfaceDescription, float3 V, PositionInputs posInput, out SurfaceData surfaceData, out float3 bentNormalWS)
+			{
+				ZERO_INITIALIZE(SurfaceData, surfaceData);
+
+				surfaceData.specularOcclusion = 1.0;
+				surfaceData.thickness = 0.0;
+
+				surfaceData.perceptualSmoothness =		surfaceDescription.Smoothness;
+
+				// refraction
+                #if defined(_REFRACTION_PLANE) || defined(_REFRACTION_SPHERE) || defined(_REFRACTION_THIN)
+                    if (_EnableSSRefraction)
+                    {
+                        surfaceData.ior =                       surfaceDescription.RefractionIndex;
+                        surfaceData.transmittanceColor =        surfaceDescription.RefractionColor;
+                        surfaceData.atDistance =                surfaceDescription.RefractionDistance;
+                        surfaceData.transmittanceMask = (1.0 - surfaceDescription.Alpha);
+                        surfaceDescription.Alpha = 1.0;
+                    }
+                    else
+                    {
+                        surfaceData.ior = 1.0;
+                        surfaceData.transmittanceColor = float3(1.0, 1.0, 1.0);
+                        surfaceData.atDistance = 1.0;
+                        surfaceData.transmittanceMask = 0.0;
+                        surfaceDescription.Alpha = 1.0;
+                    }
+                #else
+                    surfaceData.ior = 1.0;
+                    surfaceData.transmittanceColor = float3(1.0, 1.0, 1.0);
+                    surfaceData.atDistance = 1.0;
+                    surfaceData.transmittanceMask = 0.0;
+                #endif
+
+				surfaceData.materialFeatures = MATERIALFEATUREFLAGS_LIT_STANDARD;
+
+				#ifdef _MATERIAL_FEATURE_SUBSURFACE_SCATTERING
+				if (surfaceData.subsurfaceMask > 0)
+                    surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_LIT_SUBSURFACE_SCATTERING;
+				#endif
+
+				#ifdef _MATERIAL_FEATURE_TRANSMISSION
+                    surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_LIT_TRANSMISSION;
+				#endif
+
+				#ifdef _MATERIAL_FEATURE_COLORED_TRANSMISSION
+                    surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_LIT_TRANSMISSION;
+                    surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_LIT_COLORED_TRANSMISSION;
+				#endif
+
+                #ifdef _MATERIAL_FEATURE_ANISOTROPY
+                    surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_LIT_ANISOTROPY;
+                    surfaceData.normalWS = float3(0, 1, 0);
+                #endif
+
+				#ifdef _MATERIAL_FEATURE_CLEAR_COAT
+                    surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_LIT_CLEAR_COAT;
+				#endif
+
+				#ifdef _MATERIAL_FEATURE_IRIDESCENCE
+                    surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_LIT_IRIDESCENCE;
+				#endif
+
+				#ifdef _MATERIAL_FEATURE_SPECULAR_COLOR
+                    surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_LIT_SPECULAR_COLOR;
+				#endif
+
+				#if defined (_MATERIAL_FEATURE_SPECULAR_COLOR) && defined (_ENERGY_CONSERVING_SPECULAR)
+                    surfaceData.baseColor *= ( 1.0 - Max3( surfaceData.specularColor.r, surfaceData.specularColor.g, surfaceData.specularColor.b ) );
+				#endif
+
+				#ifdef _DOUBLESIDED_ON
+					float3 doubleSidedConstants = _DoubleSidedConstants.xyz;
+				#else
+					float3 doubleSidedConstants = float3( 1.0, 1.0, 1.0 );
+				#endif
+
+				float3 normal = surfaceDescription.Normal;
+
+				#ifdef DECAL_NORMAL_BLENDING
+					#ifndef SURFACE_GRADIENT
+					#if ( ASE_FRAGMENT_NORMAL == 1 )
+						normal = SurfaceGradientFromPerturbedNormal(TransformWorldToObjectNormal(fragInputs.tangentToWorld[2]), normal);
+					#elif ( ASE_FRAGMENT_NORMAL == 2 )
+						normal = SurfaceGradientFromPerturbedNormal(fragInputs.tangentToWorld[2], normal);
+					#else
+						normal = SurfaceGradientFromTangentSpaceNormalAndFromTBN(normal, fragInputs.tangentToWorld[0], fragInputs.tangentToWorld[1]);
+					#endif
+					#endif
+
+					#if HAVE_DECALS
+					if (_EnableDecals)
+					{
+						DecalSurfaceData decalSurfaceData = GetDecalSurfaceData(posInput, fragInputs, surfaceDescription.Alpha);
+						ApplyDecalToSurfaceNormal(decalSurfaceData, fragInputs.tangentToWorld[2], normal);
+						ApplyDecalToSurfaceDataNoNormal(decalSurfaceData, surfaceData);
+					}
+					#endif
+
+					GetNormalWS_SG(fragInputs, normal, surfaceData.normalWS, doubleSidedConstants);
+				#else
+					#if ( ASE_FRAGMENT_NORMAL == 1 )
+						GetNormalWS_SrcOS(fragInputs, normal, surfaceData.normalWS, doubleSidedConstants);
+					#elif ( ASE_FRAGMENT_NORMAL == 2 )
+						GetNormalWS_SrcWS(fragInputs, normal, surfaceData.normalWS, doubleSidedConstants);
+					#else
+						GetNormalWS(fragInputs, normal, surfaceData.normalWS, doubleSidedConstants);
+					#endif
+
+					#if HAVE_DECALS
+					if (_EnableDecals)
+					{
+						DecalSurfaceData decalSurfaceData = GetDecalSurfaceData(posInput, fragInputs, surfaceDescription.Alpha);
+						ApplyDecalToSurfaceNormal(decalSurfaceData, surfaceData.normalWS.xyz);
+						ApplyDecalToSurfaceDataNoNormal(decalSurfaceData, surfaceData);
+					}
+					#endif
+				#endif
+
+				surfaceData.geomNormalWS = fragInputs.tangentToWorld[2];
+                surfaceData.tangentWS = normalize(fragInputs.tangentToWorld[0].xyz );
+                surfaceData.tangentWS = Orthonormalize(surfaceData.tangentWS, surfaceData.normalWS);
+
+				bentNormalWS = surfaceData.normalWS;
+
+				#if defined(DEBUG_DISPLAY)
+					#if !defined(SHADER_STAGE_RAY_TRACING)
+					if (_DebugMipMapMode != DEBUGMIPMAPMODE_NONE)
+					{
+						#ifdef FRAG_INPUTS_USE_TEXCOORD0
+							surfaceData.baseColor = GET_TEXTURE_STREAMING_DEBUG(posInput.positionSS, fragInputs.texCoord0);
+						#else
+							surfaceData.baseColor = GET_TEXTURE_STREAMING_DEBUG_NO_UV(posInput.positionSS);
+						#endif
+						surfaceData.metallic = 0;
+					}
+					#endif
+					ApplyDebugToSurfaceData(fragInputs.tangentToWorld, surfaceData);
+				#endif
+
+                #if defined(_SPECULAR_OCCLUSION_CUSTOM)
+                #elif defined(_SPECULAR_OCCLUSION_FROM_AO_BENT_NORMAL)
+                    surfaceData.specularOcclusion = GetSpecularOcclusionFromBentAO(V, bentNormalWS, surfaceData.normalWS, surfaceData.ambientOcclusion, PerceptualSmoothnessToPerceptualRoughness(surfaceData.perceptualSmoothness));
+                #elif defined(_AMBIENT_OCCLUSION) && defined(_SPECULAR_OCCLUSION_FROM_AO)
+                    surfaceData.specularOcclusion = GetSpecularOcclusionFromAmbientOcclusion(ClampNdotV(dot(surfaceData.normalWS, V)), surfaceData.ambientOcclusion, PerceptualSmoothnessToRoughness(surfaceData.perceptualSmoothness));
+                #endif
+
+                #ifdef _ENABLE_GEOMETRIC_SPECULAR_AA
+                    surfaceData.perceptualSmoothness = GeometricNormalFiltering(surfaceData.perceptualSmoothness, fragInputs.tangentToWorld[2], surfaceDescription.SpecularAAScreenSpaceVariance, surfaceDescription.SpecularAAThreshold);
+                #endif
+			}
+
+			// Get Surface And BuiltinData
+			void GetSurfaceAndBuiltinData(SmoothSurfaceDescription surfaceDescription, FragInputs fragInputs, float3 V, inout PositionInputs posInput, out SurfaceData surfaceData, out BuiltinData builtinData)
+			{
+				#ifdef LOD_FADE_CROSSFADE
+                    LODDitheringTransition(ComputeFadeMaskSeed(V, posInput.positionSS), unity_LODFade.x);
+				#endif
+
+                #ifdef _DOUBLESIDED_ON
+                    float3 doubleSidedConstants = _DoubleSidedConstants.xyz;
+                #else
+                    float3 doubleSidedConstants = float3(1.0, 1.0, 1.0);
+                #endif
+                ApplyDoubleSidedFlipOrMirror(fragInputs, doubleSidedConstants);
+
+				#ifdef _ALPHATEST_ON
+                    DoAlphaTest( surfaceDescription.Alpha, surfaceDescription.AlphaClipThreshold );
+				#endif
+
+				#ifdef _ALPHATEST_SHADOW_ON
+                    DoAlphaTest( surfaceDescription.Alpha, surfaceDescription.AlphaClipThresholdShadow);
+				#endif
+
+				#ifdef _DEPTHOFFSET_ON
+                    ApplyDepthOffsetPositionInput(V, surfaceDescription.DepthOffset, GetViewForwardDir(), GetWorldToHClipMatrix(), posInput);
+				#endif
+
+                float3 bentNormalWS;
+                BuildSurfaceData(fragInputs, surfaceDescription, V, posInput, surfaceData, bentNormalWS);
+                InitBuiltinData(posInput, surfaceDescription.Alpha, bentNormalWS, -fragInputs.tangentToWorld[2], fragInputs.texCoord1, fragInputs.texCoord2, builtinData);
+
+				#ifdef _DEPTHOFFSET_ON
+                    builtinData.depthOffset = surfaceDescription.DepthOffset;
+				#endif
+
+                #ifdef _ALPHATEST_ON
+                    builtinData.alphaClipTreshold = surfaceDescription.AlphaClipThreshold;
+                #endif
+
+                #ifdef UNITY_VIRTUAL_TEXTURING
+                    builtinData.vtPackedFeedback = surfaceDescription.VTPackedFeedback;
+                #endif
+
+				#ifdef ASE_BAKEDGI
+                    builtinData.bakeDiffuseLighting = surfaceDescription.BakedGI;
+				#endif
+
+				#ifdef ASE_BAKEDBACKGI
+                    builtinData.backBakeDiffuseLighting = surfaceDescription.BakedBackGI;
+				#endif
+
+                builtinData.emissiveColor = surfaceDescription.Emission;
+
+                PostInitBuiltinData(V, posInput, surfaceData, builtinData);
+			}
+
+			#if (defined(WRITE_DECAL_BUFFER) && !defined(_DISABLE_DECALS)) || defined(WRITE_RENDERING_LAYER)
+			#include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Decal/DecalPrepassBuffer.hlsl"
+			#endif
+
+			PackedVaryingsMeshToPS VertexFunction(AttributesMesh inputMesh )
+			{
+				PackedVaryingsMeshToPS output;
+
+				UNITY_SETUP_INSTANCE_ID(inputMesh);
+				UNITY_TRANSFER_INSTANCE_ID(inputMesh, output);
+				UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO( output );
+
+				float3 ase_positionWS = GetAbsolutePositionWS( TransformObjectToWorld( ( inputMesh.positionOS ).xyz ) );
+				float2 appendResult4_g12 = (float2(ase_positionWS.x , ase_positionWS.z));
+				float2 panner8_g12 = ( 1.0 * _Time.y * _WindSpeed + ( appendResult4_g12 / _Size ));
+				float4 tex2DNode9_g12 = tex2Dlod( _Noisetexture, float4( panner8_g12, 0, 0.0) );
+				float2 texCoord17_g12 = inputMesh.uv0.xy * float2( 1,1 ) + float2( 0,0 );
+				
+				float3 objectToViewPos = TransformWorldToView( TransformObjectToWorld( inputMesh.positionOS ) );
+				float eyeDepth = -objectToViewPos.z;
+				output.ase_texcoord3.z = eyeDepth;
+				
+				output.ase_texcoord3.xy = inputMesh.uv0.xy;
+				
+				//setting value to unused interpolator channels and avoid initialization warnings
+				output.ase_texcoord3.w = 0;
+
+				#ifdef ASE_ABSOLUTE_VERTEX_POS
+				float3 defaultVertexValue = inputMesh.positionOS.xyz;
+				#else
+				float3 defaultVertexValue = float3( 0, 0, 0 );
+				#endif
+				float3 vertexValue = ( tex2DNode9_g12 * _Windintensity * texCoord17_g12.y ).rgb;
+
+				#ifdef ASE_ABSOLUTE_VERTEX_POS
+				inputMesh.positionOS.xyz = vertexValue;
+				#else
+				inputMesh.positionOS.xyz += vertexValue;
+				#endif
+
+				inputMesh.normalOS = inputMesh.normalOS;
+				inputMesh.tangentOS = inputMesh.tangentOS;
+
+				float3 positionRWS = TransformObjectToWorld(inputMesh.positionOS);
+				float3 normalWS = TransformObjectToWorldNormal(inputMesh.normalOS);
+				float4 tangentWS = float4(TransformObjectToWorldDir(inputMesh.tangentOS.xyz), inputMesh.tangentOS.w);
+
+				output.positionCS = TransformWorldToHClip(positionRWS);
+				output.positionRWS = positionRWS;
+				output.normalWS = normalWS;
+				output.tangentWS = tangentWS;
+
+				#if defined( ENABLE_TERRAIN_PERPIXEL_NORMAL )
+					output.tangentWS.zw = inputMesh.uv0.xy;
+					output.tangentWS.xy = inputMesh.uv0.xy * unity_LightmapST.xy + unity_LightmapST.zw;
+				#endif
+				return output;
+			}
+
+			#if defined(ASE_TESSELLATION)
+			struct VertexControl
+			{
+				float3 positionOS : INTERNALTESSPOS;
+				float3 normalOS : NORMAL;
+				float4 tangentOS : TANGENT;
+				float4 uv0 : TEXCOORD0;
+				
+				UNITY_VERTEX_INPUT_INSTANCE_ID
+			};
+
+			struct TessellationFactors
+			{
+				float edge[3] : SV_TessFactor;
+				float inside : SV_InsideTessFactor;
+			};
+
+			VertexControl Vert ( AttributesMesh v )
+			{
+				VertexControl o;
+				UNITY_SETUP_INSTANCE_ID(v);
+				UNITY_TRANSFER_INSTANCE_ID(v, o);
+				o.positionOS = v.positionOS;
+				o.normalOS = v.normalOS;
+				o.tangentOS = v.tangentOS;
+				o.uv0 = v.uv0;
+				
+				return o;
+			}
+
+			TessellationFactors TessellationFunction (InputPatch<VertexControl,3> v)
+			{
+				TessellationFactors o;
+				float4 tf = 1;
+				float tessValue = _TessValue; float tessMin = _TessMin; float tessMax = _TessMax;
+				float edgeLength = _TessEdgeLength; float tessMaxDisp = _TessMaxDisp;
+				#if (SHADEROPTIONS_CAMERA_RELATIVE_RENDERING != 0)
+				float3 cameraPos = 0;
+				#else
+				float3 cameraPos = _WorldSpaceCameraPos;
+				#endif
+				#if defined(ASE_FIXED_TESSELLATION)
+				tf = FixedTess( tessValue );
+				#elif defined(ASE_DISTANCE_TESSELLATION)
+				tf = DistanceBasedTess(float4(v[0].positionOS,1), float4(v[1].positionOS,1), float4(v[2].positionOS,1), tessValue, tessMin, tessMax, GetObjectToWorldMatrix(), cameraPos );
+				#elif defined(ASE_LENGTH_TESSELLATION)
+				tf = EdgeLengthBasedTess(float4(v[0].positionOS,1), float4(v[1].positionOS,1), float4(v[2].positionOS,1), edgeLength, GetObjectToWorldMatrix(), cameraPos, _ScreenParams );
+				#elif defined(ASE_LENGTH_CULL_TESSELLATION)
+				tf = EdgeLengthBasedTessCull(float4(v[0].positionOS,1), float4(v[1].positionOS,1), float4(v[2].positionOS,1), edgeLength, tessMaxDisp, GetObjectToWorldMatrix(), cameraPos, _ScreenParams, _FrustumPlanes );
+				#endif
+				o.edge[0] = tf.x; o.edge[1] = tf.y; o.edge[2] = tf.z; o.inside = tf.w;
+				return o;
+			}
+
+			[domain("tri")]
+			[partitioning("fractional_odd")]
+			[outputtopology("triangle_cw")]
+			[patchconstantfunc("TessellationFunction")]
+			[outputcontrolpoints(3)]
+			VertexControl HullFunction(InputPatch<VertexControl, 3> patch, uint id : SV_OutputControlPointID)
+			{
+			   return patch[id];
+			}
+
+			[domain("tri")]
+			PackedVaryingsMeshToPS DomainFunction(TessellationFactors factors, OutputPatch<VertexControl, 3> patch, float3 bary : SV_DomainLocation)
+			{
+				AttributesMesh o = (AttributesMesh) 0;
+				o.positionOS = patch[0].positionOS * bary.x + patch[1].positionOS * bary.y + patch[2].positionOS * bary.z;
+				o.normalOS = patch[0].normalOS * bary.x + patch[1].normalOS * bary.y + patch[2].normalOS * bary.z;
+				o.tangentOS = patch[0].tangentOS * bary.x + patch[1].tangentOS * bary.y + patch[2].tangentOS * bary.z;
+				o.uv0 = patch[0].uv0 * bary.x + patch[1].uv0 * bary.y + patch[2].uv0 * bary.z;
+				
+				#if defined(ASE_PHONG_TESSELLATION)
+				float3 pp[3];
+				for (int i = 0; i < 3; ++i)
+					pp[i] = o.positionOS.xyz - patch[i].normalOS * (dot(o.positionOS.xyz, patch[i].normalOS) - dot(patch[i].positionOS.xyz, patch[i].normalOS));
+				float phongStrength = _TessPhongStrength;
+				o.positionOS.xyz = phongStrength * (pp[0]*bary.x + pp[1]*bary.y + pp[2]*bary.z) + (1.0f-phongStrength) * o.positionOS.xyz;
+				#endif
+				UNITY_TRANSFER_INSTANCE_ID(patch[0], o);
+				return VertexFunction(o);
+			}
+			#else
+			PackedVaryingsMeshToPS Vert ( AttributesMesh v )
+			{
+				return VertexFunction( v );
+			}
+			#endif
+
+			#if defined(WRITE_NORMAL_BUFFER) && defined(WRITE_MSAA_DEPTH)
+			#define SV_TARGET_DECAL SV_Target2
+			#elif defined(WRITE_NORMAL_BUFFER) || defined(WRITE_MSAA_DEPTH)
+			#define SV_TARGET_DECAL SV_Target1
+			#else
+			#define SV_TARGET_DECAL SV_Target0
+			#endif
+
+			void Frag( PackedVaryingsMeshToPS packedInput
+						#if defined(SCENESELECTIONPASS) || defined(SCENEPICKINGPASS)
+						, out float4 outColor : SV_Target0
+						#else
+							#ifdef WRITE_MSAA_DEPTH
+							, out float4 depthColor : SV_Target0
+								#ifdef WRITE_NORMAL_BUFFER
+								, out float4 outNormalBuffer : SV_Target1
+								#endif
+							#else
+								#ifdef WRITE_NORMAL_BUFFER
+								, out float4 outNormalBuffer : SV_Target0
+								#endif
+							#endif
+
+							#if (defined(WRITE_DECAL_BUFFER) && !defined(_DISABLE_DECALS)) || defined(WRITE_RENDERING_LAYER)
+							, out float4 outDecalBuffer : SV_TARGET_DECAL
+							#endif
+						#endif
+						#if defined( ASE_DEPTH_WRITE_ON )
+							, out float outputDepth : DEPTH_OFFSET_SEMANTIC
+						#endif
+						 )
+			{
+				UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(packedInput);
+				UNITY_SETUP_INSTANCE_ID(packedInput);
+
+				FragInputs input;
+				ZERO_INITIALIZE(FragInputs, input);
+				input.positionSS = packedInput.positionCS;
+				input.positionRWS = packedInput.positionRWS;
+				input.tangentToWorld = BuildTangentToWorld(packedInput.tangentWS, packedInput.normalWS);
+
+				PositionInputs posInput = GetPositionInput(input.positionSS.xy, _ScreenSize.zw, input.positionSS.z, input.positionSS.w, input.positionRWS);
+
+				#if _DOUBLESIDED_ON && SHADER_STAGE_FRAGMENT
+					input.isFrontFace = IS_FRONT_VFACE(packedInput.cullFace, true, false);
+				#elif SHADER_STAGE_FRAGMENT
+					#if defined(ASE_NEED_CULLFACE)
+						input.isFrontFace = IS_FRONT_VFACE(packedInput.cullFace, true, false);
+					#endif
+				#endif
+
+				half IsFrontFace = input.isFrontFace;
+				float3 PositionRWS = posInput.positionWS;
+				float3 PositionWS = GetAbsolutePositionWS( posInput.positionWS );
+				float3 V = GetWorldSpaceNormalizeViewDir( packedInput.positionRWS );
+				float4 ScreenPosNorm = float4( posInput.positionNDC, packedInput.positionCS.zw );
+				float4 ClipPos = ComputeClipSpacePosition( ScreenPosNorm.xy, packedInput.positionCS.z ) * packedInput.positionCS.w;
+				float4 ScreenPos = ComputeScreenPos( ClipPos, _ProjectionParams.x );
+				float3 NormalWS = packedInput.normalWS;
+				float3 TangentWS = packedInput.tangentWS.xyz;
+				float3 BitangentWS = input.tangentToWorld[ 1 ];
+
+				#if defined( ENABLE_TERRAIN_PERPIXEL_NORMAL )
+					float2 sampleCoords = (packedInput.tangentWS.zw / _TerrainHeightmapRecipSize.zw + 0.5f) * _TerrainHeightmapRecipSize.xy;
+					NormalWS = TransformObjectToWorldNormal(normalize(SAMPLE_TEXTURE2D(_TerrainNormalmapTexture, sampler_TerrainNormalmapTexture, sampleCoords).rgb * 2 - 1));
+					TangentWS = -cross(GetObjectToWorldMatrix()._13_23_33, NormalWS);
+					input.tangentToWorld = BuildTangentToWorld( float4( TangentWS, -1 ), NormalWS );
+					BitangentWS = input.tangentToWorld[ 1 ];
+				#endif
+
+				float2 uv_TextureSample0 = packedInput.ase_texcoord3.xy * _TextureSample0_ST.xy + _TextureSample0_ST.zw;
+				float4 ase_positionSS_Pixel = ASEScreenPositionNormalizedToPixel( ScreenPosNorm, _ScreenParams );
+				float dither66 = Dither4x4Bayer( fmod( ase_positionSS_Pixel.x, 4 ), fmod( ase_positionSS_Pixel.y, 4 ) );
+				float2 texCoord16 = packedInput.ase_texcoord3.xy * float2( 1,1 ) + float2( 0,0 );
+				float smoothstepResult23 = smoothstep( 0.0 , _BottomGradientsize , texCoord16.y);
+				float lerpResult55 = lerp( 1.0 , smoothstepResult23 , _BottomGradient);
+				float fresnelNdotV59 = dot( NormalWS, V );
+				float fresnelNode59 = ( -1.0 + 5.0 * pow( 1.0 - fresnelNdotV59, 2.0 ) );
+				float lerpResult63 = lerp( 1.0 , ( 1.0 - saturate( fresnelNode59 ) ) , _Fresneldither);
+				float eyeDepth = packedInput.ase_texcoord3.z;
+				float cameraDepthFade65 = (( eyeDepth -_ProjectionParams.y - 100.0 ) / 20.0);
+				dither66 = step( dither66, saturate( ( saturate( lerpResult55 ) * saturate( lerpResult63 ) * ( 1.0 - saturate( cameraDepthFade65 ) ) ) * 1.00001 ) );
+				
+
+				SmoothSurfaceDescription surfaceDescription = (SmoothSurfaceDescription)0;
+
+				surfaceDescription.Normal = float3( 0, 0, 1 );
+				surfaceDescription.Smoothness = _Smoothness;
+				surfaceDescription.Alpha = ( tex2D( _TextureSample0, uv_TextureSample0 ).a * dither66 );
+
+				#ifdef _ALPHATEST_ON
+				surfaceDescription.AlphaClipThreshold = _AlphaCutoff;
+				#endif
+
+				#if defined( ASE_CHANGES_WORLD_POS )
+					posInput.positionWS = PositionRWS;
+				#endif
+
+				#if defined( ASE_DEPTH_WRITE_ON )
+					#if !defined( _DEPTHOFFSET_ON )
+						posInput.deviceDepth = input.positionSS.z;
+					#else
+						surfaceDescription.DepthOffset = 0;
+					#endif
+				#endif
+
+				SurfaceData surfaceData;
+				BuiltinData builtinData;
+				GetSurfaceAndBuiltinData(surfaceDescription, input, V, posInput, surfaceData, builtinData);
+
+                #if defined( ASE_DEPTH_WRITE_ON )
+					outputDepth = posInput.deviceDepth;
+				#endif
+
+                #if SHADERPASS == SHADERPASS_SHADOWS
+                float bias = max(abs(ddx(posInput.deviceDepth)), abs(ddy(posInput.deviceDepth))) * _SlopeScaleDepthBias;
+                outputDepth += bias;
+                #endif
+
+				#ifdef SCENESELECTIONPASS
+    				outColor = float4(_ObjectId, _PassValue, 1.0, 1.0);
+				#elif defined(SCENEPICKINGPASS)
+    				outColor = unity_SelectionID;
+				#else
+    				#ifdef WRITE_MSAA_DEPTH
+    					depthColor = packedInput.positionCS.z;
+    					depthColor.a = SharpenAlpha(builtinData.opacity, builtinData.alphaClipTreshold);
+    				#endif
+
+    				#if defined(WRITE_NORMAL_BUFFER)
+    				EncodeIntoNormalBuffer(ConvertSurfaceDataToNormalData(surfaceData), outNormalBuffer);
+    				#endif
+
+    				#if (defined(WRITE_DECAL_BUFFER) && !defined(_DISABLE_DECALS)) || defined(WRITE_RENDERING_LAYER)
+    				DecalPrepassData decalPrepassData;
+                    #ifdef _DISABLE_DECALS
+				    ZERO_INITIALIZE(DecalPrepassData, decalPrepassData);
+                    #else
+    				decalPrepassData.geomNormalWS = surfaceData.geomNormalWS;
+                    #endif
+    				decalPrepassData.renderingLayerMask = GetMeshRenderingLayerMask();
+    				EncodeIntoDecalPrepassBuffer(decalPrepassData, outDecalBuffer);
+    				#endif
+				#endif // SCENESELECTIONPASS
 			}
 
 			ENDHLSL
@@ -3463,25 +4239,36 @@ Shader "Grass Test"
 
 
 			HLSLPROGRAM
+			#define ASE_GEOMETRY
+			#pragma shader_feature_local _ _DOUBLESIDED_ON
+			#define ASE_FRAGMENT_NORMAL 0
+			#pragma shader_feature_local_fragment _ _DISABLE_DECALS
+			#define _SPECULAR_OCCLUSION_FROM_AO 1
+			#pragma multi_compile_instancing
+			#pragma instancing_options renderinglayer
+			#pragma shader_feature_local _ _ALPHATEST_ON
+			#define HAVE_MESH_MODIFICATION
+			#define ASE_VERSION 19904
+			#define ASE_SRP_VERSION 170200
 
-            #define _SPECULAR_OCCLUSION_FROM_AO 1
-            #pragma multi_compile_instancing
-            #pragma instancing_options renderinglayer
-            #define ASE_SRP_VERSION 140012
+			#pragma multi_compile _ DOTS_INSTANCING_ON
 
+            #pragma shader_feature _ _SURFACE_TYPE_TRANSPARENT
+            #pragma shader_feature_local _ _TRANSPARENT_WRITES_MOTION_VEC _TRANSPARENT_REFRACTIVE_SORT
+            #pragma shader_feature_local_fragment _ _ENABLE_FOG_ON_TRANSPARENT
 
-            #pragma shader_feature _SURFACE_TYPE_TRANSPARENT
-			#pragma shader_feature_local _TRANSPARENT_WRITES_MOTION_VEC
-			#pragma shader_feature_local_fragment _ENABLE_FOG_ON_TRANSPARENT
-			#pragma shader_feature_local _DOUBLESIDED_ON
-			#pragma shader_feature_local _ALPHATEST_ON
+            #pragma multi_compile _ WRITE_NORMAL_BUFFER
+            #pragma multi_compile_fragment _ WRITE_MSAA_DEPTH
+            #pragma multi_compile_fragment _ WRITE_DECAL_BUFFER_AND_RENDERING_LAYER
 
-			#pragma multi_compile _ WRITE_NORMAL_BUFFER
-			#pragma multi_compile_fragment _ WRITE_MSAA_DEPTH
-			#pragma multi_compile _ WRITE_DECAL_BUFFER
+			#ifdef WRITE_DECAL_BUFFER_AND_RENDERING_LAYER
+			#define WRITE_DECAL_BUFFER
+			#endif
 
 			#pragma vertex Vert
 			#pragma fragment Frag
+
+            #define SHADERPASS SHADERPASS_MOTION_VECTORS
 
 			#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
 			#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/GeometricTools.hlsl"
@@ -3490,17 +4277,32 @@ Shader "Grass Test"
 			#include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/ShaderVariables.hlsl"
 			#include "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/ShaderPass/ShaderPass.cs.hlsl"
 			#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/TextureStack.hlsl"
+			#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/DebugMipmapStreamingMacros.hlsl"
             #include "Packages/com.unity.shadergraph/ShaderGraphLibrary/Functions.hlsl"
 
 			#include "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/ShaderPass/FragInputs.hlsl"
 
-			#define SHADERPASS SHADERPASS_MOTION_VECTORS
+            #ifdef RAYTRACING_SHADER_GRAPH_DEFAULT
+                #define RAYTRACING_SHADER_GRAPH_HIGH
+            #endif
 
-			#ifndef SHADER_UNLIT
-			#if defined(_DOUBLESIDED_ON) && !defined(VARYINGS_NEED_CULLFACE)
-			#define VARYINGS_NEED_CULLFACE
+            #ifdef RAYTRACING_SHADER_GRAPH_RAYTRACED
+               #define RAYTRACING_SHADER_GRAPH_LOW
+            #endif
+
+            #ifndef SHADER_UNLIT
+            #if defined(_DOUBLESIDED_ON) && !defined(VARYINGS_NEED_CULLFACE)
+                #define VARYINGS_NEED_CULLFACE
+            #endif
+            #endif
+
+			#if defined(_DOUBLESIDED_ON) && !defined(ASE_NEED_CULLFACE)
+			     #define ASE_NEED_CULLFACE 1
 			#endif
-			#endif
+
+            #if _MATERIAL_FEATURE_COLORED_TRANSMISSION
+            #undef _MATERIAL_FEATURE_CLEAR_COAT
+            #endif
 
 		    #if defined(_MATERIAL_FEATURE_SUBSURFACE_SCATTERING) && !defined(_SURFACE_TYPE_TRANSPARENT)
 			#define OUTPUT_SPLIT_LIGHTING
@@ -3512,39 +4314,50 @@ Shader "Grass Test"
 			#define _REFRACTION_THIN
 		    #endif
 
-			#if SHADERPASS == SHADERPASS_TRANSPARENT_DEPTH_PREPASS
-			#if !defined(_DISABLE_SSR_TRANSPARENT) && !defined(SHADER_UNLIT)
-				#define WRITE_NORMAL_BUFFER
-			#endif
-			#endif
+            #if SHADERPASS == SHADERPASS_TRANSPARENT_DEPTH_PREPASS
+            #if !defined(_DISABLE_SSR_TRANSPARENT) && !defined(SHADER_UNLIT)
+                #define WRITE_NORMAL_BUFFER
+            #endif
+            #endif
 
-			#ifndef DEBUG_DISPLAY
-				#if !defined(_SURFACE_TYPE_TRANSPARENT)
-					#if SHADERPASS == SHADERPASS_FORWARD
-					#define SHADERPASS_FORWARD_BYPASS_ALPHA_TEST
-					#elif SHADERPASS == SHADERPASS_GBUFFER
-					#define SHADERPASS_GBUFFER_BYPASS_ALPHA_TEST
-					#endif
-				#endif
-			#endif
+            #if SHADERPASS == SHADERPASS_MOTION_VECTORS && defined(WRITE_DECAL_BUFFER_AND_RENDERING_LAYER)
+                #define WRITE_DECAL_BUFFER
+            #endif
 
-			#if defined(SHADER_LIT) && !defined(_SURFACE_TYPE_TRANSPARENT)
-			#define _DEFERRED_CAPABLE_MATERIAL
-			#endif
+            #ifndef DEBUG_DISPLAY
+                #if !defined(_SURFACE_TYPE_TRANSPARENT)
+                    #if SHADERPASS == SHADERPASS_FORWARD
+                    #define SHADERPASS_FORWARD_BYPASS_ALPHA_TEST
+                    #elif SHADERPASS == SHADERPASS_GBUFFER
+                    #define SHADERPASS_GBUFFER_BYPASS_ALPHA_TEST
+                    #endif
+                #endif
+            #endif
 
-			#if defined(_TRANSPARENT_WRITES_MOTION_VEC) && defined(_SURFACE_TYPE_TRANSPARENT)
-			#define _WRITE_TRANSPARENT_MOTION_VECTOR
-			#endif
+            #if defined(SHADER_LIT) && !defined(_SURFACE_TYPE_TRANSPARENT)
+                #define _DEFERRED_CAPABLE_MATERIAL
+            #endif
+
+            #if (defined(_TRANSPARENT_WRITES_MOTION_VEC) || defined(_TRANSPARENT_REFRACTIVE_SORT)) && defined(_SURFACE_TYPE_TRANSPARENT)
+                #define _WRITE_TRANSPARENT_MOTION_VECTOR
+            #endif
 
 			CBUFFER_START( UnityPerMaterial )
-			float4 _Color0;
+			float4 _Color;
 			float4 _TextureSample0_ST;
+			float2 _WindSpeed;
+			float _Size;
+			float _Windintensity;
+			float _Windinalbedo;
 			float _Smoothness;
+			float _BottomGradientsize;
+			float _BottomGradient;
+			float _Fresneldither;
 			float4 _EmissionColor;
 			float _AlphaCutoff;
 			float _RenderQueueType;
 			#ifdef _ADD_PRECOMPUTED_VELOCITY
-			float _AddPrecomputedVelocity;
+			    float _AddPrecomputedVelocity;
 			#endif
 			float _StencilRef;
 			float _StencilWriteMask;
@@ -3552,6 +4365,8 @@ Shader "Grass Test"
 			float _StencilWriteMaskDepth;
 			float _StencilRefMV;
 			float _StencilWriteMaskMV;
+			float _StencilRefDistortionVec;
+			float _StencilWriteMaskDistortionVec;
 			float _StencilWriteMaskGBuffer;
 			float _StencilRefGBuffer;
 			float _ZTestGBuffer;
@@ -3560,10 +4375,11 @@ Shader "Grass Test"
 			float _SurfaceType;
 			float _BlendMode;
             #ifdef SUPPORT_BLENDMODE_PRESERVE_SPECULAR_LIGHTING
-			float _EnableBlendModePreserveSpecularLighting;
+			    float _EnableBlendModePreserveSpecularLighting;
             #endif
 			float _SrcBlend;
 			float _DstBlend;
+			float _DstBlend2;
 			float _AlphaSrcBlend;
 			float _AlphaDstBlend;
 			float _ZWrite;
@@ -3582,26 +4398,26 @@ Shader "Grass Test"
 			float _DoubleSidedNormalMode;
 			float4 _DoubleSidedConstants;
 			#ifdef ASE_TESSELLATION
-			float _TessPhongStrength;
-			float _TessValue;
-			float _TessMin;
-			float _TessMax;
-			float _TessEdgeLength;
-			float _TessMaxDisp;
+			    float _TessPhongStrength;
+			    float _TessValue;
+			    float _TessMin;
+			    float _TessMax;
+			    float _TessEdgeLength;
+			    float _TessMaxDisp;
 			#endif
+			UNITY_TEXTURE_STREAMING_DEBUG_VARS;
 			CBUFFER_END
 
-			// Property used by ScenePickingPass
             #ifdef SCENEPICKINGPASS
 			float4 _SelectionID;
             #endif
 
-			// Properties used by SceneSelectionPass
             #ifdef SCENESELECTIONPASS
 			int _ObjectId;
 			int _PassValue;
             #endif
 
+			sampler2D _Noisetexture;
 			sampler2D _TextureSample0;
 
 
@@ -3616,21 +4432,26 @@ Shader "Grass Test"
 			#include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/MaterialUtilities.hlsl"
 			#include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/ShaderGraphFunctions.hlsl"
 
-			// Setup DECALS_OFF so the shader stripper can remove variants
-            #define HAVE_DECALS ( (defined(DECALS_3RT) || defined(DECALS_4RT)) && !defined(_DISABLE_DECALS) )
             #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Decal/DecalUtilities.hlsl"
             #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Lit/LitDecalData.hlsl"
 
-			
+        	#ifdef HAVE_VFX_MODIFICATION
+            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/VisualEffectVertex.hlsl"
+        	#endif
 
-			#if defined(_DOUBLESIDED_ON) && !defined(ASE_NEED_CULLFACE)
-			#define ASE_NEED_CULLFACE 1
-			#endif
+			#define ASE_NEEDS_TEXTURE_COORDINATES0
+			#define ASE_NEEDS_FRAG_SCREEN_POSITION_NORMALIZED
+			#define ASE_NEEDS_FRAG_TEXTURE_COORDINATES0
+			#define ASE_NEEDS_FRAG_WORLD_VIEW_DIR
+			#define ASE_NEEDS_VERT_NORMAL
+			#define ASE_NEEDS_VERT_POSITION
+
 
 			struct AttributesMesh
 			{
 				float3 positionOS : POSITION;
 				float3 normalOS : NORMAL;
+				float4 tangentOS : TANGENT;
 				float3 previousPositionOS : TEXCOORD4;
 				float3 precomputedVelocity : TEXCOORD5;
 				float4 ase_texcoord : TEXCOORD0;
@@ -3640,9 +4461,9 @@ Shader "Grass Test"
 			struct PackedVaryingsMeshToPS
 			{
 				SV_POSITION_QUALIFIERS float4 vmeshPositionCS : SV_Position;
-				float3 vmeshInterp00 : TEXCOORD0;
-				float3 vpassInterpolators0 : TEXCOORD1; //interpolators0
-				float3 vpassInterpolators1 : TEXCOORD2; //interpolators1
+				float3 vmeshPositionRWS : TEXCOORD0;
+				float3 vpassPositionCS : TEXCOORD1;
+				float3 vpassPreviousPositionCS : TEXCOORD2;
 				float4 ase_texcoord3 : TEXCOORD3;
 				float4 ase_texcoord4 : TEXCOORD4;
 				UNITY_VERTEX_INPUT_INSTANCE_ID
@@ -3652,15 +4473,26 @@ Shader "Grass Test"
 				#endif
 			};
 
-			inline float Dither4x4Bayer( int x, int y )
+			float4 ASEScreenPositionNormalizedToPixel( float4 screenPosNorm, float4 screenParams )
+			{
+				float4 screenPosPixel = screenPosNorm * float4( screenParams.xy, 1, 1 );
+				#if UNITY_UV_STARTS_AT_TOP
+					screenPosPixel.xy = float2( screenPosPixel.x, ( _ProjectionParams.x < 0 ) ? screenParams.y - screenPosPixel.y : screenPosPixel.y );
+				#else
+					screenPosPixel.xy = float2( screenPosPixel.x, ( _ProjectionParams.x > 0 ) ? screenParams.y - screenPosPixel.y : screenPosPixel.y );
+				#endif
+				return screenPosPixel;
+			}
+			
+			inline float Dither4x4Bayer( uint x, uint y )
 			{
 				const float dither[ 16 ] = {
-			 1,  9,  3, 11,
-			13,  5, 15,  7,
-			 4, 12,  2, 10,
-			16,  8, 14,  6 };
-				int r = y * 4 + x;
-				return dither[r] / 16; // same # of instructions as pre-dividing due to compiler magic
+				     1,  9,  3, 11,
+				    13,  5, 15,  7,
+				     4, 12,  2, 10,
+				    16,  8, 14,  6 };
+				uint r = y * 4 + x;
+				return dither[ min( r, 15 ) ] / 16; // same # of instructions as pre-dividing due to compiler magic
 			}
 			
 
@@ -3669,186 +4501,261 @@ Shader "Grass Test"
 				ZERO_INITIALIZE(SurfaceData, surfaceData);
 
 				surfaceData.specularOcclusion = 1.0;
-
-				// surface data
+				surfaceData.thickness = 0.0;
 				surfaceData.perceptualSmoothness =		surfaceDescription.Smoothness;
 
 				// refraction
-				#ifdef _HAS_REFRACTION
-				if( _EnableSSRefraction )
-				{
-					surfaceData.transmittanceMask = ( 1.0 - surfaceDescription.Alpha );
-					surfaceDescription.Alpha = 1.0;
-				}
-				else
-				{
-					surfaceData.ior = 1.0;
-					surfaceData.transmittanceColor = float3( 1.0, 1.0, 1.0 );
-					surfaceData.atDistance = 1.0;
-					surfaceData.transmittanceMask = 0.0;
-					surfaceDescription.Alpha = 1.0;
-				}
-				#else
-				surfaceData.ior = 1.0;
-				surfaceData.transmittanceColor = float3( 1.0, 1.0, 1.0 );
-				surfaceData.atDistance = 1.0;
-				surfaceData.transmittanceMask = 0.0;
-				#endif
-
-				// material features
-				surfaceData.materialFeatures = MATERIALFEATUREFLAGS_LIT_STANDARD;
-				#ifdef _MATERIAL_FEATURE_SUBSURFACE_SCATTERING
-				surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_LIT_SUBSURFACE_SCATTERING;
-				#endif
-				#ifdef _MATERIAL_FEATURE_TRANSMISSION
-				surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_LIT_TRANSMISSION;
-				#endif
-                #ifdef _MATERIAL_FEATURE_ANISOTROPY
-				surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_LIT_ANISOTROPY;
-				surfaceData.normalWS = float3(0, 1, 0);
+                #if defined(_REFRACTION_PLANE) || defined(_REFRACTION_SPHERE) || defined(_REFRACTION_THIN)
+                    if (_EnableSSRefraction)
+                    {
+                        surfaceData.ior =                       surfaceDescription.RefractionIndex;
+                        surfaceData.transmittanceColor =        surfaceDescription.RefractionColor;
+                        surfaceData.atDistance =                surfaceDescription.RefractionDistance;
+                        surfaceData.transmittanceMask = (1.0 - surfaceDescription.Alpha);
+                        surfaceDescription.Alpha = 1.0;
+                    }
+                    else
+                    {
+                        surfaceData.ior = 1.0;
+                        surfaceData.transmittanceColor = float3(1.0, 1.0, 1.0);
+                        surfaceData.atDistance = 1.0;
+                        surfaceData.transmittanceMask = 0.0;
+                        surfaceDescription.Alpha = 1.0;
+                    }
+                #else
+                    surfaceData.ior = 1.0;
+                    surfaceData.transmittanceColor = float3(1.0, 1.0, 1.0);
+                    surfaceData.atDistance = 1.0;
+                    surfaceData.transmittanceMask = 0.0;
                 #endif
+
+				surfaceData.materialFeatures = MATERIALFEATUREFLAGS_LIT_STANDARD;
+
+				#ifdef _MATERIAL_FEATURE_SUBSURFACE_SCATTERING
+				if (surfaceData.subsurfaceMask > 0)
+                    surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_LIT_SUBSURFACE_SCATTERING;
+				#endif
+
+				#ifdef _MATERIAL_FEATURE_TRANSMISSION
+                    surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_LIT_TRANSMISSION;
+				#endif
+
+				#ifdef _MATERIAL_FEATURE_COLORED_TRANSMISSION
+                    surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_LIT_TRANSMISSION;
+                    surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_LIT_COLORED_TRANSMISSION;
+				#endif
+
+                #ifdef _MATERIAL_FEATURE_ANISOTROPY
+                    surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_LIT_ANISOTROPY;
+                    surfaceData.normalWS = float3(0, 1, 0);
+                #endif
+
 				#ifdef _MATERIAL_FEATURE_CLEAR_COAT
-				surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_LIT_CLEAR_COAT;
+                    surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_LIT_CLEAR_COAT;
 				#endif
+
 				#ifdef _MATERIAL_FEATURE_IRIDESCENCE
-				surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_LIT_IRIDESCENCE;
+                    surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_LIT_IRIDESCENCE;
 				#endif
+
 				#ifdef _MATERIAL_FEATURE_SPECULAR_COLOR
-				surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_LIT_SPECULAR_COLOR;
+                    surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_LIT_SPECULAR_COLOR;
 				#endif
 
-				// others
 				#if defined (_MATERIAL_FEATURE_SPECULAR_COLOR) && defined (_ENERGY_CONSERVING_SPECULAR)
-				surfaceData.baseColor *= ( 1.0 - Max3( surfaceData.specularColor.r, surfaceData.specularColor.g, surfaceData.specularColor.b ) );
+                    surfaceData.baseColor *= ( 1.0 - Max3( surfaceData.specularColor.r, surfaceData.specularColor.g, surfaceData.specularColor.b ) );
 				#endif
+
 				#ifdef _DOUBLESIDED_ON
-				float3 doubleSidedConstants = _DoubleSidedConstants.xyz;
+					float3 doubleSidedConstants = _DoubleSidedConstants.xyz;
 				#else
-				float3 doubleSidedConstants = float3( 1.0, 1.0, 1.0 );
+					float3 doubleSidedConstants = float3( 1.0, 1.0, 1.0 );
 				#endif
 
-				// normals
-				float3 normalTS = float3(0.0f, 0.0f, 1.0f);
-				normalTS = surfaceDescription.Normal;
+				float3 normal = surfaceDescription.Normal;
 
-				surfaceData.geomNormalWS = fragInputs.tangentToWorld[2];
-				surfaceData.tangentWS = normalize( fragInputs.tangentToWorld[ 0 ].xyz );
-
-				// decals
-			#ifdef DECAL_NORMAL_BLENDING
-				if (_EnableDecals)
-				{
+				#ifdef DECAL_NORMAL_BLENDING
 					#ifndef SURFACE_GRADIENT
-					normalTS = SurfaceGradientFromTangentSpaceNormalAndFromTBN(normalTS, fragInputs.tangentToWorld[0], fragInputs.tangentToWorld[1]);
+					#if ( ASE_FRAGMENT_NORMAL == 1 )
+						normal = SurfaceGradientFromPerturbedNormal(TransformWorldToObjectNormal(fragInputs.tangentToWorld[2]), normal);
+					#elif ( ASE_FRAGMENT_NORMAL == 2 )
+						normal = SurfaceGradientFromPerturbedNormal(fragInputs.tangentToWorld[2], normal);
+					#else
+						normal = SurfaceGradientFromTangentSpaceNormalAndFromTBN(normal, fragInputs.tangentToWorld[0], fragInputs.tangentToWorld[1]);
+					#endif
 					#endif
 
-					DecalSurfaceData decalSurfaceData = GetDecalSurfaceData(posInput, fragInputs, surfaceDescription.Alpha);
-					ApplyDecalToSurfaceData(decalSurfaceData, fragInputs.tangentToWorld[2], surfaceData, normalTS);
-				}
+					#if HAVE_DECALS
+					if (_EnableDecals)
+					{
+						DecalSurfaceData decalSurfaceData = GetDecalSurfaceData(posInput, fragInputs, surfaceDescription.Alpha);
+						ApplyDecalToSurfaceNormal(decalSurfaceData, fragInputs.tangentToWorld[2], normal);
+						ApplyDecalToSurfaceDataNoNormal(decalSurfaceData, surfaceData);
+					}
+					#endif
 
-				GetNormalWS_SG(fragInputs, normalTS, surfaceData.normalWS, doubleSidedConstants);
-			#else
-				GetNormalWS(fragInputs, normalTS, surfaceData.normalWS, doubleSidedConstants);
+					GetNormalWS_SG(fragInputs, normal, surfaceData.normalWS, doubleSidedConstants);
+				#else
+					#if ( ASE_FRAGMENT_NORMAL == 1 )
+						GetNormalWS_SrcOS(fragInputs, normal, surfaceData.normalWS, doubleSidedConstants);
+					#elif ( ASE_FRAGMENT_NORMAL == 2 )
+						GetNormalWS_SrcWS(fragInputs, normal, surfaceData.normalWS, doubleSidedConstants);
+					#else
+						GetNormalWS(fragInputs, normal, surfaceData.normalWS, doubleSidedConstants);
+					#endif
 
-				#if HAVE_DECALS
-				if (_EnableDecals)
-				{
-					// Both uses and modifies 'surfaceData.normalWS'.
-					DecalSurfaceData decalSurfaceData = GetDecalSurfaceData(posInput, fragInputs, surfaceDescription.Alpha);
-					ApplyDecalToSurfaceData(decalSurfaceData, fragInputs.tangentToWorld[2], surfaceData);
-				}
+					#if HAVE_DECALS
+					if (_EnableDecals)
+					{
+						DecalSurfaceData decalSurfaceData = GetDecalSurfaceData(posInput, fragInputs, surfaceDescription.Alpha);
+						ApplyDecalToSurfaceNormal(decalSurfaceData, surfaceData.normalWS.xyz);
+						ApplyDecalToSurfaceDataNoNormal(decalSurfaceData, surfaceData);
+					}
+					#endif
 				#endif
-			#endif
+
+				surfaceData.geomNormalWS = fragInputs.tangentToWorld[2];
+                surfaceData.tangentWS = normalize(fragInputs.tangentToWorld[0].xyz );
+                surfaceData.tangentWS = Orthonormalize(surfaceData.tangentWS, surfaceData.normalWS);
 
 				bentNormalWS = surfaceData.normalWS;
-				surfaceData.tangentWS = Orthonormalize( surfaceData.tangentWS, surfaceData.normalWS );
+
+				#if defined(DEBUG_DISPLAY)
+					#if !defined(SHADER_STAGE_RAY_TRACING)
+					if (_DebugMipMapMode != DEBUGMIPMAPMODE_NONE)
+					{
+						#ifdef FRAG_INPUTS_USE_TEXCOORD0
+							surfaceData.baseColor = GET_TEXTURE_STREAMING_DEBUG(posInput.positionSS, fragInputs.texCoord0);
+						#else
+							surfaceData.baseColor = GET_TEXTURE_STREAMING_DEBUG_NO_UV(posInput.positionSS);
+						#endif
+						surfaceData.metallic = 0;
+					}
+					#endif
+					ApplyDebugToSurfaceData(fragInputs.tangentToWorld, surfaceData);
+				#endif
 
                 #if defined(_SPECULAR_OCCLUSION_CUSTOM)
                 #elif defined(_SPECULAR_OCCLUSION_FROM_AO_BENT_NORMAL)
-				surfaceData.specularOcclusion = GetSpecularOcclusionFromBentAO(V, bentNormalWS, surfaceData.normalWS, surfaceData.ambientOcclusion, PerceptualSmoothnessToPerceptualRoughness(surfaceData.perceptualSmoothness));
+                    surfaceData.specularOcclusion = GetSpecularOcclusionFromBentAO(V, bentNormalWS, surfaceData.normalWS, surfaceData.ambientOcclusion, PerceptualSmoothnessToPerceptualRoughness(surfaceData.perceptualSmoothness));
                 #elif defined(_AMBIENT_OCCLUSION) && defined(_SPECULAR_OCCLUSION_FROM_AO)
-				surfaceData.specularOcclusion = GetSpecularOcclusionFromAmbientOcclusion(ClampNdotV(dot(surfaceData.normalWS, V)), surfaceData.ambientOcclusion, PerceptualSmoothnessToRoughness(surfaceData.perceptualSmoothness));
+                    surfaceData.specularOcclusion = GetSpecularOcclusionFromAmbientOcclusion(ClampNdotV(dot(surfaceData.normalWS, V)), surfaceData.ambientOcclusion, PerceptualSmoothnessToRoughness(surfaceData.perceptualSmoothness));
                 #endif
 
-				// debug
-				#if defined(DEBUG_DISPLAY)
-				if (_DebugMipMapMode != DEBUGMIPMAPMODE_NONE)
-				{
-					surfaceData.metallic = 0;
-				}
-				ApplyDebugToSurfaceData(fragInputs.tangentToWorld, surfaceData);
-				#endif
+                #ifdef _ENABLE_GEOMETRIC_SPECULAR_AA
+                    surfaceData.perceptualSmoothness = GeometricNormalFiltering(surfaceData.perceptualSmoothness, fragInputs.tangentToWorld[2], surfaceDescription.SpecularAAScreenSpaceVariance, surfaceDescription.SpecularAAThreshold);
+                #endif
 			}
 
+			// Get Surface And BuiltinData
 			void GetSurfaceAndBuiltinData(SmoothSurfaceDescription surfaceDescription, FragInputs fragInputs, float3 V, inout PositionInputs posInput, out SurfaceData surfaceData, out BuiltinData builtinData)
 			{
 				#ifdef LOD_FADE_CROSSFADE
-				LODDitheringTransition(ComputeFadeMaskSeed(V, posInput.positionSS), unity_LODFade.x);
+                    LODDitheringTransition(ComputeFadeMaskSeed(V, posInput.positionSS), unity_LODFade.x);
 				#endif
 
-				#ifdef _DOUBLESIDED_ON
-				float3 doubleSidedConstants = _DoubleSidedConstants.xyz;
-				#else
-				float3 doubleSidedConstants = float3( 1.0, 1.0, 1.0 );
-				#endif
-
-				ApplyDoubleSidedFlipOrMirror( fragInputs, doubleSidedConstants );
+                #ifdef _DOUBLESIDED_ON
+                    float3 doubleSidedConstants = _DoubleSidedConstants.xyz;
+                #else
+                    float3 doubleSidedConstants = float3(1.0, 1.0, 1.0);
+                #endif
+                ApplyDoubleSidedFlipOrMirror(fragInputs, doubleSidedConstants);
 
 				#ifdef _ALPHATEST_ON
-				DoAlphaTest( surfaceDescription.Alpha, surfaceDescription.AlphaClipThreshold );
+                    DoAlphaTest( surfaceDescription.Alpha, surfaceDescription.AlphaClipThreshold );
+				#endif
+
+				#ifdef _ALPHATEST_SHADOW_ON
+                    DoAlphaTest( surfaceDescription.Alpha, surfaceDescription.AlphaClipThresholdShadow);
 				#endif
 
 				#ifdef _DEPTHOFFSET_ON
-				builtinData.depthOffset = surfaceDescription.DepthOffset;
-				ApplyDepthOffsetPositionInput( V, surfaceDescription.DepthOffset, GetViewForwardDir(), GetWorldToHClipMatrix(), posInput );
+                    ApplyDepthOffsetPositionInput(V, surfaceDescription.DepthOffset, GetViewForwardDir(), GetWorldToHClipMatrix(), posInput);
 				#endif
 
-				float3 bentNormalWS;
-				BuildSurfaceData( fragInputs, surfaceDescription, V, posInput, surfaceData, bentNormalWS );
+                float3 bentNormalWS;
+                BuildSurfaceData(fragInputs, surfaceDescription, V, posInput, surfaceData, bentNormalWS);
+                InitBuiltinData(posInput, surfaceDescription.Alpha, bentNormalWS, -fragInputs.tangentToWorld[2], fragInputs.texCoord1, fragInputs.texCoord2, builtinData);
 
-				InitBuiltinData( posInput, surfaceDescription.Alpha, bentNormalWS, -fragInputs.tangentToWorld[ 2 ], fragInputs.texCoord1, fragInputs.texCoord2, builtinData );
+				#ifdef _DEPTHOFFSET_ON
+                    builtinData.depthOffset = surfaceDescription.DepthOffset;
+				#endif
 
-				PostInitBuiltinData(V, posInput, surfaceData, builtinData);
+                #ifdef _ALPHATEST_ON
+                    builtinData.alphaClipTreshold = surfaceDescription.AlphaClipThreshold;
+                #endif
+
+                #ifdef UNITY_VIRTUAL_TEXTURING
+                    builtinData.vtPackedFeedback = surfaceDescription.VTPackedFeedback;
+                #endif
+
+				#ifdef ASE_BAKEDGI
+                    builtinData.bakeDiffuseLighting = surfaceDescription.BakedGI;
+				#endif
+
+				#ifdef ASE_BAKEDBACKGI
+                    builtinData.backBakeDiffuseLighting = surfaceDescription.BakedBackGI;
+				#endif
+
+                builtinData.emissiveColor = surfaceDescription.Emission;
+
+                PostInitBuiltinData(V, posInput, surfaceData, builtinData);
 			}
 
-			AttributesMesh ApplyMeshModification(AttributesMesh inputMesh, float3 timeParameters, inout PackedVaryingsMeshToPS outputPackedVaryingsMeshToPS )
+			AttributesMesh ApplyMeshModification(AttributesMesh inputMesh, float3 timeParameters, inout PackedVaryingsMeshToPS output)
 			{
+				float3 currentTimeParams = _TimeParameters.xyz;
 				_TimeParameters.xyz = timeParameters;
-				float4 ase_clipPos = TransformWorldToHClip( TransformObjectToWorld(inputMesh.positionOS));
-				float4 screenPos = ComputeScreenPos( ase_clipPos , _ProjectionParams.x );
-				outputPackedVaryingsMeshToPS.ase_texcoord4 = screenPos;
+
+				float3 ase_positionWS = GetAbsolutePositionWS( TransformObjectToWorld( ( inputMesh.positionOS ).xyz ) );
+				float2 appendResult4_g12 = (float2(ase_positionWS.x , ase_positionWS.z));
+				float2 panner8_g12 = ( 1.0 * _Time.y * _WindSpeed + ( appendResult4_g12 / _Size ));
+				float4 tex2DNode9_g12 = tex2Dlod( _Noisetexture, float4( panner8_g12, 0, 0.0) );
+				float2 texCoord17_g12 = inputMesh.ase_texcoord.xy * float2( 1,1 ) + float2( 0,0 );
 				
-				outputPackedVaryingsMeshToPS.ase_texcoord3.xy = inputMesh.ase_texcoord.xy;
+				float3 ase_normalWS = TransformObjectToWorldNormal( inputMesh.normalOS );
+				output.ase_texcoord4.xyz = ase_normalWS;
+				float3 objectToViewPos = TransformWorldToView( TransformObjectToWorld( inputMesh.positionOS ) );
+				float eyeDepth = -objectToViewPos.z;
+				output.ase_texcoord3.z = eyeDepth;
+				
+				output.ase_texcoord3.xy = inputMesh.ase_texcoord.xy;
 				
 				//setting value to unused interpolator channels and avoid initialization warnings
-				outputPackedVaryingsMeshToPS.ase_texcoord3.zw = 0;
+				output.ase_texcoord3.w = 0;
+				output.ase_texcoord4.w = 0;
 
 				#ifdef ASE_ABSOLUTE_VERTEX_POS
 				float3 defaultVertexValue = inputMesh.positionOS.xyz;
 				#else
 				float3 defaultVertexValue = float3( 0, 0, 0 );
 				#endif
-				float3 vertexValue =  defaultVertexValue ;
+				float3 vertexValue = ( tex2DNode9_g12 * _Windintensity * texCoord17_g12.y ).rgb;
 
 				#ifdef ASE_ABSOLUTE_VERTEX_POS
 				inputMesh.positionOS.xyz = vertexValue;
 				#else
 				inputMesh.positionOS.xyz += vertexValue;
 				#endif
-				inputMesh.normalOS =  inputMesh.normalOS ;
+				inputMesh.normalOS = inputMesh.normalOS;
+				inputMesh.tangentOS = inputMesh.tangentOS;
+
+				_TimeParameters.xyz = currentTimeParams;
 				return inputMesh;
 			}
 
 			PackedVaryingsMeshToPS VertexFunction(AttributesMesh inputMesh)
 			{
-				PackedVaryingsMeshToPS outputPackedVaryingsMeshToPS = (PackedVaryingsMeshToPS)0;
+				PackedVaryingsMeshToPS output = (PackedVaryingsMeshToPS)0;
 				AttributesMesh defaultMesh = inputMesh;
 
 				UNITY_SETUP_INSTANCE_ID(inputMesh);
-				UNITY_TRANSFER_INSTANCE_ID(inputMesh, outputPackedVaryingsMeshToPS);
-				UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO( outputPackedVaryingsMeshToPS );
+				UNITY_TRANSFER_INSTANCE_ID(inputMesh, output);
+				UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO( output );
 
-				inputMesh = ApplyMeshModification( inputMesh, _TimeParameters.xyz, outputPackedVaryingsMeshToPS);
+				#if defined(HAVE_MESH_MODIFICATION)
+					inputMesh = ApplyMeshModification(inputMesh, _TimeParameters.xyz, output);
+				#endif
 
 				float3 positionRWS = TransformObjectToWorld(inputMesh.positionOS);
 				float3 normalWS = TransformObjectToWorldNormal(inputMesh.normalOS);
@@ -3868,17 +4775,16 @@ Shader "Grass Test"
 				{
 					bool hasDeformation = unity_MotionVectorsParams.x > 0.0;
 					float3 effectivePositionOS = (hasDeformation ? inputMesh.previousPositionOS : defaultMesh.positionOS);
+
 					#if defined(_ADD_PRECOMPUTED_VELOCITY)
-					effectivePositionOS -= inputMesh.precomputedVelocity;
+						effectivePositionOS -= inputMesh.precomputedVelocity;
 					#endif
 
 					#if defined(HAVE_MESH_MODIFICATION)
 						AttributesMesh previousMesh = defaultMesh;
-						previousMesh.positionOS = effectivePositionOS ;
+						previousMesh.positionOS = effectivePositionOS;
 						PackedVaryingsMeshToPS test = (PackedVaryingsMeshToPS)0;
-						float3 curTime = _TimeParameters.xyz;
 						previousMesh = ApplyMeshModification(previousMesh, _LastTimeParameters.xyz, test);
-						_TimeParameters.xyz = curTime;
 						float3 previousPositionRWS = TransformPreviousObjectToWorld(previousMesh.positionOS);
 					#else
 						float3 previousPositionRWS = TransformPreviousObjectToWorld(effectivePositionOS);
@@ -3904,15 +4810,15 @@ Shader "Grass Test"
 					VPASSpreviousPositionCS = mul(UNITY_MATRIX_PREV_VP, float4(previousPositionRWS, 1.0));
 				}
 
-				outputPackedVaryingsMeshToPS.vmeshPositionCS = VMESHpositionCS;
-				outputPackedVaryingsMeshToPS.vmeshInterp00.xyz = VMESHpositionRWS;
+				output.vmeshPositionCS = VMESHpositionCS;
+				output.vmeshPositionRWS = VMESHpositionRWS;
 
-				outputPackedVaryingsMeshToPS.vpassInterpolators0 = float3(VPASSpositionCS.xyw);
-				outputPackedVaryingsMeshToPS.vpassInterpolators1 = float3(VPASSpreviousPositionCS.xyw);
-				return outputPackedVaryingsMeshToPS;
+				output.vpassPositionCS = float3(VPASSpositionCS.xyw);
+				output.vpassPreviousPositionCS = float3(VPASSpreviousPositionCS.xyw);
+				return output;
 			}
 
-			#if defined(WRITE_DECAL_BUFFER) && !defined(_DISABLE_DECALS)
+			#if (defined(WRITE_DECAL_BUFFER) && !defined(_DISABLE_DECALS)) || defined(WRITE_RENDERING_LAYER)
 			#include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Decal/DecalPrepassBuffer.hlsl"
 			#endif
 
@@ -3921,6 +4827,7 @@ Shader "Grass Test"
 			{
 				float3 positionOS : INTERNALTESSPOS;
 				float3 normalOS : NORMAL;
+				float4 tangentOS : TANGENT;
 				float3 previousPositionOS : TEXCOORD4;
 				float3 precomputedVelocity : TEXCOORD5;
 				float4 ase_texcoord : TEXCOORD0;
@@ -3941,6 +4848,7 @@ Shader "Grass Test"
 				UNITY_TRANSFER_INSTANCE_ID(v, o);
 				o.positionOS = v.positionOS;
 				o.normalOS = v.normalOS;
+				o.tangentOS = v.tangentOS;
 				o.previousPositionOS = v.previousPositionOS;
 				#if defined (_ADD_PRECOMPUTED_VELOCITY)
 				o.precomputedVelocity = v.precomputedVelocity;
@@ -3989,6 +4897,7 @@ Shader "Grass Test"
 				AttributesMesh o = (AttributesMesh) 0;
 				o.positionOS = patch[0].positionOS * bary.x + patch[1].positionOS * bary.y + patch[2].positionOS * bary.z;
 				o.normalOS = patch[0].normalOS * bary.x + patch[1].normalOS * bary.y + patch[2].normalOS * bary.z;
+				o.tangentOS = patch[0].tangentOS * bary.x + patch[1].tangentOS * bary.y + patch[2].tangentOS * bary.z;
 				o.previousPositionOS = patch[0].previousPositionOS * bary.x + patch[1].previousPositionOS * bary.y + patch[2].previousPositionOS * bary.z;
 				#if defined (_ADD_PRECOMPUTED_VELOCITY)
 					o.precomputedVelocity = patch[0].precomputedVelocity * bary.x + patch[1].precomputedVelocity * bary.y + patch[2].precomputedVelocity * bary.z;
@@ -4036,12 +4945,10 @@ Shader "Grass Test"
 					#ifdef WRITE_NORMAL_BUFFER
 					, out float4 outNormalBuffer : SV_TARGET_NORMAL
 					#endif
-
-					#ifdef _DEPTHOFFSET_ON
-					, out float outputDepth : DEPTH_OFFSET_SEMANTIC
+					#if defined( ASE_DEPTH_WRITE_ON )
+						, out float outputDepth : DEPTH_OFFSET_SEMANTIC
 					#endif
-				
-				)
+					 )
 			{
 				UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX( packedInput );
 				UNITY_SETUP_INSTANCE_ID( packedInput );
@@ -4049,42 +4956,65 @@ Shader "Grass Test"
 				ZERO_INITIALIZE(FragInputs, input);
 				input.tangentToWorld = k_identity3x3;
 				input.positionSS = packedInput.vmeshPositionCS;
-				input.positionRWS = packedInput.vmeshInterp00.xyz;
+				input.positionRWS = packedInput.vmeshPositionRWS;
 
 				PositionInputs posInput = GetPositionInput(input.positionSS.xy, _ScreenSize.zw, input.positionSS.z, input.positionSS.w, input.positionRWS);
 
+				float3 PositionRWS = posInput.positionWS;
+				float3 PositionWS = GetAbsolutePositionWS( posInput.positionWS );
 				float3 V = GetWorldSpaceNormalizeViewDir(input.positionRWS);
+				float4 ScreenPosNorm = float4( posInput.positionNDC, packedInput.vmeshPositionCS.zw );
+				float4 ClipPos = ComputeClipSpacePosition( ScreenPosNorm.xy, packedInput.vmeshPositionCS.z ) * packedInput.vmeshPositionCS.w;
+				float4 ScreenPos = ComputeScreenPos( ClipPos, _ProjectionParams.x );
 
 				SurfaceData surfaceData;
 				BuiltinData builtinData;
 
 				SmoothSurfaceDescription surfaceDescription = (SmoothSurfaceDescription)0;
+
 				float2 uv_TextureSample0 = packedInput.ase_texcoord3.xy * _TextureSample0_ST.xy + _TextureSample0_ST.zw;
-				float4 screenPos = packedInput.ase_texcoord4;
-				float4 ase_screenPosNorm = screenPos / screenPos.w;
-				ase_screenPosNorm.z = ( UNITY_NEAR_CLIP_VALUE >= 0 ) ? ase_screenPosNorm.z : ase_screenPosNorm.z * 0.5 + 0.5;
-				float2 clipScreen17 = ase_screenPosNorm.xy * _ScreenParams.xy;
-				float dither17 = Dither4x4Bayer( fmod(clipScreen17.x, 4), fmod(clipScreen17.y, 4) );
+				float4 ase_positionSS_Pixel = ASEScreenPositionNormalizedToPixel( ScreenPosNorm, _ScreenParams );
+				float dither66 = Dither4x4Bayer( fmod( ase_positionSS_Pixel.x, 4 ), fmod( ase_positionSS_Pixel.y, 4 ) );
 				float2 texCoord16 = packedInput.ase_texcoord3.xy * float2( 1,1 ) + float2( 0,0 );
-				float smoothstepResult23 = smoothstep( 0.0 , 0.5 , texCoord16.y);
-				dither17 = step( dither17, smoothstepResult23 );
+				float smoothstepResult23 = smoothstep( 0.0 , _BottomGradientsize , texCoord16.y);
+				float lerpResult55 = lerp( 1.0 , smoothstepResult23 , _BottomGradient);
+				float3 ase_normalWS = packedInput.ase_texcoord4.xyz;
+				float fresnelNdotV59 = dot( ase_normalWS, V );
+				float fresnelNode59 = ( -1.0 + 5.0 * pow( 1.0 - fresnelNdotV59, 2.0 ) );
+				float lerpResult63 = lerp( 1.0 , ( 1.0 - saturate( fresnelNode59 ) ) , _Fresneldither);
+				float eyeDepth = packedInput.ase_texcoord3.z;
+				float cameraDepthFade65 = (( eyeDepth -_ProjectionParams.y - 100.0 ) / 20.0);
+				dither66 = step( dither66, saturate( ( saturate( lerpResult55 ) * saturate( lerpResult63 ) * ( 1.0 - saturate( cameraDepthFade65 ) ) ) * 1.00001 ) );
 				
+
 				surfaceDescription.Normal = float3( 0, 0, 1 );
 				surfaceDescription.Smoothness = _Smoothness;
-				surfaceDescription.Alpha = ( tex2D( _TextureSample0, uv_TextureSample0 ).a * dither17 );
+				surfaceDescription.Alpha = ( tex2D( _TextureSample0, uv_TextureSample0 ).a * dither66 );
 
 				#ifdef _ALPHATEST_ON
 				surfaceDescription.AlphaClipThreshold = _AlphaCutoff;
 				#endif
 
-				#ifdef _DEPTHOFFSET_ON
-				surfaceDescription.DepthOffset = 0;
+				#if defined( ASE_CHANGES_WORLD_POS )
+					posInput.positionWS = PositionRWS;
+					float3 positionOS = mul( GetWorldToObjectMatrix(),  float4( PositionRWS, 1.0 ) ).xyz;
+					float3 previousPositionRWS = mul( GetPrevObjectToWorldMatrix(),  float4( positionOS, 1.0 ) ).xyz;
+					packedInput.vpassPositionCS = mul( UNITY_MATRIX_UNJITTERED_VP, float4( PositionRWS, 1.0 ) ).xyw;
+					packedInput.vpassPreviousPositionCS = mul( UNITY_MATRIX_PREV_VP, float4( previousPositionRWS, 1.0 ) ).xyw;
 				#endif
 
-				GetSurfaceAndBuiltinData( surfaceDescription, input, V, posInput, surfaceData, builtinData );
+				#if defined( ASE_DEPTH_WRITE_ON )
+					#if !defined( _DEPTHOFFSET_ON )
+						posInput.deviceDepth = input.positionSS.z;
+					#else
+						surfaceDescription.DepthOffset = 0;
+					#endif
+				#endif
 
-				float4 VPASSpositionCS = float4(packedInput.vpassInterpolators0.xy, 0.0, packedInput.vpassInterpolators0.z);
-				float4 VPASSpreviousPositionCS = float4(packedInput.vpassInterpolators1.xy, 0.0, packedInput.vpassInterpolators1.z);
+				GetSurfaceAndBuiltinData(surfaceDescription, input, V, posInput, surfaceData, builtinData);
+
+				float4 VPASSpositionCS = float4(packedInput.vpassPositionCS.xy, 0.0, packedInput.vpassPositionCS.z);
+				float4 VPASSpreviousPositionCS = float4(packedInput.vpassPreviousPositionCS.xy, 0.0, packedInput.vpassPreviousPositionCS.z);
 
 				#ifdef _DEPTHOFFSET_ON
 				VPASSpositionCS.w += builtinData.depthOffset;
@@ -4098,17 +5028,12 @@ Shader "Grass Test"
 				if( forceNoMotion )
 					outMotionVector = float4( 2.0, 0.0, 0.0, 0.0 );
 
-				// Depth and Alpha to coverage
 				#ifdef WRITE_MSAA_DEPTH
-					// In case we are rendering in MSAA, reading the an MSAA depth buffer is way too expensive. To avoid that, we export the depth to a color buffer
 					depthColor = packedInput.vmeshPositionCS.z;
-
-					// Alpha channel is used for alpha to coverage
 					depthColor.a = SharpenAlpha(builtinData.opacity, builtinData.alphaClipTreshold);
 				#endif
 
-				// Normal Buffer Processing
-				#ifdef WRITE_NORMAL_BUFFER
+				#if defined(WRITE_NORMAL_BUFFER)
 					EncodeIntoNormalBuffer(ConvertSurfaceDataToNormalData(surfaceData), outNormalBuffer);
 				#endif
 
@@ -4118,16 +5043,13 @@ Shader "Grass Test"
 					ZERO_INITIALIZE(DecalPrepassData, decalPrepassData);
 					#else
 					decalPrepassData.geomNormalWS = surfaceData.geomNormalWS;
-					decalPrepassData.decalLayerMask = GetMeshRenderingDecalLayer();
 					#endif
+					decalPrepassData.renderingLayerMask = GetMeshRenderingLayerMask();
 					EncodeIntoDecalPrepassBuffer(decalPrepassData, outDecalBuffer);
-
-					// make sure we don't overwrite light layers
-					outDecalBuffer.w = (GetMeshRenderingLightLayer() & 0x000000FF) / 255.0;
 				#endif
 
-				#ifdef _DEPTHOFFSET_ON
-				outputDepth = posInput.deviceDepth;
+				#if defined( ASE_DEPTH_WRITE_ON )
+					outputDepth = posInput.deviceDepth;
 				#endif
 			}
 
@@ -4143,6 +5065,9 @@ Shader "Grass Test"
 
 			Blend [_SrcBlend] [_DstBlend], [_AlphaSrcBlend] [_AlphaDstBlend]
 			Blend 1 SrcAlpha OneMinusSrcAlpha
+			Blend 2 One [_DstBlend2]
+			Blend 3 One [_DstBlend2]
+			Blend 4 One OneMinusSrcAlpha
 
 			Cull [_CullModeForward]
 			ZTest [_ZTestDepthEqualForOpaque]
@@ -4161,39 +5086,53 @@ Shader "Grass Test"
             ColorMask [_ColorMaskTransparentVelTwo] 2
 
 			HLSLPROGRAM
+			#define ASE_GEOMETRY
+			#pragma shader_feature_local _ _DOUBLESIDED_ON
+			#define ASE_FRAGMENT_NORMAL 0
+			#pragma shader_feature_local_fragment _ _DISABLE_DECALS
+			#define _SPECULAR_OCCLUSION_FROM_AO 1
+			#pragma multi_compile_instancing
+			#pragma instancing_options renderinglayer
+			#pragma shader_feature_local _ _ALPHATEST_ON
+			#define HAVE_MESH_MODIFICATION
+			#define ASE_VERSION 19904
+			#define ASE_SRP_VERSION 170200
 
-            #define _SPECULAR_OCCLUSION_FROM_AO 1
-            #pragma multi_compile_instancing
-            #pragma instancing_options renderinglayer
-            #define ASE_SRP_VERSION 140012
+			#pragma multi_compile _ DOTS_INSTANCING_ON
 
+            #pragma shader_feature _ _SURFACE_TYPE_TRANSPARENT
+            #pragma shader_feature_local _ _TRANSPARENT_WRITES_MOTION_VEC _TRANSPARENT_REFRACTIVE_SORT
+            #pragma shader_feature_local_fragment _ _ENABLE_FOG_ON_TRANSPARENT
 
-            #pragma shader_feature _SURFACE_TYPE_TRANSPARENT
-			#pragma shader_feature_local _TRANSPARENT_WRITES_MOTION_VEC
-			#pragma shader_feature_local_fragment _ENABLE_FOG_ON_TRANSPARENT
-			#pragma shader_feature_local _DOUBLESIDED_ON
-			#pragma shader_feature_local _ALPHATEST_ON
-
-			#pragma multi_compile_fragment _ SHADOWS_SHADOWMASK
-			#pragma multi_compile_fragment SHADOW_LOW SHADOW_MEDIUM SHADOW_HIGH
-			#pragma multi_compile_fragment AREA_SHADOW_MEDIUM AREA_SHADOW_HIGH
-			#pragma multi_compile_fragment PROBE_VOLUMES_OFF PROBE_VOLUMES_L1 PROBE_VOLUMES_L2
+            #pragma multi_compile_fragment _ SHADOWS_SHADOWMASK
+            #pragma multi_compile_fragment PUNCTUAL_SHADOW_LOW PUNCTUAL_SHADOW_MEDIUM PUNCTUAL_SHADOW_HIGH
+            #pragma multi_compile_fragment DIRECTIONAL_SHADOW_LOW DIRECTIONAL_SHADOW_MEDIUM DIRECTIONAL_SHADOW_HIGH
+            #pragma multi_compile_fragment AREA_SHADOW_MEDIUM AREA_SHADOW_HIGH
+            #pragma multi_compile_fragment _ PROBE_VOLUMES_L1 PROBE_VOLUMES_L2
             #pragma multi_compile_fragment SCREEN_SPACE_SHADOWS_OFF SCREEN_SPACE_SHADOWS_ON
             #pragma multi_compile_fragment USE_FPTL_LIGHTLIST USE_CLUSTERED_LIGHTLIST
-			#pragma multi_compile _ DEBUG_DISPLAY
-			#pragma multi_compile _ LIGHTMAP_ON
-			#pragma multi_compile _ DIRLIGHTMAP_COMBINED
-			#pragma multi_compile _ DYNAMICLIGHTMAP_ON
-			#pragma multi_compile_fragment DECALS_OFF DECALS_3RT DECALS_4RT
-			#pragma multi_compile_fragment _ DECAL_SURFACE_GRADIENT
+
+            #pragma multi_compile _ DEBUG_DISPLAY
+            #pragma multi_compile _ LIGHTMAP_ON
+			#pragma multi_compile _ LIGHTMAP_BICUBIC_SAMPLING
+            #pragma multi_compile _ DIRLIGHTMAP_COMBINED
+            #pragma multi_compile _ DYNAMICLIGHTMAP_ON
+            #pragma multi_compile_fragment DECALS_OFF DECALS_3RT DECALS_4RT
+            #pragma multi_compile_fragment _ DECAL_SURFACE_GRADIENT
+            #pragma multi_compile _ USE_LEGACY_LIGHTMAPS
 
 			#ifndef SHADER_STAGE_FRAGMENT
 			#define SHADOW_LOW
+			#ifndef USE_FPTL_LIGHTLIST
 			#define USE_FPTL_LIGHTLIST
+			#endif
 			#endif
 
 			#pragma vertex Vert
 			#pragma fragment Frag
+
+			#define SHADERPASS SHADERPASS_FORWARD
+		    #define HAS_LIGHTLOOP 1
 
 			#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
 			#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/GeometricTools.hlsl"
@@ -4202,21 +5141,32 @@ Shader "Grass Test"
 			#include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/ShaderVariables.hlsl"
 			#include "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/ShaderPass/ShaderPass.cs.hlsl"
 			#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/TextureStack.hlsl"
+			#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/DebugMipmapStreamingMacros.hlsl"
             #include "Packages/com.unity.shadergraph/ShaderGraphLibrary/Functions.hlsl"
 
 			#include "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/ShaderPass/FragInputs.hlsl"
 
-			#define SHADERPASS SHADERPASS_FORWARD
-		    #define HAS_LIGHTLOOP 1
+            #ifdef RAYTRACING_SHADER_GRAPH_DEFAULT
+                #define RAYTRACING_SHADER_GRAPH_HIGH
+            #endif
 
-			// Setup for Fog Enabled to apply in sky refletions in LightLoopDef.hlsl
-            #define APPLY_FOG_ON_SKY_REFLECTIONS
+            #ifdef RAYTRACING_SHADER_GRAPH_RAYTRACED
+                #define RAYTRACING_SHADER_GRAPH_LOW
+            #endif
 
-			#ifndef SHADER_UNLIT
-			#if defined(_DOUBLESIDED_ON) && !defined(VARYINGS_NEED_CULLFACE)
-			#define VARYINGS_NEED_CULLFACE
+            #ifndef SHADER_UNLIT
+            #if defined(_DOUBLESIDED_ON) && !defined(VARYINGS_NEED_CULLFACE)
+                #define VARYINGS_NEED_CULLFACE
+            #endif
+            #endif
+
+			#if defined(_DOUBLESIDED_ON) && !defined(ASE_NEED_CULLFACE)
+			    #define ASE_NEED_CULLFACE 1
 			#endif
-			#endif
+
+            #if _MATERIAL_FEATURE_COLORED_TRANSMISSION
+            #undef _MATERIAL_FEATURE_CLEAR_COAT
+            #endif
 
 		    #if defined(_MATERIAL_FEATURE_SUBSURFACE_SCATTERING) && !defined(_SURFACE_TYPE_TRANSPARENT)
 			#define OUTPUT_SPLIT_LIGHTING
@@ -4228,39 +5178,50 @@ Shader "Grass Test"
 			#define _REFRACTION_THIN
 		    #endif
 
-			#if SHADERPASS == SHADERPASS_TRANSPARENT_DEPTH_PREPASS
-			#if !defined(_DISABLE_SSR_TRANSPARENT) && !defined(SHADER_UNLIT)
-				#define WRITE_NORMAL_BUFFER
-			#endif
-			#endif
+            #if SHADERPASS == SHADERPASS_TRANSPARENT_DEPTH_PREPASS
+            #if !defined(_DISABLE_SSR_TRANSPARENT) && !defined(SHADER_UNLIT)
+                #define WRITE_NORMAL_BUFFER
+            #endif
+            #endif
 
-			#ifndef DEBUG_DISPLAY
-				#if !defined(_SURFACE_TYPE_TRANSPARENT)
-					#if SHADERPASS == SHADERPASS_FORWARD
-					#define SHADERPASS_FORWARD_BYPASS_ALPHA_TEST
-					#elif SHADERPASS == SHADERPASS_GBUFFER
-					#define SHADERPASS_GBUFFER_BYPASS_ALPHA_TEST
-					#endif
-				#endif
-			#endif
+            #if SHADERPASS == SHADERPASS_MOTION_VECTORS && defined(WRITE_DECAL_BUFFER_AND_RENDERING_LAYER)
+                #define WRITE_DECAL_BUFFER
+            #endif
 
-			#if defined(SHADER_LIT) && !defined(_SURFACE_TYPE_TRANSPARENT)
-			#define _DEFERRED_CAPABLE_MATERIAL
-			#endif
+            #ifndef DEBUG_DISPLAY
+                #if !defined(_SURFACE_TYPE_TRANSPARENT)
+                    #if SHADERPASS == SHADERPASS_FORWARD
+                    #define SHADERPASS_FORWARD_BYPASS_ALPHA_TEST
+                    #elif SHADERPASS == SHADERPASS_GBUFFER
+                    #define SHADERPASS_GBUFFER_BYPASS_ALPHA_TEST
+                    #endif
+                #endif
+            #endif
 
-			#if defined(_TRANSPARENT_WRITES_MOTION_VEC) && defined(_SURFACE_TYPE_TRANSPARENT)
-			#define _WRITE_TRANSPARENT_MOTION_VECTOR
-			#endif
+            #if defined(SHADER_LIT) && !defined(_SURFACE_TYPE_TRANSPARENT)
+                #define _DEFERRED_CAPABLE_MATERIAL
+            #endif
+
+            #if (defined(_TRANSPARENT_WRITES_MOTION_VEC) || defined(_TRANSPARENT_REFRACTIVE_SORT)) && defined(_SURFACE_TYPE_TRANSPARENT)
+                #define _WRITE_TRANSPARENT_MOTION_VECTOR
+            #endif
 
 			CBUFFER_START( UnityPerMaterial )
-			float4 _Color0;
+			float4 _Color;
 			float4 _TextureSample0_ST;
+			float2 _WindSpeed;
+			float _Size;
+			float _Windintensity;
+			float _Windinalbedo;
 			float _Smoothness;
+			float _BottomGradientsize;
+			float _BottomGradient;
+			float _Fresneldither;
 			float4 _EmissionColor;
 			float _AlphaCutoff;
 			float _RenderQueueType;
 			#ifdef _ADD_PRECOMPUTED_VELOCITY
-			float _AddPrecomputedVelocity;
+			    float _AddPrecomputedVelocity;
 			#endif
 			float _StencilRef;
 			float _StencilWriteMask;
@@ -4268,6 +5229,8 @@ Shader "Grass Test"
 			float _StencilWriteMaskDepth;
 			float _StencilRefMV;
 			float _StencilWriteMaskMV;
+			float _StencilRefDistortionVec;
+			float _StencilWriteMaskDistortionVec;
 			float _StencilWriteMaskGBuffer;
 			float _StencilRefGBuffer;
 			float _ZTestGBuffer;
@@ -4276,10 +5239,11 @@ Shader "Grass Test"
 			float _SurfaceType;
 			float _BlendMode;
             #ifdef SUPPORT_BLENDMODE_PRESERVE_SPECULAR_LIGHTING
-			float _EnableBlendModePreserveSpecularLighting;
+			    float _EnableBlendModePreserveSpecularLighting;
             #endif
 			float _SrcBlend;
 			float _DstBlend;
+			float _DstBlend2;
 			float _AlphaSrcBlend;
 			float _AlphaDstBlend;
 			float _ZWrite;
@@ -4298,26 +5262,26 @@ Shader "Grass Test"
 			float _DoubleSidedNormalMode;
 			float4 _DoubleSidedConstants;
 			#ifdef ASE_TESSELLATION
-			float _TessPhongStrength;
-			float _TessValue;
-			float _TessMin;
-			float _TessMax;
-			float _TessEdgeLength;
-			float _TessMaxDisp;
+			    float _TessPhongStrength;
+			    float _TessValue;
+			    float _TessMin;
+			    float _TessMax;
+			    float _TessEdgeLength;
+			    float _TessMaxDisp;
 			#endif
+			UNITY_TEXTURE_STREAMING_DEBUG_VARS;
 			CBUFFER_END
 
-			// Property used by ScenePickingPass
             #ifdef SCENEPICKINGPASS
 			float4 _SelectionID;
             #endif
 
-			// Properties used by SceneSelectionPass
             #ifdef SCENESELECTIONPASS
 			int _ObjectId;
 			int _PassValue;
             #endif
 
+			sampler2D _Noisetexture;
 			sampler2D _TextureSample0;
 
 
@@ -4335,27 +5299,38 @@ Shader "Grass Test"
             #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/MaterialUtilities.hlsl"
             #include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/ShaderGraphFunctions.hlsl"
 
-			// Setup DECALS_OFF so the shader stripper can remove variants
-            #define HAVE_DECALS ( (defined(DECALS_3RT) || defined(DECALS_4RT)) && !defined(_DISABLE_DECALS) )
             #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Decal/DecalUtilities.hlsl"
             #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Lit/LitDecalData.hlsl"
 
-			
+        	#ifdef HAVE_VFX_MODIFICATION
+        	#include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/VisualEffectVertex.hlsl"
+        	#endif
 
-			#if defined(_DOUBLESIDED_ON) && !defined(ASE_NEED_CULLFACE)
-			#define ASE_NEED_CULLFACE 1
+			#if defined( UNITY_INSTANCING_ENABLED ) && defined( ASE_INSTANCED_TERRAIN ) && ( defined(_TERRAIN_INSTANCED_PERPIXEL_NORMAL) || defined(_INSTANCEDTERRAINNORMALS_PIXEL) )
+				#define ENABLE_TERRAIN_PERPIXEL_NORMAL
 			#endif
+
+			#define ASE_NEEDS_TEXTURE_COORDINATES0
+			#define ASE_NEEDS_VERT_TEXTURE_COORDINATES0
+			#define ASE_NEEDS_FRAG_SCREEN_POSITION_NORMALIZED
+			#define ASE_NEEDS_FRAG_TEXTURE_COORDINATES0
+			#define ASE_NEEDS_FRAG_WORLD_VIEW_DIR
+			#define ASE_NEEDS_WORLD_NORMAL
+			#define ASE_NEEDS_FRAG_WORLD_NORMAL
+			#define ASE_NEEDS_VERT_POSITION
+
 
 			struct AttributesMesh
 			{
 				float3 positionOS : POSITION;
 				float3 normalOS : NORMAL;
 				float4 tangentOS : TANGENT;
+				float4 uv0 : TEXCOORD0;
 				float4 uv1 : TEXCOORD1;
 				float4 uv2 : TEXCOORD2;
 				float3 previousPositionOS : TEXCOORD4;
 				float3 precomputedVelocity : TEXCOORD5;
-				float4 ase_texcoord : TEXCOORD0;
+				
 				UNITY_VERTEX_INPUT_INSTANCE_ID
 			};
 
@@ -4364,7 +5339,7 @@ Shader "Grass Test"
 				SV_POSITION_QUALIFIERS float4 positionCS : SV_Position;
 				float3 positionRWS : TEXCOORD0;
 				float3 normalWS : TEXCOORD1;
-				float4 tangentWS : TEXCOORD2;
+				float4 tangentWS : TEXCOORD2; // holds terrainUV ifdef ENABLE_TERRAIN_PERPIXEL_NORMAL
 				float4 uv1 : TEXCOORD3;
 				float4 uv2 : TEXCOORD4;
 				#ifdef _WRITE_TRANSPARENT_MOTION_VECTOR
@@ -4372,7 +5347,6 @@ Shader "Grass Test"
 					float3 vpassPreviousPositionCS : TEXCOORD6;
 				#endif
 				float4 ase_texcoord7 : TEXCOORD7;
-				float4 ase_texcoord8 : TEXCOORD8;
 				UNITY_VERTEX_INPUT_INSTANCE_ID
 				UNITY_VERTEX_OUTPUT_STEREO
 				#if defined(SHADER_STAGE_FRAGMENT) && defined(ASE_NEED_CULLFACE)
@@ -4380,25 +5354,35 @@ Shader "Grass Test"
 				#endif
 			};
 
-			inline float Dither4x4Bayer( int x, int y )
+			float4 ASEScreenPositionNormalizedToPixel( float4 screenPosNorm, float4 screenParams )
+			{
+				float4 screenPosPixel = screenPosNorm * float4( screenParams.xy, 1, 1 );
+				#if UNITY_UV_STARTS_AT_TOP
+					screenPosPixel.xy = float2( screenPosPixel.x, ( _ProjectionParams.x < 0 ) ? screenParams.y - screenPosPixel.y : screenPosPixel.y );
+				#else
+					screenPosPixel.xy = float2( screenPosPixel.x, ( _ProjectionParams.x > 0 ) ? screenParams.y - screenPosPixel.y : screenPosPixel.y );
+				#endif
+				return screenPosPixel;
+			}
+			
+			inline float Dither4x4Bayer( uint x, uint y )
 			{
 				const float dither[ 16 ] = {
-			 1,  9,  3, 11,
-			13,  5, 15,  7,
-			 4, 12,  2, 10,
-			16,  8, 14,  6 };
-				int r = y * 4 + x;
-				return dither[r] / 16; // same # of instructions as pre-dividing due to compiler magic
+				     1,  9,  3, 11,
+				    13,  5, 15,  7,
+				     4, 12,  2, 10,
+				    16,  8, 14,  6 };
+				uint r = y * 4 + x;
+				return dither[ min( r, 15 ) ] / 16; // same # of instructions as pre-dividing due to compiler magic
 			}
 			
 
 			void BuildSurfaceData(FragInputs fragInputs, inout GlobalSurfaceDescription surfaceDescription, float3 V, PositionInputs posInput, out SurfaceData surfaceData, out float3 bentNormalWS)
 			{
 				ZERO_INITIALIZE(SurfaceData, surfaceData);
-
 				surfaceData.specularOcclusion = 1.0;
+				surfaceData.thickness = 0.0;
 
-				// surface data
 				surfaceData.baseColor =                 surfaceDescription.BaseColor;
 				surfaceData.perceptualSmoothness =		surfaceDescription.Smoothness;
 				surfaceData.ambientOcclusion =			surfaceDescription.Occlusion;
@@ -4408,224 +5392,268 @@ Shader "Grass Test"
 				#ifdef _SPECULAR_OCCLUSION_CUSTOM
 				surfaceData.specularOcclusion =			surfaceDescription.SpecularOcclusion;
 				#endif
+
 				#ifdef _MATERIAL_FEATURE_SUBSURFACE_SCATTERING
 				surfaceData.subsurfaceMask =			surfaceDescription.SubsurfaceMask;
 				#endif
+
 				#if defined(_HAS_REFRACTION) || defined(_MATERIAL_FEATURE_TRANSMISSION)
 				surfaceData.thickness = 				surfaceDescription.Thickness;
 				#endif
+
 				#ifdef _MATERIAL_FEATURE_TRANSMISSION
 				surfaceData.transmissionMask =			surfaceDescription.TransmissionMask;
 				#endif
+
 				#if defined( _MATERIAL_FEATURE_SUBSURFACE_SCATTERING ) || defined( _MATERIAL_FEATURE_TRANSMISSION )
 				surfaceData.diffusionProfileHash =		asuint(surfaceDescription.DiffusionProfile);
 				#endif
+
 				#ifdef _MATERIAL_FEATURE_SPECULAR_COLOR
 				surfaceData.specularColor =				surfaceDescription.Specular;
 				#endif
+
 				#ifdef _MATERIAL_FEATURE_ANISOTROPY
 				surfaceData.anisotropy =				surfaceDescription.Anisotropy;
 				#endif
+
 				#ifdef _MATERIAL_FEATURE_IRIDESCENCE
 				surfaceData.iridescenceMask =			surfaceDescription.IridescenceMask;
 				surfaceData.iridescenceThickness =		surfaceDescription.IridescenceThickness;
 				#endif
 
 				// refraction
-				#ifdef _HAS_REFRACTION
-				if( _EnableSSRefraction )
-				{
-					surfaceData.ior = surfaceDescription.RefractionIndex;
-					surfaceData.transmittanceColor = surfaceDescription.RefractionColor;
-					surfaceData.atDistance = surfaceDescription.RefractionDistance;
-
-					surfaceData.transmittanceMask = ( 1.0 - surfaceDescription.Alpha );
-					surfaceDescription.Alpha = 1.0;
-				}
-				else
-				{
-					surfaceData.ior = 1.0;
-					surfaceData.transmittanceColor = float3( 1.0, 1.0, 1.0 );
-					surfaceData.atDistance = 1.0;
-					surfaceData.transmittanceMask = 0.0;
-					surfaceDescription.Alpha = 1.0;
-				}
-				#else
-				surfaceData.ior = 1.0;
-				surfaceData.transmittanceColor = float3( 1.0, 1.0, 1.0 );
-				surfaceData.atDistance = 1.0;
-				surfaceData.transmittanceMask = 0.0;
-				#endif
-
-
-				// material features
-				surfaceData.materialFeatures = MATERIALFEATUREFLAGS_LIT_STANDARD;
-				#ifdef _MATERIAL_FEATURE_SUBSURFACE_SCATTERING
-				surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_LIT_SUBSURFACE_SCATTERING;
-				#endif
-				#ifdef _MATERIAL_FEATURE_TRANSMISSION
-				surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_LIT_TRANSMISSION;
-				#endif
-                #ifdef _MATERIAL_FEATURE_ANISOTROPY
-				surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_LIT_ANISOTROPY;
-				surfaceData.normalWS = float3(0, 1, 0);
+                #if defined(_REFRACTION_PLANE) || defined(_REFRACTION_SPHERE) || defined(_REFRACTION_THIN)
+                    if (_EnableSSRefraction)
+                    {
+                        surfaceData.ior =                       surfaceDescription.RefractionIndex;
+                        surfaceData.transmittanceColor =        surfaceDescription.RefractionColor;
+                        surfaceData.atDistance =                surfaceDescription.RefractionDistance;
+                        surfaceData.transmittanceMask = (1.0 - surfaceDescription.Alpha);
+                        surfaceDescription.Alpha = 1.0;
+                    }
+                    else
+                    {
+                        surfaceData.ior = 1.0;
+                        surfaceData.transmittanceColor = float3(1.0, 1.0, 1.0);
+                        surfaceData.atDistance = 1.0;
+                        surfaceData.transmittanceMask = 0.0;
+                        surfaceDescription.Alpha = 1.0;
+                    }
+                #else
+                    surfaceData.ior = 1.0;
+                    surfaceData.transmittanceColor = float3(1.0, 1.0, 1.0);
+                    surfaceData.atDistance = 1.0;
+                    surfaceData.transmittanceMask = 0.0;
                 #endif
+
+				surfaceData.materialFeatures = MATERIALFEATUREFLAGS_LIT_STANDARD;
+
+				#ifdef _MATERIAL_FEATURE_SUBSURFACE_SCATTERING
+				if (surfaceData.subsurfaceMask > 0)
+                    surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_LIT_SUBSURFACE_SCATTERING;
+				#endif
+
+				#ifdef _MATERIAL_FEATURE_TRANSMISSION
+                    surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_LIT_TRANSMISSION;
+				#endif
+
+				#ifdef _MATERIAL_FEATURE_COLORED_TRANSMISSION
+                    surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_LIT_TRANSMISSION;
+                    surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_LIT_COLORED_TRANSMISSION;
+				#endif
+
+                #ifdef _MATERIAL_FEATURE_ANISOTROPY
+                    surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_LIT_ANISOTROPY;
+                    surfaceData.normalWS = float3(0, 1, 0);
+                #endif
+
 				#ifdef _MATERIAL_FEATURE_CLEAR_COAT
-				surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_LIT_CLEAR_COAT;
+                    surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_LIT_CLEAR_COAT;
 				#endif
+
 				#ifdef _MATERIAL_FEATURE_IRIDESCENCE
-				surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_LIT_IRIDESCENCE;
+                    surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_LIT_IRIDESCENCE;
 				#endif
+
 				#ifdef _MATERIAL_FEATURE_SPECULAR_COLOR
-				surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_LIT_SPECULAR_COLOR;
+                    surfaceData.materialFeatures |= MATERIALFEATUREFLAGS_LIT_SPECULAR_COLOR;
 				#endif
 
-				// others
 				#if defined (_MATERIAL_FEATURE_SPECULAR_COLOR) && defined (_ENERGY_CONSERVING_SPECULAR)
-				surfaceData.baseColor *= ( 1.0 - Max3( surfaceData.specularColor.r, surfaceData.specularColor.g, surfaceData.specularColor.b ) );
+                    surfaceData.baseColor *= ( 1.0 - Max3( surfaceData.specularColor.r, surfaceData.specularColor.g, surfaceData.specularColor.b ) );
 				#endif
+
 				#ifdef _DOUBLESIDED_ON
-				float3 doubleSidedConstants = _DoubleSidedConstants.xyz;
+					float3 doubleSidedConstants = _DoubleSidedConstants.xyz;
 				#else
-				float3 doubleSidedConstants = float3( 1.0, 1.0, 1.0 );
+					float3 doubleSidedConstants = float3( 1.0, 1.0, 1.0 );
 				#endif
 
-				// normals
-				float3 normalTS = float3(0.0f, 0.0f, 1.0f);
-				normalTS = surfaceDescription.Normal;
+				float3 normal = surfaceDescription.Normal;
 
-				surfaceData.geomNormalWS = fragInputs.tangentToWorld[2];
-				surfaceData.tangentWS = normalize( fragInputs.tangentToWorld[ 0 ].xyz );
-
-				// decals
-			#ifdef DECAL_NORMAL_BLENDING
-				if (_EnableDecals)
-				{
+				#ifdef DECAL_NORMAL_BLENDING
 					#ifndef SURFACE_GRADIENT
-					normalTS = SurfaceGradientFromTangentSpaceNormalAndFromTBN(normalTS, fragInputs.tangentToWorld[0], fragInputs.tangentToWorld[1]);
+					#if ( ASE_FRAGMENT_NORMAL == 1 )
+						normal = SurfaceGradientFromPerturbedNormal(TransformWorldToObjectNormal(fragInputs.tangentToWorld[2]), normal);
+					#elif ( ASE_FRAGMENT_NORMAL == 2 )
+						normal = SurfaceGradientFromPerturbedNormal(fragInputs.tangentToWorld[2], normal);
+					#else
+						normal = SurfaceGradientFromTangentSpaceNormalAndFromTBN(normal, fragInputs.tangentToWorld[0], fragInputs.tangentToWorld[1]);
+					#endif
 					#endif
 
-					DecalSurfaceData decalSurfaceData = GetDecalSurfaceData(posInput, fragInputs, surfaceDescription.Alpha);
-					ApplyDecalToSurfaceData(decalSurfaceData, fragInputs.tangentToWorld[2], surfaceData, normalTS);
-				}
+					#if HAVE_DECALS
+					if (_EnableDecals)
+					{
+						DecalSurfaceData decalSurfaceData = GetDecalSurfaceData(posInput, fragInputs, surfaceDescription.Alpha);
+						ApplyDecalToSurfaceNormal(decalSurfaceData, fragInputs.tangentToWorld[2], normal);
+						ApplyDecalToSurfaceDataNoNormal(decalSurfaceData, surfaceData);
+					}
+					#endif
 
-				GetNormalWS_SG(fragInputs, normalTS, surfaceData.normalWS, doubleSidedConstants);
-			#else
-				GetNormalWS(fragInputs, normalTS, surfaceData.normalWS, doubleSidedConstants);
+					GetNormalWS_SG(fragInputs, normal, surfaceData.normalWS, doubleSidedConstants);
+				#else
+					#if ( ASE_FRAGMENT_NORMAL == 1 )
+						GetNormalWS_SrcOS(fragInputs, normal, surfaceData.normalWS, doubleSidedConstants);
+					#elif ( ASE_FRAGMENT_NORMAL == 2 )
+						GetNormalWS_SrcWS(fragInputs, normal, surfaceData.normalWS, doubleSidedConstants);
+					#else
+						GetNormalWS(fragInputs, normal, surfaceData.normalWS, doubleSidedConstants);
+					#endif
 
-				#if HAVE_DECALS
-				if (_EnableDecals)
-				{
-					// Both uses and modifies 'surfaceData.normalWS'.
-					DecalSurfaceData decalSurfaceData = GetDecalSurfaceData(posInput, fragInputs, surfaceDescription.Alpha);
-					ApplyDecalToSurfaceData(decalSurfaceData, fragInputs.tangentToWorld[2], surfaceData);
-				}
+					#if HAVE_DECALS
+					if (_EnableDecals)
+					{
+						DecalSurfaceData decalSurfaceData = GetDecalSurfaceData(posInput, fragInputs, surfaceDescription.Alpha);
+						ApplyDecalToSurfaceNormal(decalSurfaceData, surfaceData.normalWS.xyz);
+						ApplyDecalToSurfaceDataNoNormal(decalSurfaceData, surfaceData);
+					}
+					#endif
 				#endif
-			#endif
+
+				surfaceData.geomNormalWS = fragInputs.tangentToWorld[2];
+                surfaceData.tangentWS = normalize(fragInputs.tangentToWorld[0].xyz );
+                surfaceData.tangentWS = Orthonormalize(surfaceData.tangentWS, surfaceData.normalWS);
 
 				bentNormalWS = surfaceData.normalWS;
 
 				#ifdef ASE_BENT_NORMAL
-				GetNormalWS( fragInputs, surfaceDescription.BentNormal, bentNormalWS, doubleSidedConstants );
+                    GetNormalWS( fragInputs, surfaceDescription.BentNormal, bentNormalWS, doubleSidedConstants );
 				#endif
 
 				#ifdef _MATERIAL_FEATURE_ANISOTROPY
-				surfaceData.tangentWS = TransformTangentToWorld( surfaceDescription.Tangent, fragInputs.tangentToWorld );
+                    surfaceData.tangentWS = TransformTangentToWorld(surfaceDescription.Tangent, fragInputs.tangentToWorld);
 				#endif
-				surfaceData.tangentWS = Orthonormalize( surfaceData.tangentWS, surfaceData.normalWS );
 
+				#if defined(DEBUG_DISPLAY)
+					#if !defined(SHADER_STAGE_RAY_TRACING)
+					if (_DebugMipMapMode != DEBUGMIPMAPMODE_NONE)
+					{
+						#ifdef FRAG_INPUTS_USE_TEXCOORD0
+							surfaceData.baseColor = GET_TEXTURE_STREAMING_DEBUG(posInput.positionSS, fragInputs.texCoord0);
+						#else
+							surfaceData.baseColor = GET_TEXTURE_STREAMING_DEBUG_NO_UV(posInput.positionSS);
+						#endif
+						surfaceData.metallic = 0;
+					}
+					#endif
+					ApplyDebugToSurfaceData(fragInputs.tangentToWorld, surfaceData);
+				#endif
 
                 #if defined(_SPECULAR_OCCLUSION_CUSTOM)
                 #elif defined(_SPECULAR_OCCLUSION_FROM_AO_BENT_NORMAL)
-				surfaceData.specularOcclusion = GetSpecularOcclusionFromBentAO(V, bentNormalWS, surfaceData.normalWS, surfaceData.ambientOcclusion, PerceptualSmoothnessToPerceptualRoughness(surfaceData.perceptualSmoothness));
+                    surfaceData.specularOcclusion = GetSpecularOcclusionFromBentAO(V, bentNormalWS, surfaceData.normalWS, surfaceData.ambientOcclusion, PerceptualSmoothnessToPerceptualRoughness(surfaceData.perceptualSmoothness));
                 #elif defined(_AMBIENT_OCCLUSION) && defined(_SPECULAR_OCCLUSION_FROM_AO)
-				surfaceData.specularOcclusion = GetSpecularOcclusionFromAmbientOcclusion(ClampNdotV(dot(surfaceData.normalWS, V)), surfaceData.ambientOcclusion, PerceptualSmoothnessToRoughness(surfaceData.perceptualSmoothness));
+                    surfaceData.specularOcclusion = GetSpecularOcclusionFromAmbientOcclusion(ClampNdotV(dot(surfaceData.normalWS, V)), surfaceData.ambientOcclusion, PerceptualSmoothnessToRoughness(surfaceData.perceptualSmoothness));
                 #endif
 
-				#ifdef _ENABLE_GEOMETRIC_SPECULAR_AA
-				surfaceData.perceptualSmoothness = GeometricNormalFiltering( surfaceData.perceptualSmoothness, fragInputs.tangentToWorld[ 2 ], surfaceDescription.SpecularAAScreenSpaceVariance, surfaceDescription.SpecularAAThreshold );
-				#endif
-
-				// debug
-				#if defined(DEBUG_DISPLAY)
-				if (_DebugMipMapMode != DEBUGMIPMAPMODE_NONE)
-				{
-					surfaceData.metallic = 0;
-				}
-				ApplyDebugToSurfaceData(fragInputs.tangentToWorld, surfaceData);
-				#endif
+                #ifdef _ENABLE_GEOMETRIC_SPECULAR_AA
+                    surfaceData.perceptualSmoothness = GeometricNormalFiltering(surfaceData.perceptualSmoothness, fragInputs.tangentToWorld[2], surfaceDescription.SpecularAAScreenSpaceVariance, surfaceDescription.SpecularAAThreshold);
+                #endif
 			}
 
+			// Get Surface And BuiltinData
 			void GetSurfaceAndBuiltinData(GlobalSurfaceDescription surfaceDescription, FragInputs fragInputs, float3 V, inout PositionInputs posInput, out SurfaceData surfaceData, out BuiltinData builtinData)
 			{
 				#ifdef LOD_FADE_CROSSFADE
-				LODDitheringTransition(ComputeFadeMaskSeed(V, posInput.positionSS), unity_LODFade.x);
+                    LODDitheringTransition(ComputeFadeMaskSeed(V, posInput.positionSS), unity_LODFade.x);
 				#endif
 
-				#ifdef _DOUBLESIDED_ON
-				float3 doubleSidedConstants = _DoubleSidedConstants.xyz;
-				#else
-				float3 doubleSidedConstants = float3( 1.0, 1.0, 1.0 );
-				#endif
-
-				ApplyDoubleSidedFlipOrMirror( fragInputs, doubleSidedConstants );
+                #ifdef _DOUBLESIDED_ON
+                    float3 doubleSidedConstants = _DoubleSidedConstants.xyz;
+                #else
+                    float3 doubleSidedConstants = float3(1.0, 1.0, 1.0);
+                #endif
+                ApplyDoubleSidedFlipOrMirror(fragInputs, doubleSidedConstants);
 
 				#ifdef _ALPHATEST_ON
-				DoAlphaTest( surfaceDescription.Alpha, surfaceDescription.AlphaClipThreshold );
+                    DoAlphaTest( surfaceDescription.Alpha, surfaceDescription.AlphaClipThreshold );
+				#endif
+
+				#ifdef _ALPHATEST_SHADOW_ON
+                    DoAlphaTest( surfaceDescription.Alpha, surfaceDescription.AlphaClipThresholdShadow);
 				#endif
 
 				#ifdef _DEPTHOFFSET_ON
-				ApplyDepthOffsetPositionInput( V, surfaceDescription.DepthOffset, GetViewForwardDir(), GetWorldToHClipMatrix(), posInput );
+                    ApplyDepthOffsetPositionInput(V, surfaceDescription.DepthOffset, GetViewForwardDir(), GetWorldToHClipMatrix(), posInput);
 				#endif
 
 				float3 bentNormalWS;
-				BuildSurfaceData( fragInputs, surfaceDescription, V, posInput, surfaceData, bentNormalWS );
-
-				InitBuiltinData( posInput, surfaceDescription.Alpha, bentNormalWS, -fragInputs.tangentToWorld[ 2 ], fragInputs.texCoord1, fragInputs.texCoord2, builtinData );
+                BuildSurfaceData(fragInputs, surfaceDescription, V, posInput, surfaceData, bentNormalWS);
+                InitBuiltinData(posInput, surfaceDescription.Alpha, bentNormalWS, -fragInputs.tangentToWorld[2], fragInputs.texCoord1, fragInputs.texCoord2, builtinData);
 
 				#ifdef _DEPTHOFFSET_ON
-				builtinData.depthOffset = surfaceDescription.DepthOffset;
+                    builtinData.depthOffset = surfaceDescription.DepthOffset;
 				#endif
 
-				#ifdef _ALPHATEST_ON
+                #ifdef _ALPHATEST_ON
                     builtinData.alphaClipTreshold = surfaceDescription.AlphaClipThreshold;
                 #endif
 
-				#ifdef UNITY_VIRTUAL_TEXTURING
-                builtinData.vtPackedFeedback = surfaceDescription.VTPackedFeedback;
+                #ifdef UNITY_VIRTUAL_TEXTURING
+                    builtinData.vtPackedFeedback = surfaceDescription.VTPackedFeedback;
                 #endif
 
 				#ifdef ASE_BAKEDGI
-				builtinData.bakeDiffuseLighting = surfaceDescription.BakedGI;
+                    builtinData.bakeDiffuseLighting = surfaceDescription.BakedGI;
 				#endif
 
 				#ifdef ASE_BAKEDBACKGI
-				builtinData.backBakeDiffuseLighting = surfaceDescription.BakedBackGI;
+                    builtinData.backBakeDiffuseLighting = surfaceDescription.BakedBackGI;
 				#endif
 
-				builtinData.emissiveColor = surfaceDescription.Emission;
+                builtinData.emissiveColor = surfaceDescription.Emission;
 
 				PostInitBuiltinData(V, posInput, surfaceData, builtinData);
 			}
 
-			AttributesMesh ApplyMeshModification(AttributesMesh inputMesh, float3 timeParameters, inout PackedVaryingsMeshToPS outputPackedVaryingsMeshToPS )
+			AttributesMesh ApplyMeshModification(AttributesMesh inputMesh, float3 timeParameters, inout PackedVaryingsMeshToPS output)
 			{
+				float3 currentTimeParams = _TimeParameters.xyz;
 				_TimeParameters.xyz = timeParameters;
-				float4 ase_clipPos = TransformWorldToHClip( TransformObjectToWorld(inputMesh.positionOS));
-				float4 screenPos = ComputeScreenPos( ase_clipPos , _ProjectionParams.x );
-				outputPackedVaryingsMeshToPS.ase_texcoord8 = screenPos;
+
+				float3 ase_positionWS = GetAbsolutePositionWS( TransformObjectToWorld( ( inputMesh.positionOS ).xyz ) );
+				float2 appendResult4_g12 = (float2(ase_positionWS.x , ase_positionWS.z));
+				float2 panner8_g12 = ( 1.0 * _Time.y * _WindSpeed + ( appendResult4_g12 / _Size ));
+				float4 tex2DNode9_g12 = tex2Dlod( _Noisetexture, float4( panner8_g12, 0, 0.0) );
+				float2 texCoord17_g12 = inputMesh.uv0.xy * float2( 1,1 ) + float2( 0,0 );
 				
-				outputPackedVaryingsMeshToPS.ase_texcoord7.xy = inputMesh.ase_texcoord.xy;
+				float3 objectToViewPos = TransformWorldToView( TransformObjectToWorld( inputMesh.positionOS ) );
+				float eyeDepth = -objectToViewPos.z;
+				output.ase_texcoord7.z = eyeDepth;
+				
+				output.ase_texcoord7.xy = inputMesh.uv0.xy;
 				
 				//setting value to unused interpolator channels and avoid initialization warnings
-				outputPackedVaryingsMeshToPS.ase_texcoord7.zw = 0;
+				output.ase_texcoord7.w = 0;
 
 				#ifdef ASE_ABSOLUTE_VERTEX_POS
 				float3 defaultVertexValue = inputMesh.positionOS.xyz;
 				#else
 				float3 defaultVertexValue = float3( 0, 0, 0 );
 				#endif
-				float3 vertexValue = defaultVertexValue;
+				float3 vertexValue = ( tex2DNode9_g12 * _Windintensity * texCoord17_g12.y ).rgb;
 
 				#ifdef ASE_ABSOLUTE_VERTEX_POS
 				inputMesh.positionOS.xyz = vertexValue;
@@ -4634,19 +5662,21 @@ Shader "Grass Test"
 				#endif
 				inputMesh.normalOS = inputMesh.normalOS;
 				inputMesh.tangentOS = inputMesh.tangentOS;
+
+				_TimeParameters.xyz = currentTimeParams;
 				return inputMesh;
 			}
 
 			PackedVaryingsMeshToPS VertexFunction(AttributesMesh inputMesh)
 			{
-				PackedVaryingsMeshToPS outputPackedVaryingsMeshToPS = (PackedVaryingsMeshToPS)0;
+				PackedVaryingsMeshToPS output = (PackedVaryingsMeshToPS)0;
 				AttributesMesh defaultMesh = inputMesh;
 
 				UNITY_SETUP_INSTANCE_ID(inputMesh);
-				UNITY_TRANSFER_INSTANCE_ID(inputMesh, outputPackedVaryingsMeshToPS);
-				UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO( outputPackedVaryingsMeshToPS );
+				UNITY_TRANSFER_INSTANCE_ID(inputMesh, output);
+				UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO( output );
 
-				inputMesh = ApplyMeshModification( inputMesh, _TimeParameters.xyz, outputPackedVaryingsMeshToPS);
+				inputMesh = ApplyMeshModification( inputMesh, _TimeParameters.xyz, output);
 
 				float3 positionRWS = TransformObjectToWorld(inputMesh.positionOS);
 				float3 normalWS = TransformObjectToWorldNormal(inputMesh.normalOS);
@@ -4673,9 +5703,7 @@ Shader "Grass Test"
 						AttributesMesh previousMesh = defaultMesh;
 						previousMesh.positionOS = effectivePositionOS ;
 						PackedVaryingsMeshToPS test = (PackedVaryingsMeshToPS)0;
-						float3 curTime = _TimeParameters.xyz;
 						previousMesh = ApplyMeshModification(previousMesh, _LastTimeParameters.xyz, test);
-						_TimeParameters.xyz = curTime;
 						float3 previousPositionRWS = TransformPreviousObjectToWorld(previousMesh.positionOS);
 					#else
 						float3 previousPositionRWS = TransformPreviousObjectToWorld(effectivePositionOS);
@@ -4695,18 +5723,23 @@ Shader "Grass Test"
 				}
 				#endif
 
-				outputPackedVaryingsMeshToPS.positionCS = TransformWorldToHClip(positionRWS);
-				outputPackedVaryingsMeshToPS.positionRWS.xyz = positionRWS;
-				outputPackedVaryingsMeshToPS.normalWS.xyz = normalWS;
-				outputPackedVaryingsMeshToPS.tangentWS.xyzw = tangentWS;
-				outputPackedVaryingsMeshToPS.uv1.xyzw = inputMesh.uv1;
-				outputPackedVaryingsMeshToPS.uv2.xyzw = inputMesh.uv2;
+				output.positionCS = TransformWorldToHClip(positionRWS);
+				output.positionRWS = positionRWS;
+				output.normalWS = normalWS;
+				output.tangentWS = tangentWS;
+				output.uv1 = inputMesh.uv1;
+				output.uv2 = inputMesh.uv2;
+
+				#if defined( ENABLE_TERRAIN_PERPIXEL_NORMAL )
+					output.tangentWS.zw = inputMesh.uv0.xy;
+					output.tangentWS.xy = inputMesh.uv0.xy * unity_LightmapST.xy + unity_LightmapST.zw;
+				#endif
 
 				#ifdef _WRITE_TRANSPARENT_MOTION_VECTOR
-					outputPackedVaryingsMeshToPS.vpassPositionCS = float3(VPASSpositionCS.xyw);
-					outputPackedVaryingsMeshToPS.vpassPreviousPositionCS = float3(VPASSpreviousPositionCS.xyw);
+					output.vpassPositionCS = float3(VPASSpositionCS.xyw);
+					output.vpassPreviousPositionCS = float3(VPASSpreviousPositionCS.xyw);
 				#endif
-				return outputPackedVaryingsMeshToPS;
+				return output;
 			}
 
 			#if defined(ASE_TESSELLATION)
@@ -4715,10 +5748,10 @@ Shader "Grass Test"
 				float3 positionOS : INTERNALTESSPOS;
 				float3 normalOS : NORMAL;
 				float4 tangentOS : TANGENT;
+				float4 uv0 : TEXCOORD0;
 				float4 uv1 : TEXCOORD1;
 				float4 uv2 : TEXCOORD2;
-				float4 ase_texcoord : TEXCOORD0;
-
+				
 				UNITY_VERTEX_INPUT_INSTANCE_ID
 			};
 
@@ -4736,9 +5769,10 @@ Shader "Grass Test"
 				o.positionOS = v.positionOS;
 				o.normalOS = v.normalOS;
 				o.tangentOS = v.tangentOS;
+				o.uv0 = v.uv0;
 				o.uv1 = v.uv1;
 				o.uv2 = v.uv2;
-				o.ase_texcoord = v.ase_texcoord;
+				
 				return o;
 			}
 
@@ -4783,9 +5817,10 @@ Shader "Grass Test"
 				o.positionOS = patch[0].positionOS * bary.x + patch[1].positionOS * bary.y + patch[2].positionOS * bary.z;
 				o.normalOS = patch[0].normalOS * bary.x + patch[1].normalOS * bary.y + patch[2].normalOS * bary.z;
 				o.tangentOS = patch[0].tangentOS * bary.x + patch[1].tangentOS * bary.y + patch[2].tangentOS * bary.z;
+				o.uv0 = patch[0].uv0 * bary.x + patch[1].uv0 * bary.y + patch[2].uv0 * bary.z;
 				o.uv1 = patch[0].uv1 * bary.x + patch[1].uv1 * bary.y + patch[2].uv1 * bary.z;
 				o.uv2 = patch[0].uv2 * bary.x + patch[1].uv2 * bary.y + patch[2].uv2 * bary.z;
-				o.ase_texcoord = patch[0].ase_texcoord * bary.x + patch[1].ase_texcoord * bary.y + patch[2].ase_texcoord * bary.z;
+				
 				#if defined(ASE_PHONG_TESSELLATION)
 				float3 pp[3];
 				for (int i = 0; i < 3; ++i)
@@ -4803,12 +5838,22 @@ Shader "Grass Test"
 			}
 			#endif
 
+			#include "Packages/com.unity.render-pipelines.high-definition/Runtime/Debug/DebugDisplayMaterial.hlsl"
+
+            #if defined(_TRANSPARENT_REFRACTIVE_SORT) || defined(_ENABLE_FOG_ON_TRANSPARENT)
+            #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Water/Shaders/UnderWaterUtilities.hlsl"
+            #endif
+
             #ifdef UNITY_VIRTUAL_TEXTURING
                 #ifdef OUTPUT_SPLIT_LIGHTING
                    #define DIFFUSE_LIGHTING_TARGET SV_Target2
                    #define SSS_BUFFER_TARGET SV_Target3
                 #elif defined(_WRITE_TRANSPARENT_MOTION_VECTOR)
                    #define MOTION_VECTOR_TARGET SV_Target2
+                    #ifdef _TRANSPARENT_REFRACTIVE_SORT
+                        #define BEFORE_REFRACTION_TARGET SV_Target3
+                        #define BEFORE_REFRACTION_ALPHA_TARGET SV_Target4
+                #endif
             	#endif
             #if defined(SHADER_API_PSSL)
             	#pragma PSSL_target_output_format(target 1 FMT_32_ABGR)
@@ -4819,25 +5864,32 @@ Shader "Grass Test"
                 #define SSS_BUFFER_TARGET SV_Target2
                 #elif defined(_WRITE_TRANSPARENT_MOTION_VECTOR)
                 #define MOTION_VECTOR_TARGET SV_Target1
+                #ifdef _TRANSPARENT_REFRACTIVE_SORT
+                     #define BEFORE_REFRACTION_TARGET SV_Target2
+                     #define BEFORE_REFRACTION_ALPHA_TARGET SV_Target3
                 #endif
+            #endif
             #endif
 
 			void Frag(PackedVaryingsMeshToPS packedInput
-				, out float4 outColor:SV_Target0
-            #ifdef UNITY_VIRTUAL_TEXTURING
-				, out float4 outVTFeedback : SV_Target1
-            #endif
-            #ifdef OUTPUT_SPLIT_LIGHTING
-				, out float4 outDiffuseLighting : DIFFUSE_LIGHTING_TARGET
-				, OUTPUT_SSSBUFFER(outSSSBuffer) : SSS_BUFFER_TARGET
-            #elif defined(_WRITE_TRANSPARENT_MOTION_VECTOR)
-				, out float4 outMotionVec : MOTION_VECTOR_TARGET
-            #endif
-            #ifdef _DEPTHOFFSET_ON
-				, out float outputDepth : DEPTH_OFFSET_SEMANTIC
-            #endif
-		    
-						)
+						, out float4 outColor:SV_Target0
+					#ifdef UNITY_VIRTUAL_TEXTURING
+						, out float4 outVTFeedback : SV_Target1
+					#endif
+					#ifdef OUTPUT_SPLIT_LIGHTING
+						, out float4 outDiffuseLighting : DIFFUSE_LIGHTING_TARGET
+						, OUTPUT_SSSBUFFER(outSSSBuffer) : SSS_BUFFER_TARGET
+					#elif defined(_WRITE_TRANSPARENT_MOTION_VECTOR)
+						, out float4 outMotionVec : MOTION_VECTOR_TARGET
+						#ifdef _TRANSPARENT_REFRACTIVE_SORT
+							, out float4 outBeforeRefractionColor : BEFORE_REFRACTION_TARGET
+							, out float4 outBeforeRefractionAlpha : BEFORE_REFRACTION_ALPHA_TARGET
+						#endif
+					#endif
+					#if defined( ASE_DEPTH_WRITE_ON )
+						, out float outputDepth : DEPTH_OFFSET_SEMANTIC
+					#endif
+					 )
 			{
 				#ifdef _WRITE_TRANSPARENT_MOTION_VECTOR
 					outMotionVec = float4(2.0, 0.0, 0.0, 1.0);
@@ -4845,47 +5897,64 @@ Shader "Grass Test"
 
 				UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX( packedInput );
 				UNITY_SETUP_INSTANCE_ID( packedInput );
-				float3 positionRWS = packedInput.positionRWS.xyz;
-				float3 normalWS = packedInput.normalWS.xyz;
-				float4 tangentWS = packedInput.tangentWS.xyzw;
 
 				FragInputs input;
 				ZERO_INITIALIZE(FragInputs, input);
-				input.tangentToWorld = k_identity3x3;
 				input.positionSS = packedInput.positionCS;
-				input.positionRWS = positionRWS;
-				input.tangentToWorld = BuildTangentToWorld(tangentWS, normalWS);
+				input.positionRWS = packedInput.positionRWS;
+				input.tangentToWorld = BuildTangentToWorld(packedInput.tangentWS, packedInput.normalWS);
 				input.texCoord1 = packedInput.uv1.xyzw;
 				input.texCoord2 = packedInput.uv2.xyzw;
 
-				#if _DOUBLESIDED_ON && SHADER_STAGE_FRAGMENT
-				input.isFrontFace = IS_FRONT_VFACE( packedInput.cullFace, true, false);
-				#elif SHADER_STAGE_FRAGMENT
-				#if defined(ASE_NEED_CULLFACE)
-				input.isFrontFace = IS_FRONT_VFACE(packedInput.cullFace, true, false);
-				#endif
-				#endif
-				half isFrontFace = input.isFrontFace;
-
-				input.positionSS.xy = _OffScreenRendering > 0 ? (uint2)round(input.positionSS.xy * _OffScreenDownsampleFactor) : input.positionSS.xy;
+				AdjustFragInputsToOffScreenRendering(input, _OffScreenRendering > 0, _OffScreenDownsampleFactor);
 				uint2 tileIndex = uint2(input.positionSS.xy) / GetTileSize ();
 
 				PositionInputs posInput = GetPositionInput( input.positionSS.xy, _ScreenSize.zw, input.positionSS.z, input.positionSS.w, input.positionRWS.xyz, tileIndex );
 
-				float3 V = GetWorldSpaceNormalizeViewDir(input.positionRWS);
+				#if _DOUBLESIDED_ON && SHADER_STAGE_FRAGMENT
+					input.isFrontFace = IS_FRONT_VFACE(packedInput.cullFace, true, false);
+				#elif SHADER_STAGE_FRAGMENT
+					#if defined(ASE_NEED_CULLFACE)
+						input.isFrontFace = IS_FRONT_VFACE(packedInput.cullFace, true, false);
+					#endif
+				#endif
+
+				half IsFrontFace = input.isFrontFace;
+				float3 PositionRWS = posInput.positionWS;
+				float3 PositionWS = GetAbsolutePositionWS( posInput.positionWS );
+				float3 V = GetWorldSpaceNormalizeViewDir( packedInput.positionRWS );
+				float4 ScreenPosNorm = float4( posInput.positionNDC, packedInput.positionCS.zw );
+				float4 ClipPos = ComputeClipSpacePosition( ScreenPosNorm.xy, packedInput.positionCS.z ) * packedInput.positionCS.w;
+				float4 ScreenPos = ComputeScreenPos( ClipPos, _ProjectionParams.x );
+				float3 NormalWS = packedInput.normalWS;
+				float3 TangentWS = packedInput.tangentWS.xyz;
+				float3 BitangentWS = input.tangentToWorld[ 1 ];
+
+				#if defined( ENABLE_TERRAIN_PERPIXEL_NORMAL )
+					float2 sampleCoords = (packedInput.tangentWS.zw / _TerrainHeightmapRecipSize.zw + 0.5f) * _TerrainHeightmapRecipSize.xy;
+					NormalWS = TransformObjectToWorldNormal(normalize(SAMPLE_TEXTURE2D(_TerrainNormalmapTexture, sampler_TerrainNormalmapTexture, sampleCoords).rgb * 2 - 1));
+					TangentWS = -cross(GetObjectToWorldMatrix()._13_23_33, NormalWS);
+					input.tangentToWorld = BuildTangentToWorld( float4( TangentWS, -1 ), NormalWS );
+					BitangentWS = input.tangentToWorld[ 1 ];
+				#endif
+
+				float2 uv_TextureSample0 = packedInput.ase_texcoord7.xy * _TextureSample0_ST.xy + _TextureSample0_ST.zw;
+				float4 ase_positionSS_Pixel = ASEScreenPositionNormalizedToPixel( ScreenPosNorm, _ScreenParams );
+				float dither66 = Dither4x4Bayer( fmod( ase_positionSS_Pixel.x, 4 ), fmod( ase_positionSS_Pixel.y, 4 ) );
+				float2 texCoord16 = packedInput.ase_texcoord7.xy * float2( 1,1 ) + float2( 0,0 );
+				float smoothstepResult23 = smoothstep( 0.0 , _BottomGradientsize , texCoord16.y);
+				float lerpResult55 = lerp( 1.0 , smoothstepResult23 , _BottomGradient);
+				float fresnelNdotV59 = dot( NormalWS, V );
+				float fresnelNode59 = ( -1.0 + 5.0 * pow( 1.0 - fresnelNdotV59, 2.0 ) );
+				float lerpResult63 = lerp( 1.0 , ( 1.0 - saturate( fresnelNode59 ) ) , _Fresneldither);
+				float eyeDepth = packedInput.ase_texcoord7.z;
+				float cameraDepthFade65 = (( eyeDepth -_ProjectionParams.y - 100.0 ) / 20.0);
+				dither66 = step( dither66, saturate( ( saturate( lerpResult55 ) * saturate( lerpResult63 ) * ( 1.0 - saturate( cameraDepthFade65 ) ) ) * 1.00001 ) );
+				
 
 				GlobalSurfaceDescription surfaceDescription = (GlobalSurfaceDescription)0;
-				float2 uv_TextureSample0 = packedInput.ase_texcoord7.xy * _TextureSample0_ST.xy + _TextureSample0_ST.zw;
-				float4 screenPos = packedInput.ase_texcoord8;
-				float4 ase_screenPosNorm = screenPos / screenPos.w;
-				ase_screenPosNorm.z = ( UNITY_NEAR_CLIP_VALUE >= 0 ) ? ase_screenPosNorm.z : ase_screenPosNorm.z * 0.5 + 0.5;
-				float2 clipScreen17 = ase_screenPosNorm.xy * _ScreenParams.xy;
-				float dither17 = Dither4x4Bayer( fmod(clipScreen17.x, 4), fmod(clipScreen17.y, 4) );
-				float2 texCoord16 = packedInput.ase_texcoord7.xy * float2( 1,1 ) + float2( 0,0 );
-				float smoothstepResult23 = smoothstep( 0.0 , 0.5 , texCoord16.y);
-				dither17 = step( dither17, smoothstepResult23 );
-				
-				surfaceDescription.BaseColor = _Color0.rgb;
+
+				surfaceDescription.BaseColor = ( _Color.rgb + ( ( 0.0 - 1.0 ) * _Windinalbedo ) );
 				surfaceDescription.Normal = float3( 0, 0, 1 );
 				surfaceDescription.BentNormal = float3( 0, 0, 1 );
 				surfaceDescription.CoatMask = 0;
@@ -4895,22 +5964,22 @@ Shader "Grass Test"
 				surfaceDescription.Specular = 0;
 				#endif
 
-				surfaceDescription.Emission = 0;
 				surfaceDescription.Smoothness = _Smoothness;
 				surfaceDescription.Occlusion = 1;
-				surfaceDescription.Alpha = ( tex2D( _TextureSample0, uv_TextureSample0 ).a * dither17 );
+				surfaceDescription.Emission = 0;
+				surfaceDescription.Alpha = ( tex2D( _TextureSample0, uv_TextureSample0 ).a * dither66 );
 
 				#ifdef _ALPHATEST_ON
 				surfaceDescription.AlphaClipThreshold = _AlphaCutoff;
 				#endif
 
+				#ifdef _SPECULAR_OCCLUSION_CUSTOM
+				surfaceDescription.SpecularOcclusion = 0;
+				#endif
+
 				#ifdef _ENABLE_GEOMETRIC_SPECULAR_AA
 				surfaceDescription.SpecularAAScreenSpaceVariance = 0;
 				surfaceDescription.SpecularAAThreshold = 0;
-				#endif
-
-				#ifdef _SPECULAR_OCCLUSION_CUSTOM
-				surfaceDescription.SpecularOcclusion = 0;
 				#endif
 
 				#if defined(_HAS_REFRACTION) || defined(_MATERIAL_FEATURE_TRANSMISSION)
@@ -4948,12 +6017,27 @@ Shader "Grass Test"
 				#ifdef ASE_BAKEDGI
 				surfaceDescription.BakedGI = 0;
 				#endif
+
 				#ifdef ASE_BAKEDBACKGI
 				surfaceDescription.BakedBackGI = 0;
 				#endif
 
-				#ifdef _DEPTHOFFSET_ON
-				surfaceDescription.DepthOffset = 0;
+				#if defined( ASE_CHANGES_WORLD_POS )
+					posInput.positionWS = PositionRWS;
+					#if defined( _WRITE_TRANSPARENT_MOTION_VECTOR )
+						float3 positionOS = mul( GetWorldToObjectMatrix(),  float4( PositionRWS, 1.0 ) ).xyz;
+						float3 previousPositionRWS = mul( GetPrevObjectToWorldMatrix(),  float4( positionOS, 1.0 ) ).xyz;
+						packedInput.vpassPositionCS = mul( UNITY_MATRIX_UNJITTERED_VP, float4( PositionRWS, 1.0 ) ).xyw;
+						packedInput.vpassPreviousPositionCS = mul( UNITY_MATRIX_PREV_VP, float4( previousPositionRWS, 1.0 ) ).xyw;
+					#endif
+				#endif
+
+				#if defined( ASE_DEPTH_WRITE_ON )
+					#if !defined( _DEPTHOFFSET_ON )
+						posInput.deviceDepth = input.positionSS.z;
+					#else
+						surfaceDescription.DepthOffset = 0;
+					#endif
 				#endif
 
 				#ifdef UNITY_VIRTUAL_TEXTURING
@@ -4970,40 +6054,13 @@ Shader "Grass Test"
 
 				outColor = float4(0.0, 0.0, 0.0, 0.0);
 
-            #ifdef DEBUG_DISPLAY
-            #ifdef OUTPUT_SPLIT_LIGHTING
-				outDiffuseLighting = float4(0, 0, 0, 1);
-				ENCODE_INTO_SSSBUFFER(surfaceData, posInput.positionSS, outSSSBuffer);
-			#endif
+				#ifdef DEBUG_DISPLAY
+				#ifdef OUTPUT_SPLIT_LIGHTING
+					outDiffuseLighting = float4(0, 0, 0, 1);
+					ENCODE_INTO_SSSBUFFER(surfaceData, posInput.positionSS, outSSSBuffer);
+				#endif
 
-				bool viewMaterial = false;
-				int bufferSize = _DebugViewMaterialArray[0].x;
-				if (bufferSize != 0)
-				{
-					bool needLinearToSRGB = false;
-					float3 result = float3(1.0, 0.0, 1.0);
-
-					for (int index = 1; index <= bufferSize; index++)
-					{
-						int indexMaterialProperty = _DebugViewMaterialArray[index].x;
-
-						if (indexMaterialProperty != 0)
-						{
-							viewMaterial = true;
-
-							GetPropertiesDataDebug(indexMaterialProperty, result, needLinearToSRGB);
-							GetVaryingsDataDebug(indexMaterialProperty, input, result, needLinearToSRGB);
-							GetBuiltinDataDebug(indexMaterialProperty, builtinData, posInput, result, needLinearToSRGB);
-							GetSurfaceDataDebug(indexMaterialProperty, surfaceData, result, needLinearToSRGB);
-							GetBSDFDataDebug(indexMaterialProperty, bsdfData, result, needLinearToSRGB);
-						}
-					}
-
-					if (!needLinearToSRGB && _DebugAOVOutput == 0)
-						result = SRGBToLinear(max(0, result));
-
-					outColor = float4(result, 1.0);
-				}
+			    bool viewMaterial = GetMaterialDebugColor(outColor, input, builtinData, posInput, surfaceData, bsdfData);
 
 				if (!viewMaterial)
 				{
@@ -5050,13 +6107,19 @@ Shader "Grass Test"
 						ENCODE_INTO_SSSBUFFER(surfaceData, posInput.positionSS, outSSSBuffer);
                 #else
 						outColor = ApplyBlendMode(diffuseLighting, specularLighting, builtinData.opacity);
-						outColor = EvaluateAtmosphericScattering(posInput, V, outColor);
+
+						#ifdef _ENABLE_FOG_ON_TRANSPARENT
+                        outColor = EvaluateAtmosphericScattering(posInput, V, outColor);
+                        #endif
+
+                        #ifdef _TRANSPARENT_REFRACTIVE_SORT
+                        ComputeRefractionSplitColor(posInput, outColor, outBeforeRefractionColor, outBeforeRefractionAlpha);
+                        #endif
                 #endif
 
 				#ifdef _WRITE_TRANSPARENT_MOTION_VECTOR
 						float4 VPASSpositionCS = float4(packedInput.vpassPositionCS.xy, 0.0, packedInput.vpassPositionCS.z);
 						float4 VPASSpreviousPositionCS = float4(packedInput.vpassPreviousPositionCS.xy, 0.0, packedInput.vpassPreviousPositionCS.z);
-
 						bool forceNoMotion = any(unity_MotionVectorsParams.yw == 0.0);
                 #if defined(HAVE_VFX_MODIFICATION) && !VFX_FEATURE_MOTION_VECTORS
                         forceNoMotion = true;
@@ -5074,12 +6137,8 @@ Shader "Grass Test"
 				}
 				#endif
 
-				#ifdef _DEPTHOFFSET_ON
-				outputDepth = posInput.deviceDepth;
-				#endif
-
-				#ifdef UNITY_VIRTUAL_TEXTURING
-					outVTFeedback = builtinData.vtPackedFeedback;
+				#if defined( ASE_DEPTH_WRITE_ON )
+					outputDepth = posInput.deviceDepth;
 				#endif
 
                 #ifdef UNITY_VIRTUAL_TEXTURING
@@ -5088,7 +6147,9 @@ Shader "Grass Test"
 					vtAlphaValue = 1.0f - bsdfData.transmittanceMask;
                 #endif
 				outVTFeedback = PackVTFeedbackWithAlpha(builtinData.vtPackedFeedback, input.positionSS.xy, vtAlphaValue);
+				outVTFeedback.rgb *= outVTFeedback.a; // premuliplied alpha
                 #endif
+
 			}
 			ENDHLSL
 		}
@@ -5103,17 +6164,34 @@ Shader "Grass Test"
             Cull [_CullMode]
 
             HLSLPROGRAM
-
+			#define ASE_GEOMETRY
+			#pragma shader_feature_local _ _DOUBLESIDED_ON
+			#define ASE_FRAGMENT_NORMAL 0
+			#pragma shader_feature_local_fragment _ _DISABLE_DECALS
 			#define _SPECULAR_OCCLUSION_FROM_AO 1
 			#pragma multi_compile_instancing
 			#pragma instancing_options renderinglayer
-			#define ASE_SRP_VERSION 140012
-
+			#pragma shader_feature_local _ _ALPHATEST_ON
+			#define HAVE_MESH_MODIFICATION
+			#define ASE_VERSION 19904
+			#define ASE_SRP_VERSION 170200
 
 			#pragma editor_sync_compilation
+            #pragma multi_compile _ DOTS_INSTANCING_ON
+
+            #pragma shader_feature _ _SURFACE_TYPE_TRANSPARENT
+            #pragma shader_feature_local _ _TRANSPARENT_WRITES_MOTION_VEC _TRANSPARENT_REFRACTIVE_SORT
+            #pragma shader_feature_local_fragment _ _ENABLE_FOG_ON_TRANSPARENT
 
 			#pragma vertex Vert
 			#pragma fragment Frag
+
+			#define SHADERPASS SHADERPASS_DEPTH_ONLY
+			#define SCENEPICKINGPASS 1
+
+			#define ATTRIBUTES_NEED_NORMAL
+			#define ATTRIBUTES_NEED_TANGENT
+			#define VARYINGS_NEED_TANGENT_TO_WORLD
 
             #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
         	#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/GeometricTools.hlsl"
@@ -5122,51 +6200,87 @@ Shader "Grass Test"
             #include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/ShaderVariables.hlsl"
             #include "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/ShaderPass/ShaderPass.cs.hlsl"
             #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/TextureStack.hlsl"
+			#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/DebugMipmapStreamingMacros.hlsl"
             #include "Packages/com.unity.shadergraph/ShaderGraphLibrary/Functions.hlsl"
-
-			#define ATTRIBUTES_NEED_NORMAL
-			#define ATTRIBUTES_NEED_TANGENT
-			#define VARYINGS_NEED_TANGENT_TO_WORLD
 
 			#include "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/ShaderPass/FragInputs.hlsl"
 
-			#define SHADERPASS SHADERPASS_DEPTH_ONLY
-			#define SCENEPICKINGPASS 1
+            #ifdef RAYTRACING_SHADER_GRAPH_DEFAULT
+                #define RAYTRACING_SHADER_GRAPH_HIGH
+            #endif
 
-			#ifndef SHADER_UNLIT
-			#if defined(_DOUBLESIDED_ON) && !defined(VARYINGS_NEED_CULLFACE)
-		    #define VARYINGS_NEED_CULLFACE
-			#endif
+            #ifdef RAYTRACING_SHADER_GRAPH_RAYTRACED
+                #define RAYTRACING_SHADER_GRAPH_LOW
+            #endif
+
+            #ifndef SHADER_UNLIT
+            #if defined(_DOUBLESIDED_ON) && !defined(VARYINGS_NEED_CULLFACE)
+                #define VARYINGS_NEED_CULLFACE
+            #endif
+            #endif
+
+			#if defined(_DOUBLESIDED_ON) && !defined(ASE_NEED_CULLFACE)
+			    #define ASE_NEED_CULLFACE 1
 			#endif
 
-			#if SHADERPASS == SHADERPASS_TRANSPARENT_DEPTH_PREPASS
-			#if !defined(_DISABLE_SSR_TRANSPARENT) && !defined(SHADER_UNLIT)
-			#define WRITE_NORMAL_BUFFER
-			#endif
-			#endif
+            #if _MATERIAL_FEATURE_COLORED_TRANSMISSION
+            #undef _MATERIAL_FEATURE_CLEAR_COAT
+            #endif
 
 		    #if defined(_MATERIAL_FEATURE_SUBSURFACE_SCATTERING) && !defined(_SURFACE_TYPE_TRANSPARENT)
 			#define OUTPUT_SPLIT_LIGHTING
 		    #endif
 
-			#if defined(SHADER_LIT) && !defined(_SURFACE_TYPE_TRANSPARENT)
-			#define _DEFERRED_CAPABLE_MATERIAL
-			#endif
+            #if (SHADERPASS == SHADERPASS_PATH_TRACING) && !defined(_DOUBLESIDED_ON) && (defined(_REFRACTION_PLANE) || defined(_REFRACTION_SPHERE))
+            #undef  _REFRACTION_PLANE
+            #undef  _REFRACTION_SPHERE
+            #define _REFRACTION_THIN
+            #endif
 
-			#if defined(_TRANSPARENT_WRITES_MOTION_VEC) && defined(_SURFACE_TYPE_TRANSPARENT)
-			#define _WRITE_TRANSPARENT_MOTION_VECTOR
-			#endif
+            #if SHADERPASS == SHADERPASS_TRANSPARENT_DEPTH_PREPASS
+            #if !defined(_DISABLE_SSR_TRANSPARENT) && !defined(SHADER_UNLIT)
+                #define WRITE_NORMAL_BUFFER
+            #endif
+            #endif
 
-			float4 _SelectionID;
+            #if SHADERPASS == SHADERPASS_MOTION_VECTORS && defined(WRITE_DECAL_BUFFER_AND_RENDERING_LAYER)
+                #define WRITE_DECAL_BUFFER
+            #endif
+
+            #ifndef DEBUG_DISPLAY
+                #if !defined(_SURFACE_TYPE_TRANSPARENT)
+                    #if SHADERPASS == SHADERPASS_FORWARD
+                    #define SHADERPASS_FORWARD_BYPASS_ALPHA_TEST
+                    #elif SHADERPASS == SHADERPASS_GBUFFER
+                    #define SHADERPASS_GBUFFER_BYPASS_ALPHA_TEST
+                    #endif
+                #endif
+            #endif
+
+            #if defined(SHADER_LIT) && !defined(_SURFACE_TYPE_TRANSPARENT)
+                #define _DEFERRED_CAPABLE_MATERIAL
+            #endif
+
+            #if (defined(_TRANSPARENT_WRITES_MOTION_VEC) || defined(_TRANSPARENT_REFRACTIVE_SORT)) && defined(_SURFACE_TYPE_TRANSPARENT)
+                #define _WRITE_TRANSPARENT_MOTION_VECTOR
+            #endif
+
             CBUFFER_START( UnityPerMaterial )
-			float4 _Color0;
+			float4 _Color;
 			float4 _TextureSample0_ST;
+			float2 _WindSpeed;
+			float _Size;
+			float _Windintensity;
+			float _Windinalbedo;
 			float _Smoothness;
+			float _BottomGradientsize;
+			float _BottomGradient;
+			float _Fresneldither;
 			float4 _EmissionColor;
 			float _AlphaCutoff;
 			float _RenderQueueType;
 			#ifdef _ADD_PRECOMPUTED_VELOCITY
-			float _AddPrecomputedVelocity;
+			    float _AddPrecomputedVelocity;
 			#endif
 			float _StencilRef;
 			float _StencilWriteMask;
@@ -5174,6 +6288,8 @@ Shader "Grass Test"
 			float _StencilWriteMaskDepth;
 			float _StencilRefMV;
 			float _StencilWriteMaskMV;
+			float _StencilRefDistortionVec;
+			float _StencilWriteMaskDistortionVec;
 			float _StencilWriteMaskGBuffer;
 			float _StencilRefGBuffer;
 			float _ZTestGBuffer;
@@ -5182,10 +6298,11 @@ Shader "Grass Test"
 			float _SurfaceType;
 			float _BlendMode;
             #ifdef SUPPORT_BLENDMODE_PRESERVE_SPECULAR_LIGHTING
-			float _EnableBlendModePreserveSpecularLighting;
+			    float _EnableBlendModePreserveSpecularLighting;
             #endif
 			float _SrcBlend;
 			float _DstBlend;
+			float _DstBlend2;
 			float _AlphaSrcBlend;
 			float _AlphaDstBlend;
 			float _ZWrite;
@@ -5204,15 +6321,26 @@ Shader "Grass Test"
 			float _DoubleSidedNormalMode;
 			float4 _DoubleSidedConstants;
 			#ifdef ASE_TESSELLATION
-			float _TessPhongStrength;
-			float _TessValue;
-			float _TessMin;
-			float _TessMax;
-			float _TessEdgeLength;
-			float _TessMaxDisp;
+			    float _TessPhongStrength;
+			    float _TessValue;
+			    float _TessMin;
+			    float _TessMax;
+			    float _TessEdgeLength;
+			    float _TessMaxDisp;
 			#endif
+			UNITY_TEXTURE_STREAMING_DEBUG_VARS;
 			CBUFFER_END
 
+            #ifdef SCENEPICKINGPASS
+            float4 _SelectionID;
+            #endif
+
+            #ifdef SCENESELECTIONPASS
+            int _ObjectId;
+            int _PassValue;
+            #endif
+
+			sampler2D _Noisetexture;
 			sampler2D _TextureSample0;
 
 
@@ -5222,14 +6350,24 @@ Shader "Grass Test"
 
             #include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/PickingSpaceTransforms.hlsl"
             #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Material.hlsl"
-			#include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Unlit/Unlit.hlsl"
+			#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/NormalSurfaceGradient.hlsl"
+			#include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Lit/Lit.hlsl"
             #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/BuiltinUtilities.hlsl"
             #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/MaterialUtilities.hlsl"
             #include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/ShaderGraphFunctions.hlsl"
 
-			
+			#include "Packages/com.unity.render-pipelines.high-definition/Runtime/Material/Decal/DecalUtilities.hlsl"
 
-			struct VertexInput
+			#define ASE_NEEDS_TEXTURE_COORDINATES0
+			#define ASE_NEEDS_FRAG_SCREEN_POSITION_NORMALIZED
+			#define ASE_NEEDS_FRAG_TEXTURE_COORDINATES0
+			#define ASE_NEEDS_FRAG_WORLD_VIEW_DIR
+			#define ASE_NEEDS_WORLD_NORMAL
+			#define ASE_NEEDS_FRAG_WORLD_NORMAL
+			#define ASE_NEEDS_VERT_POSITION
+
+
+			struct AttributesMesh
 			{
 				float3 positionOS : POSITION;
 				float3 normalOS : NORMAL;
@@ -5238,173 +6376,153 @@ Shader "Grass Test"
 				UNITY_VERTEX_INPUT_INSTANCE_ID
 			};
 
-			struct VertexOutput
+			struct PackedVaryingsMeshToPS
 			{
-				float4 positionCS : SV_POSITION;
-				float3 normalWS : TEXCOORD0;
-				float4 tangentWS : TEXCOORD1;
-				float4 ase_texcoord2 : TEXCOORD2;
+				SV_POSITION_QUALIFIERS float4 positionCS : SV_Position;
+				float3 positionRWS : TEXCOORD0;
+				float3 normalWS : TEXCOORD1;
+				float4 tangentWS : TEXCOORD2;
 				float4 ase_texcoord3 : TEXCOORD3;
 				UNITY_VERTEX_INPUT_INSTANCE_ID
 				UNITY_VERTEX_OUTPUT_STEREO
+				#if defined(SHADER_STAGE_FRAGMENT) && defined(ASE_NEED_CULLFACE)
+				FRONT_FACE_TYPE cullFace : FRONT_FACE_SEMANTIC;
+				#endif
 			};
 
-			inline float Dither4x4Bayer( int x, int y )
+			float4 ASEScreenPositionNormalizedToPixel( float4 screenPosNorm, float4 screenParams )
+			{
+				float4 screenPosPixel = screenPosNorm * float4( screenParams.xy, 1, 1 );
+				#if UNITY_UV_STARTS_AT_TOP
+					screenPosPixel.xy = float2( screenPosPixel.x, ( _ProjectionParams.x < 0 ) ? screenParams.y - screenPosPixel.y : screenPosPixel.y );
+				#else
+					screenPosPixel.xy = float2( screenPosPixel.x, ( _ProjectionParams.x > 0 ) ? screenParams.y - screenPosPixel.y : screenPosPixel.y );
+				#endif
+				return screenPosPixel;
+			}
+			
+			inline float Dither4x4Bayer( uint x, uint y )
 			{
 				const float dither[ 16 ] = {
-			 1,  9,  3, 11,
-			13,  5, 15,  7,
-			 4, 12,  2, 10,
-			16,  8, 14,  6 };
-				int r = y * 4 + x;
-				return dither[r] / 16; // same # of instructions as pre-dividing due to compiler magic
+				     1,  9,  3, 11,
+				    13,  5, 15,  7,
+				     4, 12,  2, 10,
+				    16,  8, 14,  6 };
+				uint r = y * 4 + x;
+				return dither[ min( r, 15 ) ] / 16; // same # of instructions as pre-dividing due to compiler magic
 			}
 			
 
-            struct SurfaceDescription
+			// Get Surface And BuiltinData
+			void GetSurfaceAndBuiltinData(PickingSurfaceDescription surfaceDescription, FragInputs fragInputs, float3 V, inout PositionInputs posInput, out SurfaceData surfaceData, out BuiltinData builtinData)
 			{
-				float Alpha;
-				float AlphaClipThreshold;
-				float DepthOffset;
-			};
+				#ifdef LOD_FADE_CROSSFADE
+                    LODDitheringTransition(ComputeFadeMaskSeed(V, posInput.positionSS), unity_LODFade.x);
+				#endif
 
-			struct SurfaceDescriptionInputs
-			{
-				float3 ObjectSpaceNormal;
-				float3 WorldSpaceNormal;
-				float3 TangentSpaceNormal;
-				float3 ObjectSpaceViewDirection;
-				float3 WorldSpaceViewDirection;
-				float3 ObjectSpacePosition;
-			};
-
-
-            void GetSurfaceAndBuiltinData(SurfaceDescription surfaceDescription, FragInputs fragInputs, float3 V, inout PositionInputs posInput, out SurfaceData surfaceData, out BuiltinData builtinData RAY_TRACING_OPTIONAL_PARAMETERS)
-            {
-
-                #if !defined(SHADER_STAGE_RAY_TRACING) && !defined(_TESSELLATION_DISPLACEMENT)
-                #ifdef LOD_FADE_CROSSFADE
-				LODDitheringTransition(ComputeFadeMaskSeed(V, posInput.positionSS), unity_LODFade.x);
-                #endif
-                #endif
-
-                #ifndef SHADER_UNLIT
                 #ifdef _DOUBLESIDED_ON
-				float3 doubleSidedConstants = _DoubleSidedConstants.xyz;
+                    float3 doubleSidedConstants = _DoubleSidedConstants.xyz;
                 #else
-				float3 doubleSidedConstants = float3(1.0, 1.0, 1.0);
+                    float3 doubleSidedConstants = float3(1.0, 1.0, 1.0);
                 #endif
-				ApplyDoubleSidedFlipOrMirror(fragInputs, doubleSidedConstants);
+                ApplyDoubleSidedFlipOrMirror(fragInputs, doubleSidedConstants);
+
+                #ifdef DEBUG_DISPLAY
+                if (_DebugMipMapMode != DEBUGMIPMAPMODE_NONE)
+                {
+                    surfaceDescription.Alpha = 1.0f;
+                }
                 #endif
+
+				#ifdef _ALPHATEST_ON
+                    DoAlphaTest( surfaceDescription.Alpha, surfaceDescription.AlphaClipThreshold );
+				#endif
+
+				#ifdef _ALPHATEST_SHADOW_ON
+                    DoAlphaTest( surfaceDescription.Alpha, surfaceDescription.AlphaClipThresholdShadow);
+				#endif
+
+				#ifdef _DEPTHOFFSET_ON
+                    ApplyDepthOffsetPositionInput(V, surfaceDescription.DepthOffset, GetViewForwardDir(), GetWorldToHClipMatrix(), posInput);
+				#endif
+
+				float3 bentNormalWS;
+                //BuildSurfaceData(fragInputs, surfaceDescription, V, posInput, surfaceData, bentNormalWS);
+                InitBuiltinData(posInput, surfaceDescription.Alpha, bentNormalWS, -fragInputs.tangentToWorld[2], fragInputs.texCoord1, fragInputs.texCoord2, builtinData);
+
+				#ifdef _DEPTHOFFSET_ON
+                    builtinData.depthOffset = surfaceDescription.DepthOffset;
+				#endif
 
                 #ifdef _ALPHATEST_ON
-				float alphaCutoff = surfaceDescription.AlphaClipThreshold;
-                #if SHADERPASS == SHADERPASS_TRANSPARENT_DEPTH_PREPASS
-                #elif SHADERPASS == SHADERPASS_TRANSPARENT_DEPTH_POSTPASS
-				alphaCutoff = surfaceDescription.AlphaClipThresholdDepthPostpass;
-                #elif (SHADERPASS == SHADERPASS_SHADOWS) || (SHADERPASS == SHADERPASS_RAYTRACING_VISIBILITY)
-                #endif
-				GENERIC_ALPHA_TEST(surfaceDescription.Alpha, alphaCutoff);
-                #endif
-
-                #if !defined(SHADER_STAGE_RAY_TRACING) && _DEPTHOFFSET_ON
-				ApplyDepthOffsetPositionInput(V, surfaceDescription.DepthOffset, GetViewForwardDir(), GetWorldToHClipMatrix(), posInput);
-                #endif
-
-                #ifdef FRAG_INPUTS_USE_TEXCOORD1
-				float4 lightmapTexCoord1 = fragInputs.texCoord1;
-                #else
-				float4 lightmapTexCoord1 = float4(0, 0, 0, 0);
-                #endif
-
-                #ifdef FRAG_INPUTS_USE_TEXCOORD2
-				float4 lightmapTexCoord2 = fragInputs.texCoord2;
-                #else
-				float4 lightmapTexCoord2 = float4(0, 0, 0, 0);
-                #endif
-
-				//InitBuiltinData(posInput, surfaceDescription.Alpha, bentNormalWS, -fragInputs.tangentToWorld[2], lightmapTexCoord1, lightmapTexCoord2, builtinData);
-
-                //#else
-                //BuildSurfaceData(fragInputs, surfaceDescription, V, posInput, surfaceData);
-
-                ZERO_INITIALIZE(SurfaceData, surfaceData);
-
-                ZERO_BUILTIN_INITIALIZE(builtinData);
-                builtinData.opacity = surfaceDescription.Alpha;
-
-                #if defined(DEBUG_DISPLAY)
-				builtinData.renderingLayers = GetMeshRenderingLightLayer();
-                #endif
-
-                #ifdef _ALPHATEST_ON
-				builtinData.alphaClipTreshold = alphaCutoff;
+                    builtinData.alphaClipTreshold = surfaceDescription.AlphaClipThreshold;
                 #endif
 
                 #ifdef UNITY_VIRTUAL_TEXTURING
+                    builtinData.vtPackedFeedback = surfaceDescription.VTPackedFeedback;
                 #endif
 
-                #if _DEPTHOFFSET_ON
-				builtinData.depthOffset = surfaceDescription.DepthOffset;
-                #endif
+				#ifdef ASE_BAKEDGI
+                    builtinData.bakeDiffuseLighting = surfaceDescription.BakedGI;
+				#endif
 
-                #if (SHADERPASS == SHADERPASS_DISTORTION)
-				builtinData.distortion = surfaceDescription.Distortion;
-				builtinData.distortionBlur = surfaceDescription.DistortionBlur;
-                #endif
+				#ifdef ASE_BAKEDBACKGI
+                    builtinData.backBakeDiffuseLighting = surfaceDescription.BakedBackGI;
+				#endif
 
-                #ifndef SHADER_UNLIT
+                builtinData.emissiveColor = surfaceDescription.Emission;
+
 				PostInitBuiltinData(V, posInput, surfaceData, builtinData);
-                #else
-				ApplyDebugToBuiltinData(builtinData);
-                #endif
-
-				RAY_TRACING_OPTIONAL_ALPHA_TEST_PASS
 
             }
 
-
-			VertexOutput VertexFunction(VertexInput inputMesh  )
+			PackedVaryingsMeshToPS VertexFunction(AttributesMesh inputMesh )
 			{
-
-				VertexOutput o;
-				ZERO_INITIALIZE(VertexOutput, o);
-				UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
-
+				PackedVaryingsMeshToPS output;
 				UNITY_SETUP_INSTANCE_ID(inputMesh);
-				UNITY_TRANSFER_INSTANCE_ID(inputMesh, o );
+				UNITY_TRANSFER_INSTANCE_ID(inputMesh, output);
+				UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO( output );
 
-				float4 ase_clipPos = TransformWorldToHClip( TransformObjectToWorld(inputMesh.positionOS));
-				float4 screenPos = ComputeScreenPos( ase_clipPos , _ProjectionParams.x );
-				o.ase_texcoord3 = screenPos;
+				float3 ase_positionWS = GetAbsolutePositionWS( TransformObjectToWorld( ( inputMesh.positionOS ).xyz ) );
+				float2 appendResult4_g12 = (float2(ase_positionWS.x , ase_positionWS.z));
+				float2 panner8_g12 = ( 1.0 * _Time.y * _WindSpeed + ( appendResult4_g12 / _Size ));
+				float4 tex2DNode9_g12 = tex2Dlod( _Noisetexture, float4( panner8_g12, 0, 0.0) );
+				float2 texCoord17_g12 = inputMesh.ase_texcoord.xy * float2( 1,1 ) + float2( 0,0 );
 				
-				o.ase_texcoord2.xy = inputMesh.ase_texcoord.xy;
+				float3 objectToViewPos = TransformWorldToView( TransformObjectToWorld( inputMesh.positionOS ) );
+				float eyeDepth = -objectToViewPos.z;
+				output.ase_texcoord3.z = eyeDepth;
+				
+				output.ase_texcoord3.xy = inputMesh.ase_texcoord.xy;
 				
 				//setting value to unused interpolator channels and avoid initialization warnings
-				o.ase_texcoord2.zw = 0;
+				output.ase_texcoord3.w = 0;
+
 				#ifdef ASE_ABSOLUTE_VERTEX_POS
 				float3 defaultVertexValue = inputMesh.positionOS.xyz;
 				#else
 				float3 defaultVertexValue = float3( 0, 0, 0 );
 				#endif
-				float3 vertexValue =   defaultVertexValue ;
+				float3 vertexValue = ( tex2DNode9_g12 * _Windintensity * texCoord17_g12.y ).rgb;
+
 				#ifdef ASE_ABSOLUTE_VERTEX_POS
 				inputMesh.positionOS.xyz = vertexValue;
 				#else
 				inputMesh.positionOS.xyz += vertexValue;
 				#endif
 
-				inputMesh.normalOS =  inputMesh.normalOS ;
+				inputMesh.normalOS = inputMesh.normalOS;
+				inputMesh.tangentOS = inputMesh.tangentOS;
 
 				float3 positionRWS = TransformObjectToWorld(inputMesh.positionOS);
 				float3 normalWS = TransformObjectToWorldNormal(inputMesh.normalOS);
 				float4 tangentWS = float4(TransformObjectToWorldDir(inputMesh.tangentOS.xyz), inputMesh.tangentOS.w);
 
-				o.positionCS = TransformWorldToHClip(positionRWS);
-				o.normalWS.xyz =  normalWS;
-				o.tangentWS.xyzw =  tangentWS;
-
-				return o;
+				output.positionCS = TransformWorldToHClip(positionRWS);
+				output.positionRWS = positionRWS;
+				output.normalWS = normalWS;
+				output.tangentWS = tangentWS;
+				return output;
 			}
 
 			#if defined(ASE_TESSELLATION)
@@ -5424,7 +6542,7 @@ Shader "Grass Test"
 				float inside : SV_InsideTessFactor;
 			};
 
-			VertexControl Vert ( VertexInput v )
+			VertexControl Vert ( AttributesMesh v )
 			{
 				VertexControl o;
 				UNITY_SETUP_INSTANCE_ID(v);
@@ -5471,9 +6589,9 @@ Shader "Grass Test"
 			}
 
 			[domain("tri")]
-			VertexOutput DomainFunction(TessellationFactors factors, OutputPatch<VertexControl, 3> patch, float3 bary : SV_DomainLocation)
+			PackedVaryingsMeshToPS DomainFunction(TessellationFactors factors, OutputPatch<VertexControl, 3> patch, float3 bary : SV_DomainLocation)
 			{
-				VertexInput o = (VertexInput) 0;
+				AttributesMesh o = (AttributesMesh) 0;
 				o.positionOS = patch[0].positionOS * bary.x + patch[1].positionOS * bary.y + patch[2].positionOS * bary.z;
 				o.normalOS = patch[0].normalOS * bary.x + patch[1].normalOS * bary.y + patch[2].normalOS * bary.z;
 				o.tangentOS = patch[0].tangentOS * bary.x + patch[1].tangentOS * bary.y + patch[2].tangentOS * bary.z;
@@ -5489,50 +6607,109 @@ Shader "Grass Test"
 				return VertexFunction(o);
 			}
 			#else
-			VertexOutput Vert ( VertexInput v )
+			PackedVaryingsMeshToPS Vert ( AttributesMesh v )
 			{
 				return VertexFunction( v );
 			}
 			#endif
 
-			void Frag(	VertexOutput packedInput
+			#if defined(WRITE_NORMAL_BUFFER) && defined(WRITE_MSAA_DEPTH)
+			#define SV_TARGET_DECAL SV_Target2
+			#elif defined(WRITE_NORMAL_BUFFER) || defined(WRITE_MSAA_DEPTH)
+			#define SV_TARGET_DECAL SV_Target1
+			#else
+			#define SV_TARGET_DECAL SV_Target0
+			#endif
+
+			void Frag( PackedVaryingsMeshToPS packedInput
+						#if defined(SCENESELECTIONPASS) || defined(SCENEPICKINGPASS)
 						, out float4 outColor : SV_Target0
-						
-					)
+						#else
+							#ifdef WRITE_MSAA_DEPTH
+							, out float4 depthColor : SV_Target0
+								#ifdef WRITE_NORMAL_BUFFER
+								, out float4 outNormalBuffer : SV_Target1
+								#endif
+							#else
+								#ifdef WRITE_NORMAL_BUFFER
+								, out float4 outNormalBuffer : SV_Target0
+								#endif
+							#endif
+
+							#if (defined(WRITE_DECAL_BUFFER) && !defined(_DISABLE_DECALS)) || defined(WRITE_RENDERING_LAYER)
+							, out float4 outDecalBuffer : SV_TARGET_DECAL
+							#endif
+						#endif
+						#if defined( ASE_DEPTH_WRITE_ON )
+							, out float outputDepth : DEPTH_OFFSET_SEMANTIC
+						#endif
+						 )
 			{
 				UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(packedInput);
 				UNITY_SETUP_INSTANCE_ID(packedInput);
 
 				FragInputs input;
 				ZERO_INITIALIZE(FragInputs, input);
-				input.tangentToWorld = k_identity3x3;
 				input.positionSS = packedInput.positionCS;
-
-				input.tangentToWorld = BuildTangentToWorld(packedInput.tangentWS.xyzw, packedInput.normalWS.xyz);
+				input.positionRWS = packedInput.positionRWS;
+				input.tangentToWorld = BuildTangentToWorld(packedInput.tangentWS, packedInput.normalWS);
 
 				PositionInputs posInput = GetPositionInput(input.positionSS.xy, _ScreenSize.zw, input.positionSS.z, input.positionSS.w, input.positionRWS);
 
-				SurfaceDescription surfaceDescription = (SurfaceDescription)0;
-				float2 uv_TextureSample0 = packedInput.ase_texcoord2.xy * _TextureSample0_ST.xy + _TextureSample0_ST.zw;
-				float4 screenPos = packedInput.ase_texcoord3;
-				float4 ase_screenPosNorm = screenPos / screenPos.w;
-				ase_screenPosNorm.z = ( UNITY_NEAR_CLIP_VALUE >= 0 ) ? ase_screenPosNorm.z : ase_screenPosNorm.z * 0.5 + 0.5;
-				float2 clipScreen17 = ase_screenPosNorm.xy * _ScreenParams.xy;
-				float dither17 = Dither4x4Bayer( fmod(clipScreen17.x, 4), fmod(clipScreen17.y, 4) );
-				float2 texCoord16 = packedInput.ase_texcoord2.xy * float2( 1,1 ) + float2( 0,0 );
-				float smoothstepResult23 = smoothstep( 0.0 , 0.5 , texCoord16.y);
-				dither17 = step( dither17, smoothstepResult23 );
+				#if _DOUBLESIDED_ON && SHADER_STAGE_FRAGMENT
+					input.isFrontFace = IS_FRONT_VFACE(packedInput.cullFace, true, false);
+				#elif SHADER_STAGE_FRAGMENT
+					#if defined(ASE_NEED_CULLFACE)
+						input.isFrontFace = IS_FRONT_VFACE(packedInput.cullFace, true, false);
+					#endif
+				#endif
+
+				half isFrontFace = input.isFrontFace;
+				float3 PositionRWS = posInput.positionWS;
+				float3 PositionWS = GetAbsolutePositionWS( posInput.positionWS );
+				float3 V = GetWorldSpaceNormalizeViewDir( packedInput.positionRWS );
+				float4 ScreenPosNorm = float4( posInput.positionNDC, packedInput.positionCS.zw );
+				float4 ClipPos = ComputeClipSpacePosition( ScreenPosNorm.xy, packedInput.positionCS.z ) * packedInput.positionCS.w;
+				float4 ScreenPos = ComputeScreenPos( ClipPos, _ProjectionParams.x );
+				float3 NormalWS = packedInput.normalWS;
+				float3 TangentWS = packedInput.tangentWS.xyz;
+				float3 BitangentWS = input.tangentToWorld[ 1 ];
+
+				float2 uv_TextureSample0 = packedInput.ase_texcoord3.xy * _TextureSample0_ST.xy + _TextureSample0_ST.zw;
+				float4 ase_positionSS_Pixel = ASEScreenPositionNormalizedToPixel( ScreenPosNorm, _ScreenParams );
+				float dither66 = Dither4x4Bayer( fmod( ase_positionSS_Pixel.x, 4 ), fmod( ase_positionSS_Pixel.y, 4 ) );
+				float2 texCoord16 = packedInput.ase_texcoord3.xy * float2( 1,1 ) + float2( 0,0 );
+				float smoothstepResult23 = smoothstep( 0.0 , _BottomGradientsize , texCoord16.y);
+				float lerpResult55 = lerp( 1.0 , smoothstepResult23 , _BottomGradient);
+				float fresnelNdotV59 = dot( NormalWS, V );
+				float fresnelNode59 = ( -1.0 + 5.0 * pow( 1.0 - fresnelNdotV59, 2.0 ) );
+				float lerpResult63 = lerp( 1.0 , ( 1.0 - saturate( fresnelNode59 ) ) , _Fresneldither);
+				float eyeDepth = packedInput.ase_texcoord3.z;
+				float cameraDepthFade65 = (( eyeDepth -_ProjectionParams.y - 100.0 ) / 20.0);
+				dither66 = step( dither66, saturate( ( saturate( lerpResult55 ) * saturate( lerpResult63 ) * ( 1.0 - saturate( cameraDepthFade65 ) ) ) * 1.00001 ) );
 				
-				surfaceDescription.Alpha = ( tex2D( _TextureSample0, uv_TextureSample0 ).a * dither17 );
-				surfaceDescription.AlphaClipThreshold =  _AlphaCutoff;
 
+				PickingSurfaceDescription surfaceDescription = (PickingSurfaceDescription)0;
 
-				float3 V = float3(1.0, 1.0, 1.0);
+				surfaceDescription.Alpha = ( tex2D( _TextureSample0, uv_TextureSample0 ).a * dither66 );
 
-				SurfaceData surfaceData;
-				BuiltinData builtinData;
-				GetSurfaceAndBuiltinData(surfaceDescription, input, V, posInput, surfaceData, builtinData);
-				outColor = _SelectionID;
+				#ifdef _ALPHATEST_ON
+				surfaceDescription.AlphaClipThreshold = _AlphaCutoff;
+				#endif
+
+				#if defined( ASE_DEPTH_WRITE_ON )
+					#if !defined( _DEPTHOFFSET_ON )
+						posInput.deviceDepth = input.positionSS.z;
+					#else
+						surfaceDescription.DepthOffset = 0;
+					#endif
+				#endif
+
+				#if defined( ASE_DEPTH_WRITE_ON )
+					outputDepth = posInput.deviceDepth;
+				#endif
+
+				outColor = unity_SelectionID;
 			}
 
             ENDHLSL
@@ -5540,11 +6717,10 @@ Shader "Grass Test"
 
         Pass
         {
-
             Name "FullScreenDebug"
-            Tags 
-			{ 
-				"LightMode" = "FullScreenDebug" 
+            Tags
+			{
+				"LightMode" = "FullScreenDebug"
             }
 
             Cull [_CullMode]
@@ -5552,15 +6728,20 @@ Shader "Grass Test"
 			ZWrite Off
 
             HLSLPROGRAM
-
-			/*ase_pragma_before*/
-
-			#pragma multi_compile_instancing
-			#pragma instancing_options renderinglayer
+            /*ase_pragma_before*/
+            #pragma multi_compile _ DOTS_INSTANCING_ON
 
 			#pragma vertex Vert
 			#pragma fragment Frag
 
+            #pragma shader_feature _ _SURFACE_TYPE_TRANSPARENT
+            #pragma shader_feature_local _ _TRANSPARENT_WRITES_MOTION_VEC _TRANSPARENT_REFRACTIVE_SORT
+            #pragma shader_feature_local_fragment _ _ENABLE_FOG_ON_TRANSPARENT
+
+			#define SHADERPASS SHADERPASS_FULL_SCREEN_DEBUG
+
+			#define ATTRIBUTES_NEED_NORMAL
+			#define ATTRIBUTES_NEED_TANGENT
 
 			#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
 			#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/GeometricTools.hlsl"
@@ -5569,10 +6750,8 @@ Shader "Grass Test"
 			#include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/ShaderVariables.hlsl"
 			#include "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/ShaderPass/ShaderPass.cs.hlsl"
 			#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/TextureStack.hlsl"
+			#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/DebugMipmapStreamingMacros.hlsl"
             #include "Packages/com.unity.shadergraph/ShaderGraphLibrary/Functions.hlsl"
-
-			#define ATTRIBUTES_NEED_NORMAL
-			#define ATTRIBUTES_NEED_TANGENT
 
 			#include "Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/ShaderPass/FragInputs.hlsl"
 
@@ -5582,23 +6761,29 @@ Shader "Grass Test"
 			#endif
 			#endif
 
+            #if _MATERIAL_FEATURE_COLORED_TRANSMISSION
+            #undef _MATERIAL_FEATURE_CLEAR_COAT
+            #endif
+
 		    #if defined(_MATERIAL_FEATURE_SUBSURFACE_SCATTERING) && !defined(_SURFACE_TYPE_TRANSPARENT)
 		    #define OUTPUT_SPLIT_LIGHTING
 		    #endif
 
-		    #if !( (SHADERPASS == SHADERPASS_FORWARD) || (SHADERPASS == SHADERPASS_LIGHT_TRANSPORT) \
-               || (SHADERPASS == SHADERPASS_RAYTRACING_INDIRECT) || (SHADERPASS == SHADERPASS == SHADERPASS_RAYTRACING_INDIRECT)\
-               || (SHADERPASS == SHADERPASS_PATH_TRACING) || (SHADERPASS == SHADERPASS_RAYTRACING_SUB_SURFACE) \
-               || (SHADERPASS == SHADERPASS_RAYTRACING_GBUFFER) )
-
-		    #define DISABLE_MODIFY_BAKED_DIFFUSE_LIGHTING
-		    #endif
+            #if (SHADERPASS == SHADERPASS_PATH_TRACING) && !defined(_DOUBLESIDED_ON) && (defined(_REFRACTION_PLANE) || defined(_REFRACTION_SPHERE))
+            #undef  _REFRACTION_PLANE
+            #undef  _REFRACTION_SPHERE
+            #define _REFRACTION_THIN
+            #endif
 
 			#if SHADERPASS == SHADERPASS_TRANSPARENT_DEPTH_PREPASS
 			#if !defined(_DISABLE_SSR_TRANSPARENT) && !defined(SHADER_UNLIT)
 				#define WRITE_NORMAL_BUFFER
 			#endif
 			#endif
+
+            #if SHADERPASS == SHADERPASS_MOTION_VECTORS && defined(WRITE_DECAL_BUFFER_AND_RENDERING_LAYER)
+                #define WRITE_DECAL_BUFFER
+            #endif
 
 			#ifndef DEBUG_DISPLAY
 				#if !defined(_SURFACE_TYPE_TRANSPARENT)
@@ -5610,13 +6795,13 @@ Shader "Grass Test"
 				#endif
 			#endif
 
-			#if defined(SHADER_LIT) && !defined(_SURFACE_TYPE_TRANSPARENT)
-			#define _DEFERRED_CAPABLE_MATERIAL
-			#endif
+            #if defined(SHADER_LIT) && !defined(_SURFACE_TYPE_TRANSPARENT)
+                #define _DEFERRED_CAPABLE_MATERIAL
+            #endif
 
-			#if defined(_TRANSPARENT_WRITES_MOTION_VEC) && defined(_SURFACE_TYPE_TRANSPARENT)
-			#define _WRITE_TRANSPARENT_MOTION_VECTOR
-			#endif
+            #if (defined(_TRANSPARENT_WRITES_MOTION_VEC) || defined(_TRANSPARENT_REFRACTIVE_SORT)) && defined(_SURFACE_TYPE_TRANSPARENT)
+                #define _WRITE_TRANSPARENT_MOTION_VECTOR
+            #endif
 
             #ifdef DEBUG_DISPLAY
             #include "Packages/com.unity.render-pipelines.high-definition/Runtime/Debug/DebugDisplay.hlsl"
@@ -5634,7 +6819,7 @@ Shader "Grass Test"
 				float3 positionOS : POSITION;
 				float3 normalOS : NORMAL;
 				float4 tangentOS : TANGENT;
-				#if UNITY_ANY_INSTANCING_ENABLED
+				#if UNITY_ANY_INSTANCING_ENABLED || defined(ATTRIBUTES_NEED_INSTANCEID)
 					uint instanceID : INSTANCEID_SEMANTIC;
 				#endif
 			};
@@ -5642,7 +6827,7 @@ Shader "Grass Test"
 			struct VaryingsMeshToPS
 			{
 				SV_POSITION_QUALIFIERS float4 positionCS : SV_POSITION;
-				#if UNITY_ANY_INSTANCING_ENABLED
+				#if UNITY_ANY_INSTANCING_ENABLED || defined(ATTRIBUTES_NEED_INSTANCEID)
 					uint instanceID : CUSTOM_INSTANCE_ID;
 				#endif
 			};
@@ -5662,7 +6847,7 @@ Shader "Grass Test"
 			struct PackedVaryingsMeshToPS
 			{
 				SV_POSITION_QUALIFIERS float4 positionCS : SV_POSITION;
-				#if UNITY_ANY_INSTANCING_ENABLED
+				#if UNITY_ANY_INSTANCING_ENABLED || defined(ATTRIBUTES_NEED_INSTANCEID)
 					uint instanceID : CUSTOM_INSTANCE_ID;
 				#endif
 			};
@@ -5672,7 +6857,7 @@ Shader "Grass Test"
 				PackedVaryingsMeshToPS output;
 				ZERO_INITIALIZE(PackedVaryingsMeshToPS, output);
 				output.positionCS = input.positionCS;
-				#if UNITY_ANY_INSTANCING_ENABLED
+				#if UNITY_ANY_INSTANCING_ENABLED || defined(ATTRIBUTES_NEED_INSTANCEID)
 				output.instanceID = input.instanceID;
 				#endif
 				return output;
@@ -5682,7 +6867,7 @@ Shader "Grass Test"
 			{
 				VaryingsMeshToPS output;
 				output.positionCS = input.positionCS;
-				#if UNITY_ANY_INSTANCING_ENABLED
+				#if UNITY_ANY_INSTANCING_ENABLED || defined(ATTRIBUTES_NEED_INSTANCEID)
 				output.instanceID = input.instanceID;
 				#endif
 				return output;
@@ -5735,14 +6920,14 @@ Shader "Grass Test"
 				VertexDescriptionInputs output;
 				ZERO_INITIALIZE(VertexDescriptionInputs, output);
 
-				output.ObjectSpaceNormal =                          input.normalOS;
-				output.ObjectSpaceTangent =                         input.tangentOS.xyz;
-				output.ObjectSpacePosition =                        input.positionOS;
+				output.ObjectSpaceNormal = input.normalOS;
+				output.ObjectSpaceTangent = input.tangentOS.xyz;
+				output.ObjectSpacePosition = input.positionOS;
 
 				return output;
 			}
 
-			AttributesMesh ApplyMeshModification(AttributesMesh input, float3 timeParameters  )
+			AttributesMesh ApplyMeshModification(AttributesMesh input, float3 timeParameters)
 			{
 				VertexDescriptionInputs vertexDescriptionInputs = AttributesMeshToVertexDescriptionInputs(input);
 
@@ -5760,7 +6945,7 @@ Shader "Grass Test"
 				ZERO_INITIALIZE(FragInputs, output);
 
 				output.tangentToWorld = k_identity3x3;
-				output.positionSS = input.positionCS;
+				output.positionSS = input.positionCS; // input.positionCS is SV_Position
 
 				return output;
 			}
@@ -5812,31 +6997,62 @@ Shader "Grass Test"
 	Fallback Off
 }
 /*ASEBEGIN
-Version=19201
-Node;AmplifyShaderEditor.TemplateMultiPassMasterNode;0;0,0;Float;False;True;-1;2;Rendering.HighDefinition.LightingShaderGraphGUI;0;12;Grass Test;53b46d85872c5b24c8f4f0a1c3fe4c87;True;GBuffer;0;0;GBuffer;34;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;3;RenderPipeline=HDRenderPipeline;RenderType=Opaque=RenderType;Queue=Geometry=Queue=0;True;5;True;7;d3d11;metal;vulkan;xboxone;xboxseries;playstation;switch;0;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;0;True;_CullMode;False;True;True;True;True;True;0;True;_LightLayersMaskBuffer4;False;False;False;False;False;False;False;True;True;0;True;_StencilRefGBuffer;255;False;;255;True;_StencilWriteMaskGBuffer;7;False;;3;False;;0;False;;0;False;;7;False;;3;False;;0;False;;0;False;;False;False;True;0;True;_ZTestGBuffer;False;True;1;LightMode=GBuffer;False;False;0;;0;0;Standard;39;Surface Type;0;0;  Rendering Pass;1;0;  Refraction Model;0;0;    Blending Mode;0;0;    Blend Preserves Specular;1;0;  Back Then Front Rendering;0;0;  Transparent Depth Prepass;0;0;  Transparent Depth Postpass;0;0;  ZWrite;0;0;  Z Test;4;0;Double-Sided;0;0;Alpha Clipping;1;638967471595811504;  Use Shadow Threshold;0;0;Material Type,InvertActionOnDeselection;0;0;  Energy Conserving Specular;1;0;  Transmission,InvertActionOnDeselection;0;0;Forward Only;0;0;Receive Decals;1;0;Receives SSR;1;0;Receive SSR Transparent;0;0;Motion Vectors;1;0;  Add Precomputed Velocity;0;0;Specular AA;0;0;Specular Occlusion Mode;1;0;Override Baked GI;0;0;Depth Offset;0;0;DOTS Instancing;0;0;GPU Instancing;1;0;LOD CrossFade;0;0;Tessellation;0;0;  Phong;0;0;  Strength;0.5,False,;0;  Type;0;0;  Tess;16,False,;0;  Min;10,False,;0;  Max;25,False,;0;  Edge Length;16,False,;0;  Max Displacement;25,False,;0;Vertex Position;1;0;0;11;True;True;True;True;True;True;False;False;False;True;True;False;;False;0
-Node;AmplifyShaderEditor.TemplateMultiPassMasterNode;1;0,0;Float;False;False;-1;2;Rendering.HighDefinition.LightingShaderGraphGUI;0;12;New Amplify Shader;53b46d85872c5b24c8f4f0a1c3fe4c87;True;META;0;1;META;0;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;3;RenderPipeline=HDRenderPipeline;RenderType=Opaque=RenderType;Queue=Geometry=Queue=0;True;5;True;7;d3d11;metal;vulkan;xboxone;xboxseries;playstation;switch;0;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;2;False;;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;1;LightMode=Meta;False;False;0;;0;0;Standard;0;False;0
-Node;AmplifyShaderEditor.TemplateMultiPassMasterNode;2;0,0;Float;False;False;-1;2;Rendering.HighDefinition.LightingShaderGraphGUI;0;12;New Amplify Shader;53b46d85872c5b24c8f4f0a1c3fe4c87;True;ShadowCaster;0;2;ShadowCaster;0;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;3;RenderPipeline=HDRenderPipeline;RenderType=Opaque=RenderType;Queue=Geometry=Queue=0;True;5;True;7;d3d11;metal;vulkan;xboxone;xboxseries;playstation;switch;0;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;0;True;_CullMode;False;True;False;False;False;False;0;False;;False;False;False;False;False;False;False;False;False;True;1;False;;True;3;False;;False;True;1;LightMode=ShadowCaster;False;False;0;;0;0;Standard;0;False;0
-Node;AmplifyShaderEditor.TemplateMultiPassMasterNode;3;0,0;Float;False;False;-1;2;Rendering.HighDefinition.LightingShaderGraphGUI;0;12;New Amplify Shader;53b46d85872c5b24c8f4f0a1c3fe4c87;True;SceneSelectionPass;0;3;SceneSelectionPass;0;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;3;RenderPipeline=HDRenderPipeline;RenderType=Opaque=RenderType;Queue=Geometry=Queue=0;True;5;True;7;d3d11;metal;vulkan;xboxone;xboxseries;playstation;switch;0;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;2;False;;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;1;LightMode=SceneSelectionPass;False;False;0;;0;0;Standard;0;False;0
-Node;AmplifyShaderEditor.TemplateMultiPassMasterNode;4;0,0;Float;False;False;-1;2;Rendering.HighDefinition.LightingShaderGraphGUI;0;12;New Amplify Shader;53b46d85872c5b24c8f4f0a1c3fe4c87;True;DepthOnly;0;4;DepthOnly;0;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;3;RenderPipeline=HDRenderPipeline;RenderType=Opaque=RenderType;Queue=Geometry=Queue=0;True;5;True;7;d3d11;metal;vulkan;xboxone;xboxseries;playstation;switch;0;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;0;True;_CullMode;False;False;False;False;False;False;False;False;False;True;True;0;True;_StencilRefDepth;255;False;;255;True;_StencilWriteMaskDepth;7;False;;3;False;;0;False;;0;False;;7;False;;3;False;;0;False;;0;False;;False;True;1;False;;False;False;True;1;LightMode=DepthOnly;False;False;0;;0;0;Standard;0;False;0
-Node;AmplifyShaderEditor.TemplateMultiPassMasterNode;5;0,0;Float;False;False;-1;2;Rendering.HighDefinition.LightingShaderGraphGUI;0;12;New Amplify Shader;53b46d85872c5b24c8f4f0a1c3fe4c87;True;MotionVectors;0;5;MotionVectors;0;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;3;RenderPipeline=HDRenderPipeline;RenderType=Opaque=RenderType;Queue=Geometry=Queue=0;True;5;True;7;d3d11;metal;vulkan;xboxone;xboxseries;playstation;switch;0;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;0;True;_CullMode;False;False;False;False;False;False;False;False;False;True;True;0;True;_StencilRefMV;255;False;;255;True;_StencilWriteMaskMV;7;False;;3;False;;0;False;;0;False;;7;False;;3;False;;0;False;;0;False;;False;True;1;False;;False;False;True;1;LightMode=MotionVectors;False;False;0;;0;0;Standard;0;False;0
-Node;AmplifyShaderEditor.TemplateMultiPassMasterNode;6;0,0;Float;False;False;-1;2;Rendering.HighDefinition.LightingShaderGraphGUI;0;12;New Amplify Shader;53b46d85872c5b24c8f4f0a1c3fe4c87;True;TransparentBackface;0;6;TransparentBackface;0;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;3;RenderPipeline=HDRenderPipeline;RenderType=Opaque=RenderType;Queue=Geometry=Queue=0;True;5;True;7;d3d11;metal;vulkan;xboxone;xboxseries;playstation;switch;0;False;False;False;False;True;2;5;False;;10;False;;0;1;False;;0;False;;False;False;False;False;False;False;False;False;False;True;1;False;;False;False;False;True;True;True;True;True;0;True;_ColorMaskTransparentVelOne;False;True;True;True;True;True;0;True;_ColorMaskTransparentVelTwo;False;False;False;False;False;True;0;True;_ZWrite;True;0;True;_ZTestTransparent;False;True;1;LightMode=TransparentBackface;False;False;0;;0;0;Standard;0;False;0
-Node;AmplifyShaderEditor.TemplateMultiPassMasterNode;7;0,0;Float;False;False;-1;2;Rendering.HighDefinition.LightingShaderGraphGUI;0;12;New Amplify Shader;53b46d85872c5b24c8f4f0a1c3fe4c87;True;TransparentDepthPrepass;0;7;TransparentDepthPrepass;0;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;3;RenderPipeline=HDRenderPipeline;RenderType=Opaque=RenderType;Queue=Geometry=Queue=0;True;5;True;7;d3d11;metal;vulkan;xboxone;xboxseries;playstation;switch;0;False;True;1;1;False;;0;False;;0;1;False;;0;False;;False;False;False;False;False;False;False;False;False;False;False;False;True;0;True;_CullMode;False;False;False;False;False;False;False;False;False;True;True;0;True;_StencilRefDepth;255;False;;255;True;_StencilWriteMaskDepth;7;False;;3;False;;0;False;;0;False;;7;False;;3;False;;0;False;;0;False;;False;True;1;False;;False;False;True;1;LightMode=TransparentDepthPrepass;False;False;0;;0;0;Standard;0;False;0
-Node;AmplifyShaderEditor.TemplateMultiPassMasterNode;8;0,0;Float;False;False;-1;2;Rendering.HighDefinition.LightingShaderGraphGUI;0;12;New Amplify Shader;53b46d85872c5b24c8f4f0a1c3fe4c87;True;TransparentDepthPostpass;0;8;TransparentDepthPostpass;0;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;3;RenderPipeline=HDRenderPipeline;RenderType=Opaque=RenderType;Queue=Geometry=Queue=0;True;5;True;7;d3d11;metal;vulkan;xboxone;xboxseries;playstation;switch;0;False;True;1;1;False;;0;False;;0;1;False;;0;False;;False;False;False;False;False;False;False;False;False;False;False;False;True;0;True;_CullMode;False;True;False;False;False;False;0;False;;False;False;False;False;False;False;False;False;False;True;1;False;;False;False;True;1;LightMode=TransparentDepthPostpass;False;False;0;;0;0;Standard;0;False;0
-Node;AmplifyShaderEditor.TemplateMultiPassMasterNode;9;0,0;Float;False;False;-1;2;Rendering.HighDefinition.LightingShaderGraphGUI;0;12;New Amplify Shader;53b46d85872c5b24c8f4f0a1c3fe4c87;True;Forward;0;9;Forward;0;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;3;RenderPipeline=HDRenderPipeline;RenderType=Opaque=RenderType;Queue=Geometry=Queue=0;True;5;True;7;d3d11;metal;vulkan;xboxone;xboxseries;playstation;switch;0;False;False;False;False;True;2;5;False;;10;False;;0;1;False;;0;False;;False;False;False;False;False;False;False;False;False;True;0;True;_CullModeForward;False;False;False;True;True;True;True;True;0;True;_ColorMaskTransparentVelOne;False;True;True;True;True;True;0;True;_ColorMaskTransparentVelTwo;False;False;False;True;True;0;True;_StencilRef;255;False;;255;True;_StencilWriteMask;7;False;;3;False;;0;False;;0;False;;7;False;;3;False;;0;False;;0;False;;False;True;0;True;_ZWrite;True;0;True;_ZTestDepthEqualForOpaque;False;True;1;LightMode=Forward;False;False;0;;0;0;Standard;0;False;0
-Node;AmplifyShaderEditor.TemplateMultiPassMasterNode;10;0,0;Float;False;False;-1;2;Rendering.HighDefinition.LightingShaderGraphGUI;0;12;New Amplify Shader;53b46d85872c5b24c8f4f0a1c3fe4c87;True;ScenePickingPass;0;10;ScenePickingPass;0;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;3;RenderPipeline=HDRenderPipeline;RenderType=Opaque=RenderType;Queue=Geometry=Queue=0;True;5;True;7;d3d11;metal;vulkan;xboxone;xboxseries;playstation;switch;0;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;0;True;_CullMode;False;False;False;False;False;False;False;False;False;False;False;True;2;False;;True;3;False;;False;True;1;LightMode=Picking;False;False;0;;0;0;Standard;0;False;0
-Node;AmplifyShaderEditor.SamplerNode;11;-705,-174.5;Inherit;True;Property;_TextureSample0;Texture Sample 0;0;0;Create;True;0;0;0;False;0;False;-1;e449cd529b2756d4ca5dd643f078bd8b;e449cd529b2756d4ca5dd643f078bd8b;True;0;False;white;Auto;False;Object;-1;Auto;Texture2D;8;0;SAMPLER2D;;False;1;FLOAT2;0,0;False;2;FLOAT;0;False;3;FLOAT2;0,0;False;4;FLOAT2;0,0;False;5;FLOAT;1;False;6;FLOAT;0;False;7;SAMPLERSTATE;;False;5;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
-Node;AmplifyShaderEditor.ColorNode;15;-332,-190.5;Inherit;False;Property;_Color0;Color 0;1;0;Create;True;0;0;0;False;0;False;1,1,1,1;1,1,1,1;True;0;5;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
-Node;AmplifyShaderEditor.TextureCoordinatesNode;16;-980.9709,243.3296;Inherit;True;0;-1;2;3;2;SAMPLER2D;;False;0;FLOAT2;1,1;False;1;FLOAT2;0,0;False;5;FLOAT2;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
-Node;AmplifyShaderEditor.DitheringNode;17;-466.9289,371.7635;Inherit;False;0;False;4;0;FLOAT;0;False;1;SAMPLER2D;;False;2;FLOAT4;0,0,0,0;False;3;SAMPLERSTATE;;False;1;FLOAT;0
-Node;AmplifyShaderEditor.SimpleMultiplyOpNode;21;-209.5154,178.4932;Inherit;False;2;2;0;FLOAT;0;False;1;FLOAT;0;False;1;FLOAT;0
-Node;AmplifyShaderEditor.RangedFloatNode;24;-366.515,38.49323;Inherit;False;Property;_Smoothness;Smoothness;2;0;Create;True;0;0;0;False;0;False;0;0;0;1;0;1;FLOAT;0
-Node;AmplifyShaderEditor.SmoothstepOpNode;23;-708.5154,297.4932;Inherit;True;3;0;FLOAT;0;False;1;FLOAT;0;False;2;FLOAT;0.5;False;1;FLOAT;0
-WireConnection;0;0;15;0
-WireConnection;0;7;24;0
-WireConnection;0;9;21;0
-WireConnection;17;0;23;0
-WireConnection;21;0;11;4
-WireConnection;21;1;17;0
+Version=19904
+Node;AmplifyShaderEditor.FresnelNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;59;-1424,944;Inherit;True;Standard;WorldNormal;ViewDir;False;False;5;0;FLOAT3;0,0,1;False;4;FLOAT3;0,0,0;False;1;FLOAT;-1;False;2;FLOAT;5;False;3;FLOAT;2;False;1;FLOAT;0
+Node;AmplifyShaderEditor.TextureCoordinatesNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;16;-1264,352;Inherit;True;0;-1;2;3;2;SAMPLER2D;;False;0;FLOAT2;1,1;False;1;FLOAT2;0,0;False;5;FLOAT2;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
+Node;AmplifyShaderEditor.RangedFloatNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;58;-1248,640;Inherit;False;Property;_BottomGradientsize;Bottom Gradient size;10;0;Create;True;0;0;0;False;0;False;0.5;0.5;0;1;0;1;FLOAT;0
+Node;AmplifyShaderEditor.SaturateNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;60;-1072,944;Inherit;True;1;0;FLOAT;0;False;1;FLOAT;0
+Node;AmplifyShaderEditor.CameraDepthFade, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;65;-416,1232;Inherit;False;3;2;FLOAT3;0,0,0;False;0;FLOAT;20;False;1;FLOAT;100;False;1;FLOAT;0
+Node;AmplifyShaderEditor.SmoothstepOpNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;23;-928,400;Inherit;True;3;0;FLOAT;0;False;1;FLOAT;0;False;2;FLOAT;0.5;False;1;FLOAT;0
+Node;AmplifyShaderEditor.RangedFloatNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;56;-816,656;Inherit;False;Property;_BottomGradient;Bottom Gradient;9;1;[Toggle];Create;True;0;0;0;False;0;False;0;0;0;1;0;1;FLOAT;0
+Node;AmplifyShaderEditor.OneMinusNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;61;-864,944;Inherit;False;1;0;FLOAT;0;False;1;FLOAT;0
+Node;AmplifyShaderEditor.RangedFloatNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;64;-688,1088;Inherit;False;Property;_Fresneldither;Fresnel dither;11;1;[Toggle];Create;True;0;0;0;False;0;False;0;0;0;1;0;1;FLOAT;0
+Node;AmplifyShaderEditor.LerpOp, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;55;-496,368;Inherit;False;3;0;FLOAT;1;False;1;FLOAT;0;False;2;FLOAT;0;False;1;FLOAT;0
+Node;AmplifyShaderEditor.LerpOp, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;63;-464,896;Inherit;False;3;0;FLOAT;1;False;1;FLOAT;0;False;2;FLOAT;0;False;1;FLOAT;0
+Node;AmplifyShaderEditor.SaturateNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;69;-91.64563,1230.367;Inherit;False;1;0;FLOAT;0;False;1;FLOAT;0
+Node;AmplifyShaderEditor.OneMinusNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;68;0,1136;Inherit;False;1;0;FLOAT;0;False;1;FLOAT;0
+Node;AmplifyShaderEditor.SaturateNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;70;-288,800;Inherit;False;1;0;FLOAT;0;False;1;FLOAT;0
+Node;AmplifyShaderEditor.SaturateNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;71;-336,384;Inherit;False;1;0;FLOAT;0;False;1;FLOAT;0
+Node;AmplifyShaderEditor.SimpleMultiplyOpNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;21;-112,368;Inherit;False;3;3;0;FLOAT;0;False;1;FLOAT;0;False;2;FLOAT;0;False;1;FLOAT;0
+Node;AmplifyShaderEditor.SamplerNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;11;-736,32;Inherit;True;Property;_TextureSample0;Texture Sample 0;1;0;Create;True;0;0;0;False;0;False;-1;e449cd529b2756d4ca5dd643f078bd8b;e449cd529b2756d4ca5dd643f078bd8b;True;0;False;white;Auto;False;Object;-1;Auto;Texture2D;False;8;0;SAMPLER2D;;False;1;FLOAT2;0,0;False;2;FLOAT;0;False;3;FLOAT2;0,0;False;4;FLOAT2;0,0;False;5;FLOAT;1;False;6;FLOAT;0;False;7;SAMPLERSTATE;;False;6;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4;FLOAT3;5
+Node;AmplifyShaderEditor.ColorNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;15;-332,-190.5;Inherit;False;Property;_Color;Color;0;0;Create;True;0;0;0;False;0;False;1,1,1,1;1,1,1,1;True;True;0;6;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4;FLOAT3;5
+Node;AmplifyShaderEditor.DitheringNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;66;48,416;Inherit;False;0;False;4;0;FLOAT;0;False;1;SAMPLER2D;;False;2;FLOAT4;0,0,0,0;False;3;SAMPLERSTATE;;False;1;FLOAT;0
+Node;AmplifyShaderEditor.RangedFloatNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;24;-366.515,38.49323;Inherit;False;Property;_Smoothness;Smoothness;8;0;Create;True;0;0;0;False;0;False;0;0;0;1;0;1;FLOAT;0
+Node;AmplifyShaderEditor.SimpleMultiplyOpNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;67;262.8389,299.1447;Inherit;False;2;2;0;FLOAT;0;False;1;FLOAT;0;False;1;FLOAT;0
+Node;AmplifyShaderEditor.FunctionNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;54;480,32;Inherit;False;Wind;2;;12;92e1d73dca5e28844aad95a1e3678f3b;0;1;14;FLOAT3;1,1,1;False;2;FLOAT3;0;COLOR;16
+Node;AmplifyShaderEditor.TemplateMultiPassMasterNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;1;0,0;Float;False;False;-1;2;Rendering.HighDefinition.LightingShaderGraphGUI;0;12;New Amplify Shader;53b46d85872c5b24c8f4f0a1c3fe4c87;True;META;0;1;META;0;False;False;False;False;False;False;False;False;False;False;False;False;True;0;False;;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;3;RenderPipeline=HDRenderPipeline;RenderType=Opaque=RenderType;Queue=Geometry=Queue=0;True;5;True;7;d3d11;metal;vulkan;xboxone;xboxseries;playstation;switch;0;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;2;False;;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;1;LightMode=Meta;False;False;0;;0;0;Standard;0;False;0
+Node;AmplifyShaderEditor.TemplateMultiPassMasterNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;2;0,0;Float;False;False;-1;2;Rendering.HighDefinition.LightingShaderGraphGUI;0;12;New Amplify Shader;53b46d85872c5b24c8f4f0a1c3fe4c87;True;ShadowCaster;0;2;ShadowCaster;0;False;False;False;False;False;False;False;False;False;False;False;False;True;0;False;;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;3;RenderPipeline=HDRenderPipeline;RenderType=Opaque=RenderType;Queue=Geometry=Queue=0;True;5;True;7;d3d11;metal;vulkan;xboxone;xboxseries;playstation;switch;0;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;0;True;_CullMode;False;True;False;False;False;False;0;False;;False;False;False;False;False;False;False;False;False;True;1;False;;True;3;False;;False;True;1;LightMode=ShadowCaster;False;False;0;;0;0;Standard;0;False;0
+Node;AmplifyShaderEditor.TemplateMultiPassMasterNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;3;0,0;Float;False;False;-1;2;Rendering.HighDefinition.LightingShaderGraphGUI;0;12;New Amplify Shader;53b46d85872c5b24c8f4f0a1c3fe4c87;True;SceneSelectionPass;0;3;SceneSelectionPass;0;False;False;False;False;False;False;False;False;False;False;False;False;True;0;False;;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;3;RenderPipeline=HDRenderPipeline;RenderType=Opaque=RenderType;Queue=Geometry=Queue=0;True;5;True;7;d3d11;metal;vulkan;xboxone;xboxseries;playstation;switch;0;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;2;False;;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;1;LightMode=SceneSelectionPass;False;False;0;;0;0;Standard;0;False;0
+Node;AmplifyShaderEditor.TemplateMultiPassMasterNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;4;0,0;Float;False;False;-1;2;Rendering.HighDefinition.LightingShaderGraphGUI;0;12;New Amplify Shader;53b46d85872c5b24c8f4f0a1c3fe4c87;True;DepthOnly;0;4;DepthOnly;0;False;False;False;False;False;False;False;False;False;False;False;False;True;0;False;;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;3;RenderPipeline=HDRenderPipeline;RenderType=Opaque=RenderType;Queue=Geometry=Queue=0;True;5;True;7;d3d11;metal;vulkan;xboxone;xboxseries;playstation;switch;0;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;0;True;_CullMode;False;False;False;False;False;False;False;False;False;True;True;0;True;_StencilRefDepth;255;False;;255;True;_StencilWriteMaskDepth;7;False;;3;False;;0;False;;0;False;;7;False;;3;False;;0;False;;0;False;;False;True;1;False;;False;False;True;1;LightMode=DepthOnly;False;False;0;;0;0;Standard;0;False;0
+Node;AmplifyShaderEditor.TemplateMultiPassMasterNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;5;0,0;Float;False;False;-1;2;Rendering.HighDefinition.LightingShaderGraphGUI;0;12;New Amplify Shader;53b46d85872c5b24c8f4f0a1c3fe4c87;True;MotionVectors;0;5;MotionVectors;0;False;False;False;False;False;False;False;False;False;False;False;False;True;0;False;;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;3;RenderPipeline=HDRenderPipeline;RenderType=Opaque=RenderType;Queue=Geometry=Queue=0;True;5;True;7;d3d11;metal;vulkan;xboxone;xboxseries;playstation;switch;0;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;0;True;_CullMode;False;False;False;False;False;False;False;False;False;True;True;0;True;_StencilRefMV;255;False;;255;True;_StencilWriteMaskMV;7;False;;3;False;;0;False;;0;False;;7;False;;3;False;;0;False;;0;False;;False;True;1;False;;False;False;True;1;LightMode=MotionVectors;False;False;0;;0;0;Standard;0;False;0
+Node;AmplifyShaderEditor.TemplateMultiPassMasterNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;6;0,0;Float;False;False;-1;2;Rendering.HighDefinition.LightingShaderGraphGUI;0;12;New Amplify Shader;53b46d85872c5b24c8f4f0a1c3fe4c87;True;TransparentBackface;0;6;TransparentBackface;0;False;False;False;False;False;False;False;False;False;False;False;False;True;0;False;;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;3;RenderPipeline=HDRenderPipeline;RenderType=Opaque=RenderType;Queue=Geometry=Queue=0;True;5;True;7;d3d11;metal;vulkan;xboxone;xboxseries;playstation;switch;0;False;False;False;False;True;2;5;False;;10;False;;0;1;False;;0;False;;False;False;True;3;1;False;;10;False;;0;1;False;;0;False;;False;False;True;3;1;False;;10;False;;0;1;False;;0;False;;False;False;False;True;1;False;;False;False;False;True;True;True;True;True;0;True;_ColorMaskTransparentVelOne;False;True;True;True;True;True;0;True;_ColorMaskTransparentVelTwo;False;False;False;False;False;True;0;True;_ZWrite;True;0;True;_ZTestTransparent;False;True;1;LightMode=TransparentBackface;False;False;0;;0;0;Standard;0;False;0
+Node;AmplifyShaderEditor.TemplateMultiPassMasterNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;7;0,0;Float;False;False;-1;2;Rendering.HighDefinition.LightingShaderGraphGUI;0;12;New Amplify Shader;53b46d85872c5b24c8f4f0a1c3fe4c87;True;TransparentDepthPrepass;0;7;TransparentDepthPrepass;0;False;False;False;False;False;False;False;False;False;False;False;False;True;0;False;;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;3;RenderPipeline=HDRenderPipeline;RenderType=Opaque=RenderType;Queue=Geometry=Queue=0;True;5;True;7;d3d11;metal;vulkan;xboxone;xboxseries;playstation;switch;0;False;True;1;1;False;;0;False;;0;1;False;;0;False;;False;False;False;False;False;False;False;False;False;False;False;False;True;0;True;_CullMode;False;False;False;False;False;False;False;False;False;True;True;0;True;_StencilRefDepth;255;False;;255;True;_StencilWriteMaskDepth;7;False;;3;False;;0;False;;0;False;;7;False;;3;False;;0;False;;0;False;;False;True;1;False;;False;False;True;1;LightMode=TransparentDepthPrepass;False;False;0;;0;0;Standard;0;False;0
+Node;AmplifyShaderEditor.TemplateMultiPassMasterNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;8;0,0;Float;False;False;-1;2;Rendering.HighDefinition.LightingShaderGraphGUI;0;12;New Amplify Shader;53b46d85872c5b24c8f4f0a1c3fe4c87;True;TransparentDepthPostpass;0;8;TransparentDepthPostpass;0;False;False;False;False;False;False;False;False;False;False;False;False;True;0;False;;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;3;RenderPipeline=HDRenderPipeline;RenderType=Opaque=RenderType;Queue=Geometry=Queue=0;True;5;True;7;d3d11;metal;vulkan;xboxone;xboxseries;playstation;switch;0;False;True;1;1;False;;0;False;;0;1;False;;0;False;;False;False;False;False;False;False;False;False;False;False;False;False;True;0;True;_CullMode;False;True;False;False;False;False;0;False;;False;False;False;False;False;False;False;False;False;True;1;False;;False;False;True;1;LightMode=TransparentDepthPostpass;False;False;0;;0;0;Standard;0;False;0
+Node;AmplifyShaderEditor.TemplateMultiPassMasterNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;9;0,0;Float;False;False;-1;2;Rendering.HighDefinition.LightingShaderGraphGUI;0;12;New Amplify Shader;53b46d85872c5b24c8f4f0a1c3fe4c87;True;Forward;0;9;Forward;0;False;False;False;False;False;False;False;False;False;False;False;False;True;0;False;;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;3;RenderPipeline=HDRenderPipeline;RenderType=Opaque=RenderType;Queue=Geometry=Queue=0;True;5;True;7;d3d11;metal;vulkan;xboxone;xboxseries;playstation;switch;0;False;False;False;False;True;2;5;False;;10;False;;0;1;False;;0;False;;False;False;True;1;1;False;;0;True;_DstBlend2;0;1;False;;0;False;;False;False;True;1;1;False;;0;True;_DstBlend2;0;1;False;;0;False;;False;False;False;True;0;True;_CullModeForward;False;False;False;True;True;True;True;True;0;True;_ColorMaskTransparentVelOne;False;True;True;True;True;True;0;True;_ColorMaskTransparentVelTwo;False;False;False;True;True;0;True;_StencilRef;255;False;;255;True;_StencilWriteMask;7;False;;3;False;;0;False;;0;False;;7;False;;3;False;;0;False;;0;False;;False;True;0;True;_ZWrite;True;0;True;_ZTestDepthEqualForOpaque;False;True;1;LightMode=Forward;False;False;0;;0;0;Standard;0;False;0
+Node;AmplifyShaderEditor.TemplateMultiPassMasterNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;10;0,0;Float;False;False;-1;2;Rendering.HighDefinition.LightingShaderGraphGUI;0;12;New Amplify Shader;53b46d85872c5b24c8f4f0a1c3fe4c87;True;ScenePickingPass;0;10;ScenePickingPass;0;False;False;False;False;False;False;False;False;False;False;False;False;True;0;False;;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;3;RenderPipeline=HDRenderPipeline;RenderType=Opaque=RenderType;Queue=Geometry=Queue=0;True;5;True;7;d3d11;metal;vulkan;xboxone;xboxseries;playstation;switch;0;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;0;True;_CullMode;False;False;False;False;False;False;False;False;False;False;False;True;2;False;;True;3;False;;False;True;1;LightMode=Picking;False;False;0;;0;0;Standard;0;False;0
+Node;AmplifyShaderEditor.TemplateMultiPassMasterNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;0;896,80;Float;False;True;-1;2;Rendering.HighDefinition.LightingShaderGraphGUI;0;12;Grass Test;53b46d85872c5b24c8f4f0a1c3fe4c87;True;GBuffer;0;0;GBuffer;35;False;False;False;False;False;False;False;False;False;False;False;False;True;0;False;;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;3;RenderPipeline=HDRenderPipeline;RenderType=Opaque=RenderType;Queue=Geometry=Queue=0;True;5;True;7;d3d11;metal;vulkan;xboxone;xboxseries;playstation;switch;0;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;0;True;_CullMode;False;False;False;False;False;False;False;False;False;True;True;0;True;_StencilRefGBuffer;255;False;;255;True;_StencilWriteMaskGBuffer;7;False;;3;False;;0;False;;0;False;;7;False;;3;False;;0;False;;0;False;;False;False;True;0;True;_ZTestGBuffer;False;True;1;LightMode=GBuffer;False;False;0;;0;0;Standard;42;Category;0;0;  Instanced Terrain Normals;1;0;Surface Type;0;0;  Rendering Pass;1;0;  Refraction Model;0;0;    Blending Mode;0;0;    Blend Preserves Specular;1;0;  Back Then Front Rendering;0;0;  Transparent Depth Prepass;0;0;  Transparent Depth Postpass;0;0;  ZWrite;0;0;  Z Test;4;0;Double-Sided;0;0;Alpha Clipping;1;638967471595811504;  Use Shadow Threshold;0;0;Material Type;0;0;  Energy Conserving Specular;1;0;  Transmission;0;0;Normal Space;0;0;Receive Decals;1;0;Receive SSR;1;0;Receive SSR Transparent;0;0;Motion Vectors;1;0;  Add Precomputed Velocity;0;0;Specular AA;0;0;Specular Occlusion Mode;1;0;Override Baked GI;0;0;Write Depth;0;0;  Depth Offset;0;0;  Conservative;0;0;GPU Instancing;1;0;LOD CrossFade;0;0;Tessellation;0;0;  Phong;0;0;  Strength;0.5,False,;0;  Type;0;0;  Tess;16,False,;0;  Min;10,False,;0;  Max;25,False,;0;  Edge Length;16,False,;0;  Max Displacement;25,False,;0;Vertex Position;1;0;0;11;True;True;True;True;True;True;False;False;False;True;True;False;;False;0
+WireConnection;60;0;59;0
 WireConnection;23;0;16;2
+WireConnection;23;2;58;0
+WireConnection;61;0;60;0
+WireConnection;55;1;23;0
+WireConnection;55;2;56;0
+WireConnection;63;1;61;0
+WireConnection;63;2;64;0
+WireConnection;69;0;65;0
+WireConnection;68;0;69;0
+WireConnection;70;0;63;0
+WireConnection;71;0;55;0
+WireConnection;21;0;71;0
+WireConnection;21;1;70;0
+WireConnection;21;2;68;0
+WireConnection;66;0;21;0
+WireConnection;67;0;11;4
+WireConnection;67;1;66;0
+WireConnection;54;14;15;5
+WireConnection;0;0;54;0
+WireConnection;0;7;24;0
+WireConnection;0;9;67;0
+WireConnection;0;11;54;16
 ASEEND*/
-//CHKSM=C6BB18485A3CCB980954D64D35510A15EA0DEDC4
+//CHKSM=E8E51989A1E159240C4B104EDB4FB449906EF99C
