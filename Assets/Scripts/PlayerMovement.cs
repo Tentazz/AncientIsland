@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using DG.Tweening;
 
 public class PlayerMovement : MonoBehaviour
 {
@@ -14,6 +15,11 @@ public class PlayerMovement : MonoBehaviour
     //Setup variable pour input
     private Vector2 moveAmount;
 
+
+    // Setup Animator
+    public Animator cameraAnimator;
+    public Ease cameraAnimationEase;
+    private float animatorSpeed;
 
 
     public CharacterController controller;
@@ -32,6 +38,7 @@ public class PlayerMovement : MonoBehaviour
 
     bool sprinting = false;
     public float sprintMultiplyier = 2f;
+    private float speedBuffer;
 
     //Activer le systeme d'input du joueur
     private void OnEnable ()
@@ -76,29 +83,51 @@ public class PlayerMovement : MonoBehaviour
             velocity.y = -2f;
         }
         
-        //mouvement de base
-        Vector3 move = transform.right * moveAmount.x + transform.forward * moveAmount.y;
+        // ----------------------   Mouvement de base   ---------------------
 
-        if(sprinting == true)
-        {
-            controller.Move(move * speed * Time.deltaTime * sprintMultiplyier);
-        }
+        Walking();
+        Jump();
+        //-------------------   Jump  ---------------------
 
-        else
-        {
-            controller.Move(move * speed * Time.deltaTime);
-        }
-        
 
-        //jump
-        if(jumpAction.WasPressedThisFrame() && isGrounded)
-        {
+    }
+    private void Jump()
+    {
+        if (jumpAction.WasPressedThisFrame() && isGrounded) {
             velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
             RumbleManager.instance.RumblePulse(0f, 1f, 0.05f);
         }
 
         velocity.y += gravity * gravityMultiplyier * Time.deltaTime;
         controller.Move(velocity * Time.deltaTime);
+    }
+private void Walking() //fonction de deplacement
+    {
+        Vector3 move = transform.right * moveAmount.x + transform.forward * moveAmount.y;
 
+
+
+        if (sprinting == true) //si on sprint
+            {
+            DOTween.To(() => speedBuffer, x => speedBuffer = x, sprintMultiplyier, 0.2f);
+            DOTween.To(() => animatorSpeed, x => animatorSpeed = x, 1f, 1);
+            }
+
+        else
+            {
+                if (Mathf.Abs(moveAmount.y) < 0.1 && Mathf.Abs(moveAmount.x) < 0.1) { //si on arrete de bouger en avant
+                    DOTween.To(() => speedBuffer, x => speedBuffer = x, 0, 0.5f);
+                    DOTween.To(() => animatorSpeed, x => animatorSpeed = x, 0f, 1);
+                }
+
+                else { //si on marche normalement
+                    DOTween.To(() => speedBuffer, x => speedBuffer = x, 1f, 0.5f);
+                    DOTween.To(() => animatorSpeed, x => animatorSpeed = x, 0.5f, 1);
+                }
+
+            }
+
+        cameraAnimator.SetFloat("Speed", animatorSpeed); //mettre a jour la valeur de l'animator
+        controller.Move(move * speed * Time.deltaTime * speedBuffer); //appliquer le mouvement avec la vitesse
     }
 }

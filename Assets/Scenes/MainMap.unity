@@ -241,7 +241,7 @@ GameObject:
   m_Component:
   - component: {fileID: 36713306}
   m_Layer: 0
-  m_Name: --------MANAGERS-------
+  m_Name: --------MANAGERS-------------------------------
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -6844,7 +6844,7 @@ GameObject:
   m_Component:
   - component: {fileID: 645737073}
   m_Layer: 0
-  m_Name: -----------SCENE---------
+  m_Name: -----------SCENE---------------------------------
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -7660,8 +7660,8 @@ MonoBehaviour:
     volumeMask: {fileID: 0}
     textureScrollingSpeed: {x: 0, y: 0, z: 0}
     textureTiling: {x: 1, y: 1, z: 1}
-    positiveFade: {x: 0.0075, y: 0.5, z: 0.0075}
-    negativeFade: {x: 0.0075, y: 0.5, z: 0.0075}
+    positiveFade: {x: 0.0015, y: 0.5, z: 0.0015}
+    negativeFade: {x: 0.0015, y: 0.5, z: 0.0015}
     m_EditorUniformFade: 75
     m_EditorPositiveFade: {x: 0.000009999999, y: 0.00066666666, z: 0.000009999999}
     m_EditorNegativeFade: {x: 0.000009999999, y: 0.00066666666, z: 0.000009999999}
@@ -8764,7 +8764,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 993886873}
-  - component: {fileID: 993886872}
+  - component: {fileID: 993886874}
   m_Layer: 0
   m_Name: RainbowHierarchyRuleset
   m_TagString: EditorOnly
@@ -8772,18 +8772,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &993886872
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 993886871}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: -1774853514, guid: ebe26e22332665d4c8332b2a624e5e8b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!4 &993886873
 Transform:
   m_ObjectHideFlags: 0
@@ -8799,6 +8787,199 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &993886874
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 993886871}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 848a85510b808ee4994e553f35ca73bd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp-firstpass::Borodar.RainbowHierarchy.HierarchyRulesetV2
+  Rules:
+  - Type: 0
+    Name: 
+    GameObject: {fileID: 645737072}
+    Ordinal: 0
+    Priority: 0
+    IconType: 1
+    IconTexture: {fileID: 2800000, guid: c4e56d06f0690414f825f586576ee550, type: 3}
+    IsIconRecursive: 0
+    BackgroundType: 1
+    BackgroundTexture: {fileID: 2800000, guid: ba7b477091fba3d44962dd94537e0de1, type: 3}
+    IsBackgroundRecursive: 0
+    IsHidden: 0
+  - Type: 0
+    Name: 
+    GameObject: {fileID: 1608518883}
+    Ordinal: 1
+    Priority: 0
+    IconType: 1
+    IconTexture: {fileID: 2800000, guid: c4e56d06f0690414f825f586576ee550, type: 3}
+    IsIconRecursive: 0
+    BackgroundType: 1
+    BackgroundTexture: {fileID: 2800000, guid: ba7b477091fba3d44962dd94537e0de1, type: 3}
+    IsBackgroundRecursive: 0
+    IsHidden: 0
+  - Type: 0
+    Name: 
+    GameObject: {fileID: 36713305}
+    Ordinal: 2
+    Priority: 0
+    IconType: 1
+    IconTexture: {fileID: 2800000, guid: c4e56d06f0690414f825f586576ee550, type: 3}
+    IsIconRecursive: 0
+    BackgroundType: 1
+    BackgroundTexture: {fileID: 2800000, guid: ba7b477091fba3d44962dd94537e0de1, type: 3}
+    IsBackgroundRecursive: 0
+    IsHidden: 0
+  - Type: 0
+    Name: 
+    GameObject: {fileID: 667718353}
+    Ordinal: 3
+    Priority: 0
+    IconType: 169520
+    IconTexture: {fileID: 0}
+    IsIconRecursive: 0
+    BackgroundType: 4000
+    BackgroundTexture: {fileID: 0}
+    IsBackgroundRecursive: 0
+    IsHidden: 0
+  - Type: 0
+    Name: 
+    GameObject: {fileID: 1861342441}
+    Ordinal: 4
+    Priority: 0
+    IconType: 302000
+    IconTexture: {fileID: 0}
+    IsIconRecursive: 0
+    BackgroundType: 19000
+    BackgroundTexture: {fileID: 0}
+    IsBackgroundRecursive: 0
+    IsHidden: 0
+  - Type: 0
+    Name: 
+    GameObject: {fileID: 1369649580}
+    Ordinal: 5
+    Priority: 0
+    IconType: 302000
+    IconTexture: {fileID: 0}
+    IsIconRecursive: 0
+    BackgroundType: 0
+    BackgroundTexture: {fileID: 0}
+    IsBackgroundRecursive: 0
+    IsHidden: 0
+  - Type: 0
+    Name: 
+    GameObject: {fileID: 2247695638406281967}
+    Ordinal: 6
+    Priority: 0
+    IconType: 16000
+    IconTexture: {fileID: 0}
+    IsIconRecursive: 0
+    BackgroundType: 16000
+    BackgroundTexture: {fileID: 0}
+    IsBackgroundRecursive: 0
+    IsHidden: 0
+  - Type: 0
+    Name: 
+    GameObject: {fileID: 993886871}
+    Ordinal: 7
+    Priority: 0
+    IconType: 1
+    IconTexture: {fileID: 2800000, guid: c4e56d06f0690414f825f586576ee550, type: 3}
+    IsIconRecursive: 0
+    BackgroundType: 0
+    BackgroundTexture: {fileID: 0}
+    IsBackgroundRecursive: 0
+    IsHidden: 0
+  - Type: 0
+    Name: 
+    GameObject: {fileID: 823978978}
+    Ordinal: 8
+    Priority: 0
+    IconType: 105000
+    IconTexture: {fileID: 0}
+    IsIconRecursive: 0
+    BackgroundType: 0
+    BackgroundTexture: {fileID: 0}
+    IsBackgroundRecursive: 0
+    IsHidden: 0
+  - Type: 0
+    Name: 
+    GameObject: {fileID: 82901359}
+    Ordinal: 9
+    Priority: 0
+    IconType: 193000
+    IconTexture: {fileID: 0}
+    IsIconRecursive: 0
+    BackgroundType: 0
+    BackgroundTexture: {fileID: 0}
+    IsBackgroundRecursive: 0
+    IsHidden: 0
+  - Type: 0
+    Name: 
+    GameObject: {fileID: 257858012}
+    Ordinal: 10
+    Priority: 0
+    IconType: 300000
+    IconTexture: {fileID: 0}
+    IsIconRecursive: 0
+    BackgroundType: 0
+    BackgroundTexture: {fileID: 0}
+    IsBackgroundRecursive: 0
+    IsHidden: 0
+  - Type: 0
+    Name: 
+    GameObject: {fileID: 809447032}
+    Ordinal: 11
+    Priority: 0
+    IconType: 300000
+    IconTexture: {fileID: 0}
+    IsIconRecursive: 0
+    BackgroundType: 0
+    BackgroundTexture: {fileID: 0}
+    IsBackgroundRecursive: 0
+    IsHidden: 0
+  - Type: 0
+    Name: 
+    GameObject: {fileID: 2247695638406281969}
+    Ordinal: 12
+    Priority: 0
+    IconType: 290000
+    IconTexture: {fileID: 0}
+    IsIconRecursive: 0
+    BackgroundType: 14000
+    BackgroundTexture: {fileID: 0}
+    IsBackgroundRecursive: 0
+    IsHidden: 0
+  - Type: 0
+    Name: 
+    GameObject: {fileID: 2247695638406281968}
+    Ordinal: 13
+    Priority: 0
+    IconType: 114000
+    IconTexture: {fileID: 0}
+    IsIconRecursive: 0
+    BackgroundType: 0
+    BackgroundTexture: {fileID: 0}
+    IsBackgroundRecursive: 0
+    IsHidden: 0
+  - Type: 0
+    Name: 
+    GameObject: {fileID: 1572770399}
+    Ordinal: 14
+    Priority: 0
+    IconType: 233000
+    IconTexture: {fileID: 0}
+    IsIconRecursive: 0
+    BackgroundType: 0
+    BackgroundTexture: {fileID: 0}
+    IsBackgroundRecursive: 0
+    IsHidden: 0
 --- !u!1 &1070745047
 GameObject:
   m_ObjectHideFlags: 0
@@ -9701,7 +9882,7 @@ GameObject:
   - component: {fileID: 1369649582}
   - component: {fileID: 1369649581}
   m_Layer: 0
-  m_Name: Custom Pass
+  m_Name: Custom dithering Pass
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -9754,12 +9935,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1369649580}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.8225546, y: 0.519805, z: 1.0680405}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -0.8225546, y: -0.480195, z: 11.068041}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 0}
+  m_Father: {fileID: 1861342443}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1377512487
 GameObject:
@@ -10539,6 +10720,12 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1572770399 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 6630456973527709534, guid: cb22d33dfe694d8479e5f1373e621b11,
+    type: 3}
+  m_PrefabInstance: {fileID: 2247695638406281966}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1595810974
 GameObject:
   m_ObjectHideFlags: 0
@@ -10662,7 +10849,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1608518884}
   m_Layer: 0
-  m_Name: '-----------MAIN---------- '
+  m_Name: --------------MAIN--------------------
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -11063,7 +11250,8 @@ Transform:
   m_LocalPosition: {x: 0, y: 1, z: -10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 1369649582}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1888768842
@@ -11733,11 +11921,45 @@ PrefabInstance:
       propertyPath: m_Name
       value: PR_MainCharacter
       objectReference: {fileID: 0}
+    - target: {fileID: 4942620392142972436, guid: cb22d33dfe694d8479e5f1373e621b11,
+        type: 3}
+      propertyPath: animator
+      value: 
+      objectReference: {fileID: 2247695638406281970}
+    - target: {fileID: 4942620392142972436, guid: cb22d33dfe694d8479e5f1373e621b11,
+        type: 3}
+      propertyPath: cameraAnimator
+      value: 
+      objectReference: {fileID: 2247695638406281970}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: cb22d33dfe694d8479e5f1373e621b11, type: 3}
+--- !u!1 &2247695638406281967 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 4607285457530146397, guid: cb22d33dfe694d8479e5f1373e621b11,
+    type: 3}
+  m_PrefabInstance: {fileID: 2247695638406281966}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &2247695638406281968 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 6399023130836049663, guid: cb22d33dfe694d8479e5f1373e621b11,
+    type: 3}
+  m_PrefabInstance: {fileID: 2247695638406281966}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &2247695638406281969 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 6415716310589563371, guid: cb22d33dfe694d8479e5f1373e621b11,
+    type: 3}
+  m_PrefabInstance: {fileID: 2247695638406281966}
+  m_PrefabAsset: {fileID: 0}
+--- !u!95 &2247695638406281970 stripped
+Animator:
+  m_CorrespondingSourceObject: {fileID: 4901564033803337373, guid: cb22d33dfe694d8479e5f1373e621b11,
+    type: 3}
+  m_PrefabInstance: {fileID: 2247695638406281966}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &2790120923209099730
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -11880,13 +12102,14 @@ SceneRoots:
   m_Roots:
   - {fileID: 36713306}
   - {fileID: 823978980}
+  - {fileID: 993886873}
   - {fileID: 1608518884}
   - {fileID: 667718355}
   - {fileID: 1861342443}
-  - {fileID: 1369649582}
   - {fileID: 2247695638406281966}
-  - {fileID: 993886873}
   - {fileID: 645737073}
+  - {fileID: 257858014}
+  - {fileID: 809447034}
   - {fileID: 114794490}
   - {fileID: 579520155}
   - {fileID: 869497941}
@@ -11926,6 +12149,4 @@ SceneRoots:
   - {fileID: 179209001}
   - {fileID: 2003885105}
   - {fileID: 5774869006395012097}
-  - {fileID: 257858014}
-  - {fileID: 809447034}
   - {fileID: 2790120923209099730}
