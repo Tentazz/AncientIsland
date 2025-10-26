@@ -13,6 +13,11 @@ public class MouseLook : MonoBehaviour
 
     public float mouseSensitivityX = 100f;
     public float mouseSensitivityY = 100f;
+
+    // Sensitivity to use for gamepad (sticks are [-1,1], so we typically treat them as units/sec)
+    public float gamepadSensitivityX = 100f;
+    public float gamepadSensitivityY = 100f;
+
     public Transform playerBody;
 
     float xRotation = 0f;
@@ -43,9 +48,24 @@ public class MouseLook : MonoBehaviour
     {
         lookAmount = lookAction.ReadValue<Vector2>();
 
-        float mouseX = lookAmount.x * mouseSensitivityX * Time.deltaTime;
-        float mouseY = lookAmount.y * mouseSensitivityY * Time.deltaTime;
-        
+        var control = lookAction.activeControl;
+        bool fromMouse = control != null && control.device is Mouse; 
+
+        float mouseX;
+        float mouseY;
+
+        if (fromMouse)
+        {
+            // Mouse gives a per-frame delta (pixels since last frame) -> don't multiply by Time.deltaTime
+            mouseX = lookAmount.x * mouseSensitivityX / 100;
+            mouseY = lookAmount.y * mouseSensitivityY / 100;
+        }
+        else
+        {
+            // Gamepad/joystick gives axis values [-1,1] -> treat as units/sec so multiply by Time.deltaTime
+            mouseX = lookAmount.x * gamepadSensitivityX * Time.deltaTime;
+            mouseY = lookAmount.y * gamepadSensitivityY * Time.deltaTime;
+        }
 
         xRotation -= mouseY;
         xRotation = Mathf.Clamp(xRotation, -90f, 90f);
