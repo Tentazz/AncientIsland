@@ -13,21 +13,36 @@ public class PlayerMovement : MonoBehaviour
     public InputAction sprintAction;
 
     //Setup variable pour input
-    private Vector2 moveAmount;
+    private Vector2 moveInput;
 
 
     // Setup Animator
     public Animator cameraAnimator;
     public Ease cameraAnimationEase;
     private float animatorSpeed;
+    private float speedBuffer;
 
 
     public CharacterController controller;
-    public float speed = 12f;
+    public float speedmultiplyier = 12f;
 
-    Vector3 velocity;
+    Vector3 verticalVelocity;
+    Vector3 horizontalVelocity;
+
     bool isGrounded;
+    bool canJump = true;
     float gravity = -9.81f;
+    Vector3 airVelocity;
+    public float aircontrol = 0.001f;
+    private float airSpeedLimit = 0f;
+
+    // coyote time
+    public float coyoteTime = 0.2f;
+    private float coyoteTimeCounter;
+
+    // jump buffer
+    public float jumpBufferTime = 0.2f;
+    private float jumpBufferCounter;
 
     public Transform groundcheck;
     public float grounddistance = 0.04f;
@@ -38,36 +53,38 @@ public class PlayerMovement : MonoBehaviour
 
     bool sprinting = false;
     public float sprintMultiplyier = 2f;
-    private float speedBuffer;
+    private float speedMultiplyierBuffer;
 
     //Activer le systeme d'input du joueur
     private void OnEnable ()
     {
-        InputActions.FindActionMap("Player").Enable();
+        InputActions.FindActionMap("Player").Enable(); //activer le systeme d'input du joueur
     }
 
     private void OnDisable ()
     {
-        InputActions.FindActionMap("Player").Disable();
+        InputActions.FindActionMap("Player").Disable();//desactiver le systeme d'input du joueur
     }
 
     private void Awake ()
     {
-        moveAction = InputSystem.actions.FindAction("Move");
+        moveAction = InputSystem.actions.FindAction("Move"); 
         jumpAction = InputSystem.actions.FindAction("Jump");
         sprintAction = InputSystem.actions.FindAction("Sprint");
     }
 
     void Update()
     {
-        moveAmount = moveAction.ReadValue<Vector2>();
+        moveInput = moveAction.ReadValue<Vector2>(); //recuperer la valeur de l'input de deplacement
+
+        CheckJump();
 
 
-        //isGrounded = Physics.CheckSphere(groundcheck.position,grounddistance, groundMask);
-        isGrounded = controller.isGrounded;
-
+        if (isGrounded && verticalVelocity.y < 0) {
+            verticalVelocity.y = -2f;
+        }
         //check Sprint
-        if(sprintAction.WasPressedThisFrame())
+        if (sprintAction.WasPressedThisFrame())
         {
             sprinting = true;
         }
@@ -76,58 +93,96 @@ public class PlayerMovement : MonoBehaviour
         {
             sprinting = false;
         }
-
-        //quand on touche le sol, ralentis le joueur
-        if(isGrounded && velocity.y < 0)
-        {
-            velocity.y = -2f;
-        }
         
-        // ----------------------   Mouvement de base   ---------------------
+        //quand on touche le sol, ralentis le joueur
+
 
         Walking();
         Jump();
-        //-------------------   Jump  ---------------------
-
-
     }
+
+    private void CheckJump()
+    {
+
+        isGrounded = controller.isGrounded;//check si le joueur est au sol
+        if (isGrounded)
+        {
+            coyoteTimeCounter = coyoteTime; //reset le compteur de coyote time
+        }
+        else
+        {
+            coyoteTimeCounter -= Time.deltaTime; //decremente le compteur de coyote time
+        }
+    }
+
     private void Jump()
     {
-        if (jumpAction.WasPressedThisFrame() && isGrounded) {
-            velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
-            RumbleManager.instance.RumblePulse(0f, 1f, 0.05f);
+        if (jumpAction.WasPressedThisFrame())
+        {
+            jumpBufferCounter = jumpBufferTime; //reset le compteur de jump buffer
+        }
+        else
+        {
+            jumpBufferCounter -= Time.deltaTime; //decremente le compteur de jump buffer
         }
 
-        velocity.y += gravity * gravityMultiplyier * Time.deltaTime;
-        controller.Move(velocity * Time.deltaTime);
+        if (jumpBufferCounter > 0 && coyoteTimeCounter > 0f) {
+            verticalVelocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
+            RumbleManager.instance.RumblePulse(0f, 1f, 0.05f);
+
+            airSpeedLimit = horizontalVelocity.magnitude;
+            airVelocity = horizontalVelocity;
+            coyoteTimeCounter = 0f; //empêcher les sauts multiples pendant le coyote time
+        }
+
+        verticalVelocity.y += gravity * gravityMultiplyier * Time.deltaTime;
+        //controller.Move(verticalVelocity * Time.deltaTime);
     }
-private void Walking() //fonction de deplacement
+    private void Walking() //fonction de deplacement
     {
-        Vector3 move = transform.right * moveAmount.x + transform.forward * moveAmount.y;
 
+        if (isGrounded == true) //si on est au sol
+        {
+            horizontalVelocity = transform.right * moveInput.x + transform.forward * moveInput.y; //calculer la direction du mouvement
+        }
 
+        else //si on est en l'air
+         {
+            // appliquer le contrôle aérien (delta)
+            Vector3 controlDelta = transform.right * moveInput.x * aircontrol + transform.forward * moveInput.y * aircontrol;
+            Vector3 newAir = horizontalVelocity + controlDelta;
 
-        if (sprinting == true) //si on sprint
+            // Empêcher l'accélération au-delà de la vitesse initiale du saut.
+            // Autorise la décélération (réduction de magnitude), mais clamp la magnitude maximale à airSpeedLimit.
+            if (newAir.magnitude > airSpeedLimit) {
+                // Si airSpeedLimit est 0 => cela empêchera toute accélération horizontale après un saut depuis l'immobilité.
+                newAir = newAir.normalized * airSpeedLimit;
+            }
+
+            horizontalVelocity = newAir;
+        }
+
+        if (sprinting == true && isGrounded == true) //si on sprint
             {
-            DOTween.To(() => speedBuffer, x => speedBuffer = x, sprintMultiplyier, 0.2f);
+            DOTween.To(() => speedBuffer, x => speedBuffer = x, sprintMultiplyier, 1f);
             DOTween.To(() => animatorSpeed, x => animatorSpeed = x, 1f, 1);
+        }
+
+        else if (isGrounded== true) {
+            if (Mathf.Abs(moveInput.y) < 0.1 && Mathf.Abs(moveInput.x) < 0.1) { //si on arrete de bouger
+                DOTween.To(() => speedBuffer, x => speedBuffer = x, 0, 1f);
+                DOTween.To(() => animatorSpeed, x => animatorSpeed = x, 0f, 1);
             }
 
-        else
-            {
-                if (Mathf.Abs(moveAmount.y) < 0.1 && Mathf.Abs(moveAmount.x) < 0.1) { //si on arrete de bouger en avant
-                    DOTween.To(() => speedBuffer, x => speedBuffer = x, 0, 0.5f);
-                    DOTween.To(() => animatorSpeed, x => animatorSpeed = x, 0f, 1);
-                }
-
-                else { //si on marche normalement
-                    DOTween.To(() => speedBuffer, x => speedBuffer = x, 1f, 0.5f);
-                    DOTween.To(() => animatorSpeed, x => animatorSpeed = x, 0.5f, 1);
-                }
-
+            else { //si on marche normalement
+                DOTween.To(() => speedBuffer, x => speedBuffer = x, 1f, 1f);
+                DOTween.To(() => animatorSpeed, x => animatorSpeed = x, 0.5f, 1);
             }
+
+        }
 
         cameraAnimator.SetFloat("Speed", animatorSpeed); //mettre a jour la valeur de l'animator
-        controller.Move(move * speed * Time.deltaTime * speedBuffer); //appliquer le mouvement avec la vitesse
+
+        controller.Move(horizontalVelocity * speedmultiplyier * Time.deltaTime * speedBuffer + verticalVelocity * Time.deltaTime); //appliquer le mouvement avec la vitesse
     }
 }

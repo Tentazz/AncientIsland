@@ -11928,9 +11928,29 @@ PrefabInstance:
       objectReference: {fileID: 2247695638406281970}
     - target: {fileID: 4942620392142972436, guid: cb22d33dfe694d8479e5f1373e621b11,
         type: 3}
+      propertyPath: aircontrol
+      value: 0.04
+      objectReference: {fileID: 0}
+    - target: {fileID: 4942620392142972436, guid: cb22d33dfe694d8479e5f1373e621b11,
+        type: 3}
+      propertyPath: jumpHeight
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 4942620392142972436, guid: cb22d33dfe694d8479e5f1373e621b11,
+        type: 3}
       propertyPath: cameraAnimator
       value: 
       objectReference: {fileID: 2247695638406281970}
+    - target: {fileID: 4942620392142972436, guid: cb22d33dfe694d8479e5f1373e621b11,
+        type: 3}
+      propertyPath: jumpBufferTime
+      value: 0.1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4942620392142972436, guid: cb22d33dfe694d8479e5f1373e621b11,
+        type: 3}
+      propertyPath: speedmultiplyier
+      value: 5
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
