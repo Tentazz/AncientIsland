@@ -167,7 +167,7 @@ public class PlayerMovement : MonoBehaviour
         }
 
         jumpChargeCounter += Time.deltaTime;
-        print(Mathf.Clamp(jumpChargeCounter / jumpCharge, 0f, 1f));
+        //print(Mathf.Clamp(jumpChargeCounter / jumpCharge, 0f, 1f));
         verticalVelocity.y += gravity * gravityMultiplyier * Time.deltaTime; //appliquer la gravité
     }
     private void Walking() //fonction de deplacement
