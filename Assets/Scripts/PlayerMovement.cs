@@ -30,7 +30,7 @@ public class PlayerMovement : MonoBehaviour
     Vector3 horizontalVelocity;
 
     bool isGrounded;
-    bool canJump = true;
+    bool jumping;
     float gravity = -9.81f;
     Vector3 airVelocity;
     public float aircontrol = 0.001f;
@@ -43,6 +43,12 @@ public class PlayerMovement : MonoBehaviour
     // jump buffer
     public float jumpBufferTime = 0.2f;
     private float jumpBufferCounter;
+
+    //Jump charge
+    public float jumpCharge;
+    private float jumpChargeCounter;
+    public bool isChargingJump = false;
+    private float jumpChargeAnimator;
 
     public Transform groundcheck;
     public float grounddistance = 0.04f;
@@ -81,8 +87,16 @@ public class PlayerMovement : MonoBehaviour
 
 
         if (isGrounded && verticalVelocity.y < 0) {
-            verticalVelocity.y = -2f;
+
+            if (jumping == true) 
+            {
+                jumping = false;
+                verticalVelocity.y = -2f;
+                RumbleManager.instance.RumblePulse(0.5f, 0.5f, 0.1f);
+            }
+            //print(jumping);
         }
+
         //check Sprint
         if (sprintAction.WasPressedThisFrame())
         {
@@ -94,7 +108,6 @@ public class PlayerMovement : MonoBehaviour
             sprinting = false;
         }
         
-        //quand on touche le sol, ralentis le joueur
 
 
         Walking();
@@ -113,12 +126,31 @@ public class PlayerMovement : MonoBehaviour
         {
             coyoteTimeCounter -= Time.deltaTime; //decremente le compteur de coyote time
         }
+
+        if (isChargingJump == true)
+        {
+            DOTween.To(() => jumpChargeAnimator, x => jumpChargeAnimator = x, 1f, 0.001f);
+        }
+
+        else         {
+            DOTween.To(() => jumpChargeAnimator, x => jumpChargeAnimator = x, 0f, 0.01f);
+        }
+
+        cameraAnimator.SetFloat("jumpCharge", jumpChargeAnimator); //mettre a jour la valeur de l'animator
+
     }
 
     private void Jump()
     {
-        if (jumpAction.WasPressedThisFrame())
+        if (jumpAction.WasPressedThisFrame()) {
+            jumpChargeCounter = 0f;
+            isChargingJump = true;
+        }
+
+
+        if (jumpAction.WasReleasedThisFrame())
         {
+            isChargingJump = false;
             jumpBufferCounter = jumpBufferTime; //reset le compteur de jump buffer
         }
         else
@@ -126,17 +158,17 @@ public class PlayerMovement : MonoBehaviour
             jumpBufferCounter -= Time.deltaTime; //decremente le compteur de jump buffer
         }
 
-        if (jumpBufferCounter > 0 && coyoteTimeCounter > 0f) {
-            verticalVelocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
-            RumbleManager.instance.RumblePulse(0f, 1f, 0.05f);
-
+        if (jumpBufferCounter > 0 && coyoteTimeCounter > 0f) { // jump
+            jumping = true;
+            verticalVelocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity * Mathf.Clamp((jumpChargeCounter / jumpCharge)*0.75f +0.25f, 0f, 1f)); //calculer le saut
             airSpeedLimit = horizontalVelocity.magnitude;
             airVelocity = horizontalVelocity;
             coyoteTimeCounter = 0f; //empêcher les sauts multiples pendant le coyote time
         }
 
-        verticalVelocity.y += gravity * gravityMultiplyier * Time.deltaTime;
-        //controller.Move(verticalVelocity * Time.deltaTime);
+        jumpChargeCounter += Time.deltaTime;
+        print(Mathf.Clamp(jumpChargeCounter / jumpCharge, 0f, 1f));
+        verticalVelocity.y += gravity * gravityMultiplyier * Time.deltaTime; //appliquer la gravité
     }
     private void Walking() //fonction de deplacement
     {
