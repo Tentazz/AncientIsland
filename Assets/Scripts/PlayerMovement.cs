@@ -91,9 +91,11 @@ public class PlayerMovement : MonoBehaviour
             if (jumping == true) 
             {
                 jumping = false;
-                verticalVelocity.y = -2f;
+
                 RumbleManager.instance.RumblePulse(0.5f, 0.5f, 0.1f);
             }
+            verticalVelocity.y = -2f;
+
             //print(jumping);
         }
 

@@ -131,6 +131,15 @@
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
+                },
+                {
+                    "name": "+",
+                    "type": "Button",
+                    "id": "6c594002-16fe-44e9-a323-be53e1ff45d7",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
                 }
             ],
             "bindings": [
@@ -571,6 +580,17 @@
                     "processors": "",
                     "groups": "",
                     "action": "5",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "36f0895f-68db-4e57-8283-9ce2bd830296",
+                    "path": "<Keyboard>/numpadPlus",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "+",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

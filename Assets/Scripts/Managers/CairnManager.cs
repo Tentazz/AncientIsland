@@ -4,7 +4,6 @@ using UnityEngine.InputSystem;
 
 public class CairnManager : MonoBehaviour
 {
-    //a
     public List<GameObject> Cairns = new List<GameObject>();
     public GameObject Cairn01;
     public GameObject player;

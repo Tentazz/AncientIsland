@@ -26,6 +26,10 @@ Material:
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
+    - _SkyGradient:
+        m_Texture: {fileID: 2800000, guid: efc06c00fa1c91a42b00db00ee6bf29b, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - unity_Lightmaps:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
@@ -51,6 +55,7 @@ Material:
     - _ConservativeDepthOffsetEnable: 1
     - _CullMode: 1
     - _CullModeForward: 1
+    - _Debugtimeofday: 0.432
     - _DepthOffsetEnable: 1
     - _DistortionEnable: 0
     - _DistortionOnly: 0
@@ -61,6 +66,7 @@ Material:
     - _DstBlend2: 0
     - _EnableBlendModePreserveSpecularLighting: 1
     - _EnableFogOnTransparent: 1
+    - _Float0: 0.816
     - _OpaqueCullMode: 1
     - _PerPixelSorting: 0
     - _ReceivesSSR: 1
@@ -86,6 +92,7 @@ Material:
     - _TransparentWritingMotionVec: 0
     - _TransparentZWrite: 0
     - _UseShadowThreshold: 0
+    - _Usedebugtime: 0
     - _ZTestDepthEqualForOpaque: 3
     - _ZTestGBuffer: 4
     - _ZTestTransparent: 4
