@@ -37,6 +37,8 @@ Shader "Grass Test"
 		_Vertexoffsetinalbedo( "Vertex offset in albedo", Range( 0, 1 ) ) = 1
 		[Toggle] _Gradientmaskforvertexoffsetinalebdo( "Gradient mask for vertex offset in alebdo", Range( 0, 1 ) ) = 0
 		[Toggle] _Vertexoffsetgradient( "Vertex offset gradient", Range( 0, 1 ) ) = 0
+		[Enum(UV0,0,UV1,1)] _UVforgradient( "UV for gradient", Float ) = 0
+		[Toggle] _Alphaclipdependondistance( "Alpha clip depend on distance", Range( 0, 1 ) ) = 0
 		[HideInInspector] _texcoord( "", 2D ) = "white" {}
 
 		[HideInInspector] _RenderQueueType("Render Queue Type", Float) = 1
@@ -482,35 +484,37 @@ Shader "Grass Test"
             #endif
 
 			CBUFFER_START( UnityPerMaterial )
+			float4 _NormalMap_ST;
+			float4 _ColorWind;
 			float4 _TextureSample0_ST;
 			float4 _Color;
-			float4 _ColorWind;
-			float4 _NormalMap_ST;
-			float2 _VertexWindSpeednear;
-			float2 _WindSpeednear;
 			float2 _WindSpeedmedium;
+			float2 _WindSpeednear;
+			float2 _VertexWindSpeednear;
 			float2 _WindSpeedfar;
-			float _BottomGradientsize;
-			float _Smoothness;
 			float _NormalIntensity;
+			float _Sizefar;
 			float _Usebasecolorinstedoftexture;
+			float _BottomGradientsize;
 			float _Windinalbedo;
 			float _Distortionfarintensity;
 			float _Distortionfarsize;
-			float _Sizefar;
+			float _BottomGradient;
+			float _Smoothness;
 			float _Sizemedium;
 			float _Distortionmediumsize;
-			float _BottomGradient;
+			float _Fresneldither;
 			float _Distortionnearintensity;
 			float _Distortionnearsize;
 			float _Sizenear;
 			float _Gradientmaskforvertexoffsetinalebdo;
+			float _UVforgradient;
 			float _Vertexoffsetinalbedo;
 			float _Vertexoffsetgradient;
 			float _VertexWindintensity;
 			float _VertexoffsetSizenear;
 			float _Distortionmediumintensity;
-			float _Fresneldither;
+			float _Alphaclipdependondistance;
 			float4 _EmissionColor;
 			float _AlphaCutoff;
 			float _RenderQueueType;
@@ -604,6 +608,8 @@ Shader "Grass Test"
 			#define ASE_NEEDS_VERT_TEXTURE_COORDINATES0
 			#define ASE_NEEDS_FRAG_WORLD_POSITION
 			#define ASE_NEEDS_FRAG_TEXTURE_COORDINATES0
+			#define ASE_NEEDS_TEXTURE_COORDINATES1
+			#define ASE_NEEDS_FRAG_TEXTURE_COORDINATES1
 			#define ASE_NEEDS_WORLD_NORMAL
 			#define ASE_NEEDS_FRAG_WORLD_NORMAL
 			#define ASE_NEEDS_VERT_POSITION
@@ -1123,7 +1129,9 @@ Shader "Grass Test"
 				float4 tex2DNode92_g42 = tex2D( _VertexoffsetNoisetexture, panner98_g42 );
 				float temp_output_102_0_g42 = ( tex2DNode92_g42.r * _Vertexoffsetinalbedo );
 				float2 texCoord104_g42 = packedInput.ase_texcoord5.xy * float2( 1,1 ) + float2( 0,0 );
-				float lerpResult105_g42 = lerp( temp_output_102_0_g42 , 0.0 , ( 1.0 - texCoord104_g42.y ));
+				float2 texCoord115_g42 = packedInput.uv1.xy * float2( 1,1 ) + float2( 0,0 );
+				float lerpResult114_g42 = lerp( texCoord104_g42.y , texCoord115_g42.y , _UVforgradient);
+				float lerpResult105_g42 = lerp( temp_output_102_0_g42 , 0.0 , ( 1.0 - lerpResult114_g42 ));
 				float lerpResult107_g42 = lerp( temp_output_102_0_g42 , lerpResult105_g42 , _Gradientmaskforvertexoffsetinalebdo);
 				float2 appendResult4_g42 = (float2(PositionWS.x , PositionWS.z));
 				float2 panner8_g42 = ( 1.0 * _Time.y * _WindSpeednear + ( appendResult4_g42 / _Sizenear ));
@@ -1159,6 +1167,10 @@ Shader "Grass Test"
 				float cameraDepthFade65 = (( eyeDepth -_ProjectionParams.y - 100.0 ) / 20.0);
 				dither66 = step( dither66, saturate( ( saturate( lerpResult55 ) * saturate( lerpResult63 ) * ( 1.0 - saturate( cameraDepthFade65 ) ) ) * 1.00001 ) );
 				
+				float cameraDepthFade111 = (( eyeDepth -_ProjectionParams.y - 0.0 ) / 20.0);
+				float smoothstepResult117 = smoothstep( 0.0 , 0.5 , saturate( cameraDepthFade111 ));
+				float lerpResult114 = lerp( 0.5 , ( 1.0 - smoothstepResult117 ) , _Alphaclipdependondistance);
+				
 
 				GlobalSurfaceDescription surfaceDescription = (GlobalSurfaceDescription)0;
 
@@ -1178,7 +1190,7 @@ Shader "Grass Test"
 				surfaceDescription.Alpha = ( tex2DNode11.a * dither66 );
 
 				#ifdef _ALPHATEST_ON
-				surfaceDescription.AlphaClipThreshold = _AlphaCutoff;
+				surfaceDescription.AlphaClipThreshold = lerpResult114;
 				#endif
 
 				#ifdef _ALPHATEST_SHADOW_ON
@@ -1375,35 +1387,37 @@ Shader "Grass Test"
             #endif
 
 			CBUFFER_START( UnityPerMaterial )
+			float4 _NormalMap_ST;
+			float4 _ColorWind;
 			float4 _TextureSample0_ST;
 			float4 _Color;
-			float4 _ColorWind;
-			float4 _NormalMap_ST;
-			float2 _VertexWindSpeednear;
-			float2 _WindSpeednear;
 			float2 _WindSpeedmedium;
+			float2 _WindSpeednear;
+			float2 _VertexWindSpeednear;
 			float2 _WindSpeedfar;
-			float _BottomGradientsize;
-			float _Smoothness;
 			float _NormalIntensity;
+			float _Sizefar;
 			float _Usebasecolorinstedoftexture;
+			float _BottomGradientsize;
 			float _Windinalbedo;
 			float _Distortionfarintensity;
 			float _Distortionfarsize;
-			float _Sizefar;
+			float _BottomGradient;
+			float _Smoothness;
 			float _Sizemedium;
 			float _Distortionmediumsize;
-			float _BottomGradient;
+			float _Fresneldither;
 			float _Distortionnearintensity;
 			float _Distortionnearsize;
 			float _Sizenear;
 			float _Gradientmaskforvertexoffsetinalebdo;
+			float _UVforgradient;
 			float _Vertexoffsetinalbedo;
 			float _Vertexoffsetgradient;
 			float _VertexWindintensity;
 			float _VertexoffsetSizenear;
 			float _Distortionmediumintensity;
-			float _Fresneldither;
+			float _Alphaclipdependondistance;
 			float4 _EmissionColor;
 			float _AlphaCutoff;
 			float _RenderQueueType;
@@ -1502,6 +1516,7 @@ Shader "Grass Test"
 			#define ASE_NEEDS_TEXTURE_COORDINATES0
 			#define ASE_NEEDS_VERT_TEXTURE_COORDINATES0
 			#define ASE_NEEDS_FRAG_TEXTURE_COORDINATES0
+			#define ASE_NEEDS_TEXTURE_COORDINATES1
 			#define ASE_NEEDS_VERT_NORMAL
 			#define ASE_NEEDS_VERT_POSITION
 
@@ -1835,17 +1850,16 @@ Shader "Grass Test"
 				output.ase_texcoord4.xyz = ase_normalWS;
 				float3 objectToViewPos = TransformWorldToView( TransformObjectToWorld( inputMesh.positionOS ) );
 				float eyeDepth = -objectToViewPos.z;
-				output.ase_texcoord2.z = eyeDepth;
+				output.ase_texcoord3.w = eyeDepth;
 				
 				float4 ase_positionCS = TransformWorldToHClip( TransformObjectToWorld( ( inputMesh.positionOS ).xyz ) );
 				float4 screenPos = ComputeScreenPos( ase_positionCS, _ProjectionParams.x );
 				output.ase_texcoord5 = screenPos;
 				
 				output.ase_texcoord2.xy = inputMesh.uv0.xy;
+				output.ase_texcoord2.zw = inputMesh.uv1.xy;
 				
 				//setting value to unused interpolator channels and avoid initialization warnings
-				output.ase_texcoord2.w = 0;
-				output.ase_texcoord3.w = 0;
 				output.ase_texcoord4.w = 0;
 
 				#ifdef ASE_ABSOLUTE_VERTEX_POS
@@ -2007,7 +2021,9 @@ Shader "Grass Test"
 				float4 tex2DNode92_g42 = tex2D( _VertexoffsetNoisetexture, panner98_g42 );
 				float temp_output_102_0_g42 = ( tex2DNode92_g42.r * _Vertexoffsetinalbedo );
 				float2 texCoord104_g42 = packedInput.ase_texcoord2.xy * float2( 1,1 ) + float2( 0,0 );
-				float lerpResult105_g42 = lerp( temp_output_102_0_g42 , 0.0 , ( 1.0 - texCoord104_g42.y ));
+				float2 texCoord115_g42 = packedInput.ase_texcoord2.zw * float2( 1,1 ) + float2( 0,0 );
+				float lerpResult114_g42 = lerp( texCoord104_g42.y , texCoord115_g42.y , _UVforgradient);
+				float lerpResult105_g42 = lerp( temp_output_102_0_g42 , 0.0 , ( 1.0 - lerpResult114_g42 ));
 				float lerpResult107_g42 = lerp( temp_output_102_0_g42 , lerpResult105_g42 , _Gradientmaskforvertexoffsetinalebdo);
 				float2 appendResult4_g42 = (float2(ase_positionWS.x , ase_positionWS.z));
 				float2 panner8_g42 = ( 1.0 * _Time.y * _WindSpeednear + ( appendResult4_g42 / _Sizenear ));
@@ -2017,7 +2033,7 @@ Shader "Grass Test"
 				float2 appendResult68_g42 = (float2(ase_positionWS.x , ase_positionWS.z));
 				float3 ase_normalWS = packedInput.ase_texcoord4.xyz;
 				float smoothstepResult54_g42 = smoothstep( 0.5 , 1.0 , ase_normalWS.y);
-				float eyeDepth = packedInput.ase_texcoord2.z;
+				float eyeDepth = packedInput.ase_texcoord3.w;
 				float cameraDepthFade20_g42 = (( eyeDepth -_ProjectionParams.y - 100.0 ) / 20.0);
 				float lerpResult25_g42 = lerp( tex2D( _WindNoise, ( panner8_g42 + ( tex2D( _DistortionTexture, ( appendResult87_g42 / _Distortionnearsize ) ).r * _Distortionnearintensity ) ) ).r , ( tex2D( _WindNoise, ( panner47_g42 + ( tex2D( _DistortionTexture, ( appendResult68_g42 / _Distortionmediumsize ) ).r * _Distortionmediumintensity ) ) ).r * saturate( smoothstepResult54_g42 ) ) , saturate( cameraDepthFade20_g42 ));
 				float2 appendResult26_g42 = (float2(ase_positionWS.x , ase_positionWS.z));
@@ -2049,6 +2065,10 @@ Shader "Grass Test"
 				float cameraDepthFade65 = (( eyeDepth -_ProjectionParams.y - 100.0 ) / 20.0);
 				dither66 = step( dither66, saturate( ( saturate( lerpResult55 ) * saturate( lerpResult63 ) * ( 1.0 - saturate( cameraDepthFade65 ) ) ) * 1.00001 ) );
 				
+				float cameraDepthFade111 = (( eyeDepth -_ProjectionParams.y - 0.0 ) / 20.0);
+				float smoothstepResult117 = smoothstep( 0.0 , 0.5 , saturate( cameraDepthFade111 ));
+				float lerpResult114 = lerp( 0.5 , ( 1.0 - smoothstepResult117 ) , _Alphaclipdependondistance);
+				
 
 				GlobalSurfaceDescription surfaceDescription = (GlobalSurfaceDescription)0;
 
@@ -2068,7 +2088,7 @@ Shader "Grass Test"
 				surfaceDescription.Alpha = ( tex2DNode11.a * dither66 );
 
 				#ifdef _ALPHATEST_ON
-				surfaceDescription.AlphaClipThreshold = _AlphaCutoff;
+				surfaceDescription.AlphaClipThreshold = lerpResult114;
 				#endif
 
 				#ifdef _ENABLE_GEOMETRIC_SPECULAR_AA
@@ -2248,35 +2268,37 @@ Shader "Grass Test"
             #endif
 
 			CBUFFER_START( UnityPerMaterial )
+			float4 _NormalMap_ST;
+			float4 _ColorWind;
 			float4 _TextureSample0_ST;
 			float4 _Color;
-			float4 _ColorWind;
-			float4 _NormalMap_ST;
-			float2 _VertexWindSpeednear;
-			float2 _WindSpeednear;
 			float2 _WindSpeedmedium;
+			float2 _WindSpeednear;
+			float2 _VertexWindSpeednear;
 			float2 _WindSpeedfar;
-			float _BottomGradientsize;
-			float _Smoothness;
 			float _NormalIntensity;
+			float _Sizefar;
 			float _Usebasecolorinstedoftexture;
+			float _BottomGradientsize;
 			float _Windinalbedo;
 			float _Distortionfarintensity;
 			float _Distortionfarsize;
-			float _Sizefar;
+			float _BottomGradient;
+			float _Smoothness;
 			float _Sizemedium;
 			float _Distortionmediumsize;
-			float _BottomGradient;
+			float _Fresneldither;
 			float _Distortionnearintensity;
 			float _Distortionnearsize;
 			float _Sizenear;
 			float _Gradientmaskforvertexoffsetinalebdo;
+			float _UVforgradient;
 			float _Vertexoffsetinalbedo;
 			float _Vertexoffsetgradient;
 			float _VertexWindintensity;
 			float _VertexoffsetSizenear;
 			float _Distortionmediumintensity;
-			float _Fresneldither;
+			float _Alphaclipdependondistance;
 			float4 _EmissionColor;
 			float _AlphaCutoff;
 			float _RenderQueueType;
@@ -2834,13 +2856,17 @@ Shader "Grass Test"
 				float cameraDepthFade65 = (( eyeDepth -_ProjectionParams.y - 100.0 ) / 20.0);
 				dither66 = step( dither66, saturate( ( saturate( lerpResult55 ) * saturate( lerpResult63 ) * ( 1.0 - saturate( cameraDepthFade65 ) ) ) * 1.00001 ) );
 				
+				float cameraDepthFade111 = (( eyeDepth -_ProjectionParams.y - 0.0 ) / 20.0);
+				float smoothstepResult117 = smoothstep( 0.0 , 0.5 , saturate( cameraDepthFade111 ));
+				float lerpResult114 = lerp( 0.5 , ( 1.0 - smoothstepResult117 ) , _Alphaclipdependondistance);
+				
 
 				AlphaSurfaceDescription surfaceDescription = (AlphaSurfaceDescription)0;
 
 				surfaceDescription.Alpha = ( tex2DNode11.a * dither66 );
 
 				#ifdef _ALPHATEST_ON
-				surfaceDescription.AlphaClipThreshold = _AlphaCutoff;
+				surfaceDescription.AlphaClipThreshold = lerpResult114;
 				#endif
 
 				#ifdef _ALPHATEST_SHADOW_ON
@@ -3000,35 +3026,37 @@ Shader "Grass Test"
             #endif
 
 			CBUFFER_START( UnityPerMaterial )
+			float4 _NormalMap_ST;
+			float4 _ColorWind;
 			float4 _TextureSample0_ST;
 			float4 _Color;
-			float4 _ColorWind;
-			float4 _NormalMap_ST;
-			float2 _VertexWindSpeednear;
-			float2 _WindSpeednear;
 			float2 _WindSpeedmedium;
+			float2 _WindSpeednear;
+			float2 _VertexWindSpeednear;
 			float2 _WindSpeedfar;
-			float _BottomGradientsize;
-			float _Smoothness;
 			float _NormalIntensity;
+			float _Sizefar;
 			float _Usebasecolorinstedoftexture;
+			float _BottomGradientsize;
 			float _Windinalbedo;
 			float _Distortionfarintensity;
 			float _Distortionfarsize;
-			float _Sizefar;
+			float _BottomGradient;
+			float _Smoothness;
 			float _Sizemedium;
 			float _Distortionmediumsize;
-			float _BottomGradient;
+			float _Fresneldither;
 			float _Distortionnearintensity;
 			float _Distortionnearsize;
 			float _Sizenear;
 			float _Gradientmaskforvertexoffsetinalebdo;
+			float _UVforgradient;
 			float _Vertexoffsetinalbedo;
 			float _Vertexoffsetgradient;
 			float _VertexWindintensity;
 			float _VertexoffsetSizenear;
 			float _Distortionmediumintensity;
-			float _Fresneldither;
+			float _Alphaclipdependondistance;
 			float4 _EmissionColor;
 			float _AlphaCutoff;
 			float _RenderQueueType;
@@ -3573,13 +3601,17 @@ Shader "Grass Test"
 				float cameraDepthFade65 = (( eyeDepth -_ProjectionParams.y - 100.0 ) / 20.0);
 				dither66 = step( dither66, saturate( ( saturate( lerpResult55 ) * saturate( lerpResult63 ) * ( 1.0 - saturate( cameraDepthFade65 ) ) ) * 1.00001 ) );
 				
+				float cameraDepthFade111 = (( eyeDepth -_ProjectionParams.y - 0.0 ) / 20.0);
+				float smoothstepResult117 = smoothstep( 0.0 , 0.5 , saturate( cameraDepthFade111 ));
+				float lerpResult114 = lerp( 0.5 , ( 1.0 - smoothstepResult117 ) , _Alphaclipdependondistance);
+				
 
 				SceneSurfaceDescription surfaceDescription = (SceneSurfaceDescription)0;
 
 				surfaceDescription.Alpha = ( tex2DNode11.a * dither66 );
 
 				#ifdef _ALPHATEST_ON
-				surfaceDescription.AlphaClipThreshold = _AlphaCutoff;
+				surfaceDescription.AlphaClipThreshold = lerpResult114;
 				#endif
 
 				#if defined( ASE_CHANGES_WORLD_POS )
@@ -3727,35 +3759,37 @@ Shader "Grass Test"
             #endif
 
 			CBUFFER_START( UnityPerMaterial )
+			float4 _NormalMap_ST;
+			float4 _ColorWind;
 			float4 _TextureSample0_ST;
 			float4 _Color;
-			float4 _ColorWind;
-			float4 _NormalMap_ST;
-			float2 _VertexWindSpeednear;
-			float2 _WindSpeednear;
 			float2 _WindSpeedmedium;
+			float2 _WindSpeednear;
+			float2 _VertexWindSpeednear;
 			float2 _WindSpeedfar;
-			float _BottomGradientsize;
-			float _Smoothness;
 			float _NormalIntensity;
+			float _Sizefar;
 			float _Usebasecolorinstedoftexture;
+			float _BottomGradientsize;
 			float _Windinalbedo;
 			float _Distortionfarintensity;
 			float _Distortionfarsize;
-			float _Sizefar;
+			float _BottomGradient;
+			float _Smoothness;
 			float _Sizemedium;
 			float _Distortionmediumsize;
-			float _BottomGradient;
+			float _Fresneldither;
 			float _Distortionnearintensity;
 			float _Distortionnearsize;
 			float _Sizenear;
 			float _Gradientmaskforvertexoffsetinalebdo;
+			float _UVforgradient;
 			float _Vertexoffsetinalbedo;
 			float _Vertexoffsetgradient;
 			float _VertexWindintensity;
 			float _VertexoffsetSizenear;
 			float _Distortionmediumintensity;
-			float _Fresneldither;
+			float _Alphaclipdependondistance;
 			float4 _EmissionColor;
 			float _AlphaCutoff;
 			float _RenderQueueType;
@@ -4349,6 +4383,10 @@ Shader "Grass Test"
 				float cameraDepthFade65 = (( eyeDepth -_ProjectionParams.y - 100.0 ) / 20.0);
 				dither66 = step( dither66, saturate( ( saturate( lerpResult55 ) * saturate( lerpResult63 ) * ( 1.0 - saturate( cameraDepthFade65 ) ) ) * 1.00001 ) );
 				
+				float cameraDepthFade111 = (( eyeDepth -_ProjectionParams.y - 0.0 ) / 20.0);
+				float smoothstepResult117 = smoothstep( 0.0 , 0.5 , saturate( cameraDepthFade111 ));
+				float lerpResult114 = lerp( 0.5 , ( 1.0 - smoothstepResult117 ) , _Alphaclipdependondistance);
+				
 
 				SmoothSurfaceDescription surfaceDescription = (SmoothSurfaceDescription)0;
 
@@ -4357,7 +4395,7 @@ Shader "Grass Test"
 				surfaceDescription.Alpha = ( tex2DNode11.a * dither66 );
 
 				#ifdef _ALPHATEST_ON
-				surfaceDescription.AlphaClipThreshold = _AlphaCutoff;
+				surfaceDescription.AlphaClipThreshold = lerpResult114;
 				#endif
 
 				#if defined( ASE_CHANGES_WORLD_POS )
@@ -4540,35 +4578,37 @@ Shader "Grass Test"
             #endif
 
 			CBUFFER_START( UnityPerMaterial )
+			float4 _NormalMap_ST;
+			float4 _ColorWind;
 			float4 _TextureSample0_ST;
 			float4 _Color;
-			float4 _ColorWind;
-			float4 _NormalMap_ST;
-			float2 _VertexWindSpeednear;
-			float2 _WindSpeednear;
 			float2 _WindSpeedmedium;
+			float2 _WindSpeednear;
+			float2 _VertexWindSpeednear;
 			float2 _WindSpeedfar;
-			float _BottomGradientsize;
-			float _Smoothness;
 			float _NormalIntensity;
+			float _Sizefar;
 			float _Usebasecolorinstedoftexture;
+			float _BottomGradientsize;
 			float _Windinalbedo;
 			float _Distortionfarintensity;
 			float _Distortionfarsize;
-			float _Sizefar;
+			float _BottomGradient;
+			float _Smoothness;
 			float _Sizemedium;
 			float _Distortionmediumsize;
-			float _BottomGradient;
+			float _Fresneldither;
 			float _Distortionnearintensity;
 			float _Distortionnearsize;
 			float _Sizenear;
 			float _Gradientmaskforvertexoffsetinalebdo;
+			float _UVforgradient;
 			float _Vertexoffsetinalbedo;
 			float _Vertexoffsetgradient;
 			float _VertexWindintensity;
 			float _VertexoffsetSizenear;
 			float _Distortionmediumintensity;
-			float _Fresneldither;
+			float _Alphaclipdependondistance;
 			float4 _EmissionColor;
 			float _AlphaCutoff;
 			float _RenderQueueType;
@@ -5209,13 +5249,17 @@ Shader "Grass Test"
 				float cameraDepthFade65 = (( eyeDepth -_ProjectionParams.y - 100.0 ) / 20.0);
 				dither66 = step( dither66, saturate( ( saturate( lerpResult55 ) * saturate( lerpResult63 ) * ( 1.0 - saturate( cameraDepthFade65 ) ) ) * 1.00001 ) );
 				
+				float cameraDepthFade111 = (( eyeDepth -_ProjectionParams.y - 0.0 ) / 20.0);
+				float smoothstepResult117 = smoothstep( 0.0 , 0.5 , saturate( cameraDepthFade111 ));
+				float lerpResult114 = lerp( 0.5 , ( 1.0 - smoothstepResult117 ) , _Alphaclipdependondistance);
+				
 
 				surfaceDescription.Normal = unpack108;
 				surfaceDescription.Smoothness = _Smoothness;
 				surfaceDescription.Alpha = ( tex2DNode11.a * dither66 );
 
 				#ifdef _ALPHATEST_ON
-				surfaceDescription.AlphaClipThreshold = _AlphaCutoff;
+				surfaceDescription.AlphaClipThreshold = lerpResult114;
 				#endif
 
 				#if defined( ASE_CHANGES_WORLD_POS )
@@ -5430,35 +5474,37 @@ Shader "Grass Test"
             #endif
 
 			CBUFFER_START( UnityPerMaterial )
+			float4 _NormalMap_ST;
+			float4 _ColorWind;
 			float4 _TextureSample0_ST;
 			float4 _Color;
-			float4 _ColorWind;
-			float4 _NormalMap_ST;
-			float2 _VertexWindSpeednear;
-			float2 _WindSpeednear;
 			float2 _WindSpeedmedium;
+			float2 _WindSpeednear;
+			float2 _VertexWindSpeednear;
 			float2 _WindSpeedfar;
-			float _BottomGradientsize;
-			float _Smoothness;
 			float _NormalIntensity;
+			float _Sizefar;
 			float _Usebasecolorinstedoftexture;
+			float _BottomGradientsize;
 			float _Windinalbedo;
 			float _Distortionfarintensity;
 			float _Distortionfarsize;
-			float _Sizefar;
+			float _BottomGradient;
+			float _Smoothness;
 			float _Sizemedium;
 			float _Distortionmediumsize;
-			float _BottomGradient;
+			float _Fresneldither;
 			float _Distortionnearintensity;
 			float _Distortionnearsize;
 			float _Sizenear;
 			float _Gradientmaskforvertexoffsetinalebdo;
+			float _UVforgradient;
 			float _Vertexoffsetinalbedo;
 			float _Vertexoffsetgradient;
 			float _VertexWindintensity;
 			float _VertexoffsetSizenear;
 			float _Distortionmediumintensity;
-			float _Fresneldither;
+			float _Alphaclipdependondistance;
 			float4 _EmissionColor;
 			float _AlphaCutoff;
 			float _RenderQueueType;
@@ -5559,6 +5605,8 @@ Shader "Grass Test"
 			#define ASE_NEEDS_VERT_TEXTURE_COORDINATES0
 			#define ASE_NEEDS_FRAG_WORLD_POSITION
 			#define ASE_NEEDS_FRAG_TEXTURE_COORDINATES0
+			#define ASE_NEEDS_TEXTURE_COORDINATES1
+			#define ASE_NEEDS_FRAG_TEXTURE_COORDINATES1
 			#define ASE_NEEDS_WORLD_NORMAL
 			#define ASE_NEEDS_FRAG_WORLD_NORMAL
 			#define ASE_NEEDS_VERT_POSITION
@@ -6192,7 +6240,9 @@ Shader "Grass Test"
 				float4 tex2DNode92_g42 = tex2D( _VertexoffsetNoisetexture, panner98_g42 );
 				float temp_output_102_0_g42 = ( tex2DNode92_g42.r * _Vertexoffsetinalbedo );
 				float2 texCoord104_g42 = packedInput.ase_texcoord7.xy * float2( 1,1 ) + float2( 0,0 );
-				float lerpResult105_g42 = lerp( temp_output_102_0_g42 , 0.0 , ( 1.0 - texCoord104_g42.y ));
+				float2 texCoord115_g42 = packedInput.uv1.xy * float2( 1,1 ) + float2( 0,0 );
+				float lerpResult114_g42 = lerp( texCoord104_g42.y , texCoord115_g42.y , _UVforgradient);
+				float lerpResult105_g42 = lerp( temp_output_102_0_g42 , 0.0 , ( 1.0 - lerpResult114_g42 ));
 				float lerpResult107_g42 = lerp( temp_output_102_0_g42 , lerpResult105_g42 , _Gradientmaskforvertexoffsetinalebdo);
 				float2 appendResult4_g42 = (float2(PositionWS.x , PositionWS.z));
 				float2 panner8_g42 = ( 1.0 * _Time.y * _WindSpeednear + ( appendResult4_g42 / _Sizenear ));
@@ -6228,6 +6278,10 @@ Shader "Grass Test"
 				float cameraDepthFade65 = (( eyeDepth -_ProjectionParams.y - 100.0 ) / 20.0);
 				dither66 = step( dither66, saturate( ( saturate( lerpResult55 ) * saturate( lerpResult63 ) * ( 1.0 - saturate( cameraDepthFade65 ) ) ) * 1.00001 ) );
 				
+				float cameraDepthFade111 = (( eyeDepth -_ProjectionParams.y - 0.0 ) / 20.0);
+				float smoothstepResult117 = smoothstep( 0.0 , 0.5 , saturate( cameraDepthFade111 ));
+				float lerpResult114 = lerp( 0.5 , ( 1.0 - smoothstepResult117 ) , _Alphaclipdependondistance);
+				
 
 				GlobalSurfaceDescription surfaceDescription = (GlobalSurfaceDescription)0;
 
@@ -6247,7 +6301,7 @@ Shader "Grass Test"
 				surfaceDescription.Alpha = ( tex2DNode11.a * dither66 );
 
 				#ifdef _ALPHATEST_ON
-				surfaceDescription.AlphaClipThreshold = _AlphaCutoff;
+				surfaceDescription.AlphaClipThreshold = lerpResult114;
 				#endif
 
 				#ifdef _SPECULAR_OCCLUSION_CUSTOM
@@ -6543,35 +6597,37 @@ Shader "Grass Test"
             #endif
 
             CBUFFER_START( UnityPerMaterial )
+			float4 _NormalMap_ST;
+			float4 _ColorWind;
 			float4 _TextureSample0_ST;
 			float4 _Color;
-			float4 _ColorWind;
-			float4 _NormalMap_ST;
-			float2 _VertexWindSpeednear;
-			float2 _WindSpeednear;
 			float2 _WindSpeedmedium;
+			float2 _WindSpeednear;
+			float2 _VertexWindSpeednear;
 			float2 _WindSpeedfar;
-			float _BottomGradientsize;
-			float _Smoothness;
 			float _NormalIntensity;
+			float _Sizefar;
 			float _Usebasecolorinstedoftexture;
+			float _BottomGradientsize;
 			float _Windinalbedo;
 			float _Distortionfarintensity;
 			float _Distortionfarsize;
-			float _Sizefar;
+			float _BottomGradient;
+			float _Smoothness;
 			float _Sizemedium;
 			float _Distortionmediumsize;
-			float _BottomGradient;
+			float _Fresneldither;
 			float _Distortionnearintensity;
 			float _Distortionnearsize;
 			float _Sizenear;
 			float _Gradientmaskforvertexoffsetinalebdo;
+			float _UVforgradient;
 			float _Vertexoffsetinalbedo;
 			float _Vertexoffsetgradient;
 			float _VertexWindintensity;
 			float _VertexoffsetSizenear;
 			float _Distortionmediumintensity;
-			float _Fresneldither;
+			float _Alphaclipdependondistance;
 			float4 _EmissionColor;
 			float _AlphaCutoff;
 			float _RenderQueueType;
@@ -6986,13 +7042,17 @@ Shader "Grass Test"
 				float cameraDepthFade65 = (( eyeDepth -_ProjectionParams.y - 100.0 ) / 20.0);
 				dither66 = step( dither66, saturate( ( saturate( lerpResult55 ) * saturate( lerpResult63 ) * ( 1.0 - saturate( cameraDepthFade65 ) ) ) * 1.00001 ) );
 				
+				float cameraDepthFade111 = (( eyeDepth -_ProjectionParams.y - 0.0 ) / 20.0);
+				float smoothstepResult117 = smoothstep( 0.0 , 0.5 , saturate( cameraDepthFade111 ));
+				float lerpResult114 = lerp( 0.5 , ( 1.0 - smoothstepResult117 ) , _Alphaclipdependondistance);
+				
 
 				PickingSurfaceDescription surfaceDescription = (PickingSurfaceDescription)0;
 
 				surfaceDescription.Alpha = ( tex2DNode11.a * dither66 );
 
 				#ifdef _ALPHATEST_ON
-				surfaceDescription.AlphaClipThreshold = _AlphaCutoff;
+				surfaceDescription.AlphaClipThreshold = lerpResult114;
 				#endif
 
 				#if defined( ASE_DEPTH_WRITE_ON )
@@ -7308,21 +7368,28 @@ Node;AmplifyShaderEditor.CameraDepthFade, AmplifyShaderEditor, Version=0.0.0.0, 
 Node;AmplifyShaderEditor.LerpOp, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;55;-496,368;Inherit;False;3;0;FLOAT;1;False;1;FLOAT;0;False;2;FLOAT;0;False;1;FLOAT;0
 Node;AmplifyShaderEditor.LerpOp, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;63;-464,896;Inherit;False;3;0;FLOAT;1;False;1;FLOAT;0;False;2;FLOAT;0;False;1;FLOAT;0
 Node;AmplifyShaderEditor.SaturateNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;69;-91.64563,1230.367;Inherit;False;1;0;FLOAT;0;False;1;FLOAT;0
+Node;AmplifyShaderEditor.CameraDepthFade, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;111;-16,672;Inherit;False;3;2;FLOAT3;0,0,0;False;0;FLOAT;20;False;1;FLOAT;0;False;1;FLOAT;0
 Node;AmplifyShaderEditor.SaturateNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;70;-288,800;Inherit;False;1;0;FLOAT;0;False;1;FLOAT;0
 Node;AmplifyShaderEditor.SaturateNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;71;-336,384;Inherit;False;1;0;FLOAT;0;False;1;FLOAT;0
 Node;AmplifyShaderEditor.OneMinusNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;68;0,1136;Inherit;False;1;0;FLOAT;0;False;1;FLOAT;0
+Node;AmplifyShaderEditor.SaturateNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;112;272,656;Inherit;False;1;0;FLOAT;0;False;1;FLOAT;0
 Node;AmplifyShaderEditor.SimpleMultiplyOpNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;21;-112,368;Inherit;False;3;3;0;FLOAT;0;False;1;FLOAT;0;False;2;FLOAT;0;False;1;FLOAT;0
+Node;AmplifyShaderEditor.SmoothstepOpNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;117;464,624;Inherit;False;3;0;FLOAT;0;False;1;FLOAT;0;False;2;FLOAT;0.5;False;1;FLOAT;0
 Node;AmplifyShaderEditor.SamplerNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;11;-736,32;Inherit;True;Property;_TextureSample0;Texture Sample 0;2;0;Create;True;0;0;0;False;0;False;-1;e449cd529b2756d4ca5dd643f078bd8b;e449cd529b2756d4ca5dd643f078bd8b;True;0;False;white;Auto;False;Object;-1;Auto;Texture2D;False;8;0;SAMPLER2D;;False;1;FLOAT2;0,0;False;2;FLOAT;0;False;3;FLOAT2;0,0;False;4;FLOAT2;0,0;False;5;FLOAT;1;False;6;FLOAT;0;False;7;SAMPLERSTATE;;False;6;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4;FLOAT3;5
 Node;AmplifyShaderEditor.DitheringNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;66;48,416;Inherit;False;0;False;4;0;FLOAT;0;False;1;SAMPLER2D;;False;2;FLOAT4;0,0,0,0;False;3;SAMPLERSTATE;;False;1;FLOAT;0
 Node;AmplifyShaderEditor.ColorNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;15;-512,-736;Inherit;False;Property;_Color;Color;0;0;Create;True;0;0;0;False;0;False;1,1,1,1;1,1,1,1;True;True;0;6;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4;FLOAT3;5
 Node;AmplifyShaderEditor.ColorNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;102;-528,-576;Inherit;False;Property;_ColorWind;Color Wind;1;0;Create;True;0;0;0;False;0;False;1,1,1,1;1,1,1,1;True;True;0;6;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4;FLOAT3;5
-Node;AmplifyShaderEditor.SamplerNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;108;416,96;Inherit;True;Property;_NormalMap;Normal Map;4;1;[Normal];Create;True;0;0;0;False;0;False;-1;f1987bd1389f6df4888a416debaa73e1;None;True;0;True;bump;Auto;True;Object;-1;Auto;Texture2D;False;8;0;SAMPLER2D;;False;1;FLOAT2;0,0;False;2;FLOAT;0;False;3;FLOAT2;0,0;False;4;FLOAT2;0,0;False;5;FLOAT;1;False;6;FLOAT;0;False;7;SAMPLERSTATE;;False;6;FLOAT3;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4;FLOAT3;5
+Node;AmplifyShaderEditor.RangedFloatNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;115;662.3164,485.2447;Inherit;False;Constant;_Float1;Float 1;11;0;Create;True;0;0;0;False;0;False;0.5;0;0;0;0;1;FLOAT;0
+Node;AmplifyShaderEditor.RangedFloatNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;116;752,816;Inherit;False;Property;_Alphaclipdependondistance;Alpha clip depend on distance;34;1;[Toggle];Create;True;0;0;0;False;0;False;0;0;0;1;0;1;FLOAT;0
+Node;AmplifyShaderEditor.OneMinusNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;113;656,608;Inherit;False;1;0;FLOAT;0;False;1;FLOAT;0
+Node;AmplifyShaderEditor.SamplerNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;108;416,96;Inherit;True;Property;_NormalMap;Normal Map;4;1;[Normal];Create;True;0;0;0;False;0;False;-1;f1987bd1389f6df4888a416debaa73e1;f1987bd1389f6df4888a416debaa73e1;True;0;True;bump;Auto;True;Object;-1;Auto;Texture2D;False;8;0;SAMPLER2D;;False;1;FLOAT2;0,0;False;2;FLOAT;0;False;3;FLOAT2;0,0;False;4;FLOAT2;0,0;False;5;FLOAT;1;False;6;FLOAT;0;False;7;SAMPLERSTATE;;False;6;FLOAT3;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4;FLOAT3;5
 Node;AmplifyShaderEditor.FunctionNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;104;128,-544;Inherit;False;Wind;10;;42;92e1d73dca5e28844aad95a1e3678f3b;0;2;14;FLOAT3;1,1,1;False;109;FLOAT3;1,1,1;False;2;FLOAT3;0;FLOAT3;16
 Node;AmplifyShaderEditor.LerpOp, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;106;256,-272;Inherit;False;3;0;FLOAT3;0,0,0;False;1;FLOAT3;0,0,0;False;2;FLOAT;0;False;1;FLOAT3;0
 Node;AmplifyShaderEditor.RangedFloatNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;107;-272,-16;Inherit;False;Property;_Usebasecolorinstedoftexture;Use base color insted of texture;3;1;[Toggle];Create;True;0;0;0;False;0;False;0;0;0;1;0;1;FLOAT;0
 Node;AmplifyShaderEditor.SimpleMultiplyOpNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;67;336,416;Inherit;False;2;2;0;FLOAT;0;False;1;FLOAT;0;False;1;FLOAT;0
 Node;AmplifyShaderEditor.RangedFloatNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;24;384,320;Inherit;False;Property;_Smoothness;Smoothness;6;0;Create;True;0;0;0;False;0;False;0;0;0;1;0;1;FLOAT;0
 Node;AmplifyShaderEditor.RangedFloatNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;109;-7.485107,139.9432;Inherit;False;Property;_NormalIntensity;Normal Intensity;5;0;Create;True;0;0;0;False;0;False;1;1;0;1;0;1;FLOAT;0
+Node;AmplifyShaderEditor.LerpOp, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;114;1104,512;Inherit;False;3;0;FLOAT;0;False;1;FLOAT;0;False;2;FLOAT;0;False;1;FLOAT;0
 Node;AmplifyShaderEditor.TemplateMultiPassMasterNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;1;0,0;Float;False;False;-1;2;Rendering.HighDefinition.LightingShaderGraphGUI;0;12;New Amplify Shader;53b46d85872c5b24c8f4f0a1c3fe4c87;True;META;0;1;META;0;False;False;False;False;False;False;False;False;False;False;False;False;True;0;False;;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;3;RenderPipeline=HDRenderPipeline;RenderType=Opaque=RenderType;Queue=Geometry=Queue=0;True;5;True;7;d3d11;metal;vulkan;xboxone;xboxseries;playstation;switch;0;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;2;False;;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;1;LightMode=Meta;False;False;0;;0;0;Standard;0;False;0
 Node;AmplifyShaderEditor.TemplateMultiPassMasterNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;2;0,0;Float;False;False;-1;2;Rendering.HighDefinition.LightingShaderGraphGUI;0;12;New Amplify Shader;53b46d85872c5b24c8f4f0a1c3fe4c87;True;ShadowCaster;0;2;ShadowCaster;0;False;False;False;False;False;False;False;False;False;False;False;False;True;0;False;;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;3;RenderPipeline=HDRenderPipeline;RenderType=Opaque=RenderType;Queue=Geometry=Queue=0;True;5;True;7;d3d11;metal;vulkan;xboxone;xboxseries;playstation;switch;0;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;0;True;_CullMode;False;True;False;False;False;False;0;False;;False;False;False;False;False;False;False;False;False;True;1;False;;True;3;False;;False;True;1;LightMode=ShadowCaster;False;False;0;;0;0;Standard;0;False;0
 Node;AmplifyShaderEditor.TemplateMultiPassMasterNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;3;0,0;Float;False;False;-1;2;Rendering.HighDefinition.LightingShaderGraphGUI;0;12;New Amplify Shader;53b46d85872c5b24c8f4f0a1c3fe4c87;True;SceneSelectionPass;0;3;SceneSelectionPass;0;False;False;False;False;False;False;False;False;False;False;False;False;True;0;False;;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;3;RenderPipeline=HDRenderPipeline;RenderType=Opaque=RenderType;Queue=Geometry=Queue=0;True;5;True;7;d3d11;metal;vulkan;xboxone;xboxseries;playstation;switch;0;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;2;False;;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;1;LightMode=SceneSelectionPass;False;False;0;;0;0;Standard;0;False;0
@@ -7333,7 +7400,7 @@ Node;AmplifyShaderEditor.TemplateMultiPassMasterNode, AmplifyShaderEditor, Versi
 Node;AmplifyShaderEditor.TemplateMultiPassMasterNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;8;0,0;Float;False;False;-1;2;Rendering.HighDefinition.LightingShaderGraphGUI;0;12;New Amplify Shader;53b46d85872c5b24c8f4f0a1c3fe4c87;True;TransparentDepthPostpass;0;8;TransparentDepthPostpass;0;False;False;False;False;False;False;False;False;False;False;False;False;True;0;False;;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;3;RenderPipeline=HDRenderPipeline;RenderType=Opaque=RenderType;Queue=Geometry=Queue=0;True;5;True;7;d3d11;metal;vulkan;xboxone;xboxseries;playstation;switch;0;False;True;1;1;False;;0;False;;0;1;False;;0;False;;False;False;False;False;False;False;False;False;False;False;False;False;True;0;True;_CullMode;False;True;False;False;False;False;0;False;;False;False;False;False;False;False;False;False;False;True;1;False;;False;False;True;1;LightMode=TransparentDepthPostpass;False;False;0;;0;0;Standard;0;False;0
 Node;AmplifyShaderEditor.TemplateMultiPassMasterNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;9;0,0;Float;False;False;-1;2;Rendering.HighDefinition.LightingShaderGraphGUI;0;12;New Amplify Shader;53b46d85872c5b24c8f4f0a1c3fe4c87;True;Forward;0;9;Forward;0;False;False;False;False;False;False;False;False;False;False;False;False;True;0;False;;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;3;RenderPipeline=HDRenderPipeline;RenderType=Opaque=RenderType;Queue=Geometry=Queue=0;True;5;True;7;d3d11;metal;vulkan;xboxone;xboxseries;playstation;switch;0;False;False;False;False;True;2;5;False;;10;False;;0;1;False;;0;False;;False;False;True;1;1;False;;0;True;_DstBlend2;0;1;False;;0;False;;False;False;True;1;1;False;;0;True;_DstBlend2;0;1;False;;0;False;;False;False;False;True;0;True;_CullModeForward;False;False;False;True;True;True;True;True;0;True;_ColorMaskTransparentVelOne;False;True;True;True;True;True;0;True;_ColorMaskTransparentVelTwo;False;False;False;True;True;0;True;_StencilRef;255;False;;255;True;_StencilWriteMask;7;False;;3;False;;0;False;;0;False;;7;False;;3;False;;0;False;;0;False;;False;True;0;True;_ZWrite;True;0;True;_ZTestDepthEqualForOpaque;False;True;1;LightMode=Forward;False;False;0;;0;0;Standard;0;False;0
 Node;AmplifyShaderEditor.TemplateMultiPassMasterNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;10;0,0;Float;False;False;-1;2;Rendering.HighDefinition.LightingShaderGraphGUI;0;12;New Amplify Shader;53b46d85872c5b24c8f4f0a1c3fe4c87;True;ScenePickingPass;0;10;ScenePickingPass;0;False;False;False;False;False;False;False;False;False;False;False;False;True;0;False;;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;3;RenderPipeline=HDRenderPipeline;RenderType=Opaque=RenderType;Queue=Geometry=Queue=0;True;5;True;7;d3d11;metal;vulkan;xboxone;xboxseries;playstation;switch;0;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;0;True;_CullMode;False;False;False;False;False;False;False;False;False;False;False;True;2;False;;True;3;False;;False;True;1;LightMode=Picking;False;False;0;;0;0;Standard;0;False;0
-Node;AmplifyShaderEditor.TemplateMultiPassMasterNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;0;896,80;Float;False;True;-1;2;Rendering.HighDefinition.LightingShaderGraphGUI;0;12;Grass Test;53b46d85872c5b24c8f4f0a1c3fe4c87;True;GBuffer;0;0;GBuffer;35;False;False;False;False;False;False;False;False;False;False;False;False;True;0;False;;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;3;RenderPipeline=HDRenderPipeline;RenderType=Opaque=RenderType;Queue=Geometry=Queue=0;True;5;True;7;d3d11;metal;vulkan;xboxone;xboxseries;playstation;switch;0;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;0;True;_CullMode;False;False;False;False;False;False;False;False;False;True;True;0;True;_StencilRefGBuffer;255;False;;255;True;_StencilWriteMaskGBuffer;7;False;;3;False;;0;False;;0;False;;7;False;;3;False;;0;False;;0;False;;False;False;True;0;True;_ZTestGBuffer;False;True;1;LightMode=GBuffer;False;False;0;;0;0;Standard;42;Category;0;0;  Instanced Terrain Normals;1;0;Surface Type;0;0;  Rendering Pass;1;0;  Refraction Model;0;0;    Blending Mode;0;0;    Blend Preserves Specular;1;0;  Back Then Front Rendering;0;0;  Transparent Depth Prepass;0;0;  Transparent Depth Postpass;0;0;  ZWrite;0;0;  Z Test;4;0;Double-Sided;0;0;Alpha Clipping;1;638967471595811504;  Use Shadow Threshold;0;0;Material Type;0;0;  Energy Conserving Specular;1;0;  Transmission;0;0;Normal Space;0;0;Receive Decals;1;0;Receive SSR;1;0;Receive SSR Transparent;0;0;Motion Vectors;1;0;  Add Precomputed Velocity;0;0;Specular AA;0;0;Specular Occlusion Mode;1;0;Override Baked GI;0;0;Write Depth;0;0;  Depth Offset;0;0;  Conservative;0;0;GPU Instancing;1;0;LOD CrossFade;0;0;Tessellation;0;0;  Phong;0;0;  Strength;0.5,False,;0;  Type;0;0;  Tess;16,False,;0;  Min;10,False,;0;  Max;25,False,;0;  Edge Length;16,False,;0;  Max Displacement;25,False,;0;Vertex Position;1;0;0;11;True;True;True;True;True;True;False;False;False;True;True;False;;False;0
+Node;AmplifyShaderEditor.TemplateMultiPassMasterNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;0;1200,64;Float;False;True;-1;2;Rendering.HighDefinition.LightingShaderGraphGUI;0;12;Grass Test;53b46d85872c5b24c8f4f0a1c3fe4c87;True;GBuffer;0;0;GBuffer;35;False;False;False;False;False;False;False;False;False;False;False;False;True;0;False;;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;3;RenderPipeline=HDRenderPipeline;RenderType=Opaque=RenderType;Queue=Geometry=Queue=0;True;5;True;7;d3d11;metal;vulkan;xboxone;xboxseries;playstation;switch;0;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;0;True;_CullMode;False;False;False;False;False;False;False;False;False;True;True;0;True;_StencilRefGBuffer;255;False;;255;True;_StencilWriteMaskGBuffer;7;False;;3;False;;0;False;;0;False;;7;False;;3;False;;0;False;;0;False;;False;False;True;0;True;_ZTestGBuffer;False;True;1;LightMode=GBuffer;False;False;0;;0;0;Standard;42;Category;0;0;  Instanced Terrain Normals;1;0;Surface Type;0;0;  Rendering Pass;1;0;  Refraction Model;0;0;    Blending Mode;0;0;    Blend Preserves Specular;1;0;  Back Then Front Rendering;0;0;  Transparent Depth Prepass;0;0;  Transparent Depth Postpass;0;0;  ZWrite;0;0;  Z Test;4;0;Double-Sided;0;0;Alpha Clipping;1;638967471595811504;  Use Shadow Threshold;0;0;Material Type;0;0;  Energy Conserving Specular;1;0;  Transmission;0;0;Normal Space;0;0;Receive Decals;1;0;Receive SSR;1;0;Receive SSR Transparent;0;0;Motion Vectors;1;0;  Add Precomputed Velocity;0;0;Specular AA;0;0;Specular Occlusion Mode;1;0;Override Baked GI;0;0;Write Depth;0;0;  Depth Offset;0;0;  Conservative;0;0;GPU Instancing;1;0;LOD CrossFade;0;0;Tessellation;0;0;  Phong;0;0;  Strength;0.5,False,;0;  Type;0;0;  Tess;16,False,;0;  Min;10,False,;0;  Max;25,False,;0;  Edge Length;16,False,;0;  Max Displacement;25,False,;0;Vertex Position;1;0;0;11;True;True;True;True;True;True;False;False;False;True;True;False;;False;0
 WireConnection;60;0;59;0
 WireConnection;23;0;16;2
 WireConnection;23;2;58;0
@@ -7346,10 +7413,13 @@ WireConnection;69;0;65;0
 WireConnection;70;0;63;0
 WireConnection;71;0;55;0
 WireConnection;68;0;69;0
+WireConnection;112;0;111;0
 WireConnection;21;0;71;0
 WireConnection;21;1;70;0
 WireConnection;21;2;68;0
+WireConnection;117;0;112;0
 WireConnection;66;0;21;0
+WireConnection;113;0;117;0
 WireConnection;108;5;109;0
 WireConnection;104;14;15;5
 WireConnection;104;109;102;5
@@ -7358,10 +7428,14 @@ WireConnection;106;1;104;0
 WireConnection;106;2;107;0
 WireConnection;67;0;11;4
 WireConnection;67;1;66;0
+WireConnection;114;0;115;0
+WireConnection;114;1;113;0
+WireConnection;114;2;116;0
 WireConnection;0;0;106;0
 WireConnection;0;1;108;0
 WireConnection;0;7;24;0
 WireConnection;0;9;67;0
+WireConnection;0;10;114;0
 WireConnection;0;11;104;16
 ASEEND*/
-//CHKSM=0492323A1204A4901451C6F551773737BC0A9B97
+//CHKSM=2436718F81B701543FD9589D47520BADE8985752

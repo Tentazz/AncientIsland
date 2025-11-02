@@ -1,6 +1,9 @@
+using Sirenix.OdinInspector;
 using Unity.VisualScripting;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.InputSystem;
+
 
 public class TimeManager : MonoBehaviour
 {
@@ -16,6 +19,8 @@ public class TimeManager : MonoBehaviour
 
     public InputActionAsset InputActions;
     public InputAction NumpadPlusAction;
+    public InputAction NumpadMinusAction;
+    public float timeToSet;
 
     private void OnEnable() {
         InputActions.FindActionMap("Player").Enable(); //activer le systeme d'input du joueur
@@ -27,6 +32,7 @@ public class TimeManager : MonoBehaviour
 
     private void Awake() {
         NumpadPlusAction = InputSystem.actions.FindAction("+");
+        NumpadMinusAction = InputSystem.actions.FindAction("-");
     }
 
 
@@ -34,7 +40,8 @@ public class TimeManager : MonoBehaviour
         GlobalVariables.globalTime = initialHour * dayDuration / 24;
     }
 
-    void Update() {
+    void Update() 
+    {
 
         if (NumpadPlusAction.IsPressed()) 
         {
@@ -44,6 +51,11 @@ public class TimeManager : MonoBehaviour
         else 
         {
             GlobalVariables.globalTime += Time.deltaTime;
+        }
+
+        if (NumpadMinusAction.IsPressed()) {
+            GlobalVariables.globalTime += Time.deltaTime * -60f;
+            print("Rewind Time");
         }
 
         GlobalVariables.globalNormalizedTime = GlobalVariables.globalTime / dayDuration;
@@ -56,9 +68,23 @@ public class TimeManager : MonoBehaviour
             // Trigger day-night cycle events here
             Debug.Log("A new day has begun!");
         }
+         UpdateLightPosition();
 
+    }
+
+    [Button("SetTime")]
+    private void SetTime() {
+        GlobalVariables.globalTime = timeToSet * dayDuration / 24;
+        GlobalVariables.globalNormalizedTime = GlobalVariables.globalTime / dayDuration;
+        UpdateLightPosition();
+        GlobalVariables.SendGlobalToShaders();
+        print("Time set to: " + timeToSet + " hours.");
+    }
+
+    private void UpdateLightPosition() {
         // Update lighting based on time of day
         Light lightComponent = directionnalLight.GetComponent<Light>();
+
         if (lightComponent != null) {
             lightComponent.color = lightColorGradient.Evaluate(timeCurve.Evaluate(GlobalVariables.globalNormalizedTime));
         }
@@ -69,3 +95,5 @@ public class TimeManager : MonoBehaviour
         directionnalLight.transform.localRotation = Quaternion.Euler(new Vector3(sunAngle - 90f, 0f, 0f));
     }
 }
+
+

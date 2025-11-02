@@ -7,10 +7,14 @@ public class GlobalVariables : MonoBehaviour {
     public static float globalNormalizedTime;
 
     private void Start() {
-        Shader.SetGlobalFloat("_globalNormalizedTime", globalNormalizedTime);
+        SendGlobalToShaders();
     }
 
     private void Update() {
+        SendGlobalToShaders();
+    }
+
+    static public void SendGlobalToShaders () {
         Shader.SetGlobalFloat("_globalNormalizedTime", globalNormalizedTime);
     }
 

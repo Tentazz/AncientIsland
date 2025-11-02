@@ -7,12 +7,13 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Flower test
-  m_Shader: {fileID: 4800000, guid: 9ca18c8e09284fa4db03fc66aff01035, type: 3}
+  m_Name: Tree test 2
+  m_Shader: {fileID: 4800000, guid: a26e34d1c7cd30c4ea3ffa23550286a0, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords:
   - _ALPHATEST_ON
+  - _DOUBLESIDED_ON
   m_InvalidKeywords:
   - _ADD_PRECOMPUTED_VELOCITY
   - _CONSERVATIVE_DEPTH_OFFSET
@@ -21,7 +22,7 @@ Material:
   - _GRADIENTMASKFORVERTEXOFFSETINALEBDO_ON
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
-  m_DoubleSidedGI: 0
+  m_DoubleSidedGI: 1
   m_CustomRenderQueue: 2475
   stringTagMap:
     RenderType: TransparentCutout
@@ -90,16 +91,8 @@ Material:
         m_Texture: {fileID: 2800000, guid: 841ad33c2bd5af8448cf499ac7c0c073, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
-    - _Noisetexture1:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _Noisetexture3:
-        m_Texture: {fileID: 2800000, guid: 841ad33c2bd5af8448cf499ac7c0c073, type: 3}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
     - _NormalMap:
-        m_Texture: {fileID: 2800000, guid: f1987bd1389f6df4888a416debaa73e1, type: 3}
+        m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _NormalMapOS:
@@ -123,7 +116,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _TextureSample0:
-        m_Texture: {fileID: 2800000, guid: 88340641cb8a04c4dafa657f06ca089c, type: 3}
+        m_Texture: {fileID: 2800000, guid: afa049021e447ee47811ebc2f6c0b480, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _ThicknessMap:
@@ -169,7 +162,7 @@ Material:
     - _ATDistance: 1
     - _AddPrecomputedVelocity: 1
     - _AlbedoAffectEmissive: 0
-    - _AlphaCutoff: 0.05
+    - _AlphaCutoff: 0.206
     - _AlphaCutoffEnable: 1
     - _AlphaCutoffPostpass: 0.5
     - _AlphaCutoffPrepass: 0.5
@@ -183,12 +176,12 @@ Material:
     - _Anisotropy: 0
     - _BlendMode: 0
     - _BottomGradient: 0
-    - _BottomGradientsize: 0.2
+    - _BottomGradientsize: 0
     - _CoatMask: 0
     - _ConservativeDepthOffsetEnable: 1
-    - _CullMode: 2
-    - _CullModeForward: 2
-    - _Cutoff: 0.05
+    - _CullMode: 0
+    - _CullModeForward: 0
+    - _Cutoff: 0.206
     - _DepthOffsetEnable: 1
     - _DetailAlbedoScale: 1
     - _DetailNormalScale: 1
@@ -204,7 +197,7 @@ Material:
     - _Distortionmediumsize: 160
     - _Distortionnearintensity: 0.095
     - _Distortionnearsize: 50
-    - _DoubleSidedEnable: 0
+    - _DoubleSidedEnable: 1
     - _DoubleSidedGIMode: 0
     - _DoubleSidedNormalMode: 2
     - _DstBlend: 0
@@ -237,7 +230,6 @@ Material:
     - _Metallic: 0
     - _MetallicRemapMax: 1
     - _MetallicRemapMin: 0
-    - _NormalIntensity: 0.2
     - _NormalMapSpace: 0
     - _NormalScale: 1
     - _ObjectSpaceUVMapping: 0
@@ -259,7 +251,7 @@ Material:
     - _Sizefar: 448
     - _Sizemedium: 200
     - _Sizenear: 100
-    - _Smoothness: 0
+    - _Smoothness: 0.151
     - _SmoothnessRemapMax: 1
     - _SmoothnessRemapMin: 0
     - _SpecularAAScreenSpaceVariance: 0.1
@@ -294,10 +286,10 @@ Material:
     - _UVBase: 0
     - _UVDetail: 0
     - _UVEmissive: 0
+    - _UVforgradient: 1
     - _UseEmissiveIntensity: 0
     - _UseShadowThreshold: 0
-    - _Usebasecolorinstedoftexture: 0
-    - _VertexWindintensity: 0.4
+    - _VertexWindintensity: 0.2
     - _VertexoffsetSizenear: 50
     - _Vertexoffsetgradient: 0
     - _Vertexoffsetinalbedo: 0.04
@@ -310,11 +302,10 @@ Material:
     m_Colors:
     - _BaseColor: {r: 0.25882354, g: 0.46666667, b: 0.24705882, a: 1}
     - _BaseColorMap_MipInfo: {r: 0, g: 0, b: 0, a: 0}
-    - _Color: {r: 1, g: 1, b: 1, a: 1}
+    - _Color: {r: 0.25907144, g: 0.468, b: 0.2465357, a: 1}
     - _Color0: {r: 0.2985048, g: 0.49056602, b: 0.3715895, a: 1}
-    - _ColorWind: {r: 1, g: 1, b: 1, a: 1}
     - _DiffusionProfileAsset: {r: 0, g: 0, b: 0, a: 0}
-    - _DoubleSidedConstants: {r: 1, g: 1, b: -1, a: 0}
+    - _DoubleSidedConstants: {r: 1, g: 1, b: 1, a: 0}
     - _EmissionColor: {r: 1, g: 1, b: 1, a: 1}
     - _EmissiveColor: {r: 0, g: 0, b: 0, a: 1}
     - _EmissiveColorLDR: {r: 0, g: 0, b: 0, a: 1}
