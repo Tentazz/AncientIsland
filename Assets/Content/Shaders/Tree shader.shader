@@ -7,11 +7,28 @@ Shader "Tree shader"
 		[HideInInspector] _AlphaCutoff("Alpha Cutoff ", Range(0, 1)) = 0.5
 		_Color( "Color", Color ) = ( 1, 1, 1, 1 )
 		_TextureSample0( "Texture Sample 0", 2D ) = "white" {}
-		_Noisetexture( "Noise texture", 2D ) = "white" {}
-		_Windintensity( "Wind intensity", Range( 0, 1 ) ) = 1
-		_WindSpeed( "Wind Speed", Vector ) = ( 1, 1, 0, 0 )
-		_Size( "Size", Range( 1, 50 ) ) = 5
+		[Header(____________WIND ___________)] _WindNoise( "Wind Noise", 2D ) = "white" {}
+		_DistortionTexture( "Distortion Texture", 2D ) = "white" {}
 		_Windinalbedo( "Wind in albedo", Range( 0, 0.1 ) ) = 0
+		[Header(NEAR)] _Sizenear( "Size near", Range( 1, 100 ) ) = 5
+		_Distortionnearsize( "Distortion near size", Range( 1, 1000 ) ) = 5
+		_Distortionnearintensity( "Distortion near intensity", Range( 0, 1 ) ) = 0.1
+		_WindSpeednear( "Wind Speed near", Vector ) = ( 1, 1, 0, 0 )
+		[Header(MEDIUM)] _Sizemedium( "Size medium", Range( 1, 1000 ) ) = 5
+		_Distortionmediumsize( "Distortion medium size", Range( 1, 1000 ) ) = 5
+		_Distortionmediumintensity( "Distortion medium intensity", Range( 0, 0.1 ) ) = 0.1
+		_WindSpeedmedium( "Wind Speed medium", Vector ) = ( 1, 1, 0, 0 )
+		[Header(FAR)] _Sizefar( "Size far", Range( 1, 1000 ) ) = 5
+		_WindSpeedfar( "Wind Speed far", Vector ) = ( 1, 1, 0, 0 )
+		_Distortionfarsize( "Distortion far size", Range( 1, 1000 ) ) = 5
+		_Distortionfarintensity( "Distortion far intensity", Range( 0, 0.1 ) ) = 0.1
+		[Header(VERTEX OFFSET)] _VertexWindintensity( "Vertex Wind intensity", Range( 0, 10 ) ) = 1
+		_VertexoffsetNoisetexture( "Vertex offset Noise texture", 2D ) = "white" {}
+		_VertexoffsetSizenear( "Vertex offset Size near", Range( 1, 100 ) ) = 5
+		_VertexWindSpeednear( "Vertex Wind Speed near", Vector ) = ( 1, 1, 0, 0 )
+		_Vertexoffsetinalbedo( "Vertex offset in albedo", Range( 0, 1 ) ) = 1
+		[Toggle] _Gradientmaskforvertexoffsetinalebdo( "Gradient mask for vertex offset in alebdo", Range( 0, 1 ) ) = 0
+		[Toggle] _Vertexoffsetgradient( "Vertex offset gradient", Range( 0, 1 ) ) = 0
 		_Smoothness( "Smoothness", Range( 0, 1 ) ) = 0
 		[Toggle] _BottomGradient( "Bottom Gradient", Range( 0, 1 ) ) = 0
 		_BottomGradientsize( "Bottom Gradient size", Range( 0, 1 ) ) = 0.5
@@ -461,15 +478,30 @@ Shader "Tree shader"
             #endif
 
 			CBUFFER_START( UnityPerMaterial )
-			float4 _Color;
 			float4 _TextureSample0_ST;
-			float2 _WindSpeed;
-			float _Size;
-			float _Windintensity;
-			float _Windinalbedo;
-			float _Smoothness;
+			float4 _Color;
+			float2 _VertexWindSpeednear;
+			float2 _WindSpeednear;
+			float2 _WindSpeedfar;
+			float2 _WindSpeedmedium;
 			float _BottomGradientsize;
+			float _Smoothness;
+			float _Windinalbedo;
+			float _Distortionfarintensity;
+			float _Distortionfarsize;
+			float _Sizefar;
+			float _Distortionmediumintensity;
+			float _Sizemedium;
 			float _BottomGradient;
+			float _Distortionnearintensity;
+			float _Distortionnearsize;
+			float _Sizenear;
+			float _Gradientmaskforvertexoffsetinalebdo;
+			float _Vertexoffsetinalbedo;
+			float _Vertexoffsetgradient;
+			float _VertexWindintensity;
+			float _VertexoffsetSizenear;
+			float _Distortionmediumsize;
 			float _Fresneldither;
 			float4 _EmissionColor;
 			float _AlphaCutoff;
@@ -535,7 +567,9 @@ Shader "Tree shader"
 			int _PassValue;
             #endif
 
-			sampler2D _Noisetexture;
+			sampler2D _VertexoffsetNoisetexture;
+			sampler2D _WindNoise;
+			sampler2D _DistortionTexture;
 			sampler2D _TextureSample0;
 
 
@@ -559,11 +593,13 @@ Shader "Tree shader"
 
 			#define ASE_NEEDS_TEXTURE_COORDINATES0
 			#define ASE_NEEDS_VERT_TEXTURE_COORDINATES0
-			#define ASE_NEEDS_FRAG_SCREEN_POSITION_NORMALIZED
-			#define ASE_NEEDS_FRAG_TEXTURE_COORDINATES0
-			#define ASE_NEEDS_FRAG_WORLD_VIEW_DIR
+			#define ASE_NEEDS_FRAG_WORLD_POSITION
 			#define ASE_NEEDS_WORLD_NORMAL
 			#define ASE_NEEDS_FRAG_WORLD_NORMAL
+			#define ASE_NEEDS_VERT_POSITION
+			#define ASE_NEEDS_FRAG_TEXTURE_COORDINATES0
+			#define ASE_NEEDS_FRAG_SCREEN_POSITION_NORMALIZED
+			#define ASE_NEEDS_FRAG_WORLD_VIEW_DIR
 
 
 			struct AttributesMesh
@@ -879,22 +915,27 @@ Shader "Tree shader"
 				UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO( output );
 
 				float3 ase_positionWS = GetAbsolutePositionWS( TransformObjectToWorld( ( inputMesh.positionOS ).xyz ) );
-				float2 appendResult4_g12 = (float2(ase_positionWS.x , ase_positionWS.z));
-				float2 panner8_g12 = ( 1.0 * _Time.y * _WindSpeed + ( appendResult4_g12 / _Size ));
-				float4 tex2DNode9_g12 = tex2Dlod( _Noisetexture, float4( panner8_g12, 0, 0.0) );
+				float2 appendResult94_g12 = (float2(ase_positionWS.x , ase_positionWS.z));
+				float2 panner98_g12 = ( 1.0 * _Time.y * _VertexWindSpeednear + ( appendResult94_g12 / _VertexoffsetSizenear ));
+				float4 tex2DNode92_g12 = tex2Dlod( _VertexoffsetNoisetexture, float4( panner98_g12, 0, 0.0) );
 				float2 texCoord17_g12 = inputMesh.uv0.xy * float2( 1,1 ) + float2( 0,0 );
+				float lerpResult111_g12 = lerp( 1.0 , texCoord17_g12.y , _Vertexoffsetgradient);
+				
+				float3 objectToViewPos = TransformWorldToView( TransformObjectToWorld( inputMesh.positionOS ) );
+				float eyeDepth = -objectToViewPos.z;
+				output.ase_texcoord5.z = eyeDepth;
 				
 				output.ase_texcoord5.xy = inputMesh.uv0.xy;
 				
 				//setting value to unused interpolator channels and avoid initialization warnings
-				output.ase_texcoord5.zw = 0;
+				output.ase_texcoord5.w = 0;
 
 				#ifdef ASE_ABSOLUTE_VERTEX_POS
 				float3 defaultVertexValue = inputMesh.positionOS.xyz;
 				#else
 				float3 defaultVertexValue = float3( 0, 0, 0 );
 				#endif
-				float3 vertexValue = ( tex2DNode9_g12 * _Windintensity * texCoord17_g12.y ).rgb;
+				float3 vertexValue = ( tex2DNode92_g12.rgb * _VertexWindintensity * lerpResult111_g12 );
 
 				#ifdef ASE_ABSOLUTE_VERTEX_POS
 				inputMesh.positionOS.xyz = vertexValue;
@@ -1066,6 +1107,31 @@ Shader "Tree shader"
 					BitangentWS = input.tangentToWorld[ 1 ];
 				#endif
 
+				float2 appendResult94_g12 = (float2(PositionWS.x , PositionWS.z));
+				float2 panner98_g12 = ( 1.0 * _Time.y * _VertexWindSpeednear + ( appendResult94_g12 / _VertexoffsetSizenear ));
+				float4 tex2DNode92_g12 = tex2D( _VertexoffsetNoisetexture, panner98_g12 );
+				float temp_output_102_0_g12 = ( tex2DNode92_g12.r * _Vertexoffsetinalbedo );
+				float2 texCoord104_g12 = packedInput.ase_texcoord5.xy * float2( 1,1 ) + float2( 0,0 );
+				float lerpResult105_g12 = lerp( temp_output_102_0_g12 , 0.0 , ( 1.0 - texCoord104_g12.y ));
+				float lerpResult107_g12 = lerp( temp_output_102_0_g12 , lerpResult105_g12 , _Gradientmaskforvertexoffsetinalebdo);
+				float2 appendResult4_g12 = (float2(PositionWS.x , PositionWS.z));
+				float2 panner8_g12 = ( 1.0 * _Time.y * _WindSpeednear + ( appendResult4_g12 / _Sizenear ));
+				float2 appendResult87_g12 = (float2(PositionWS.x , PositionWS.z));
+				float2 appendResult51_g12 = (float2(PositionWS.x , PositionWS.z));
+				float2 panner47_g12 = ( 1.0 * _Time.y * _WindSpeedmedium + ( appendResult51_g12 / _Sizemedium ));
+				float2 appendResult68_g12 = (float2(PositionWS.x , PositionWS.z));
+				float smoothstepResult54_g12 = smoothstep( 0.5 , 1.0 , NormalWS.y);
+				float eyeDepth = packedInput.ase_texcoord5.z;
+				float cameraDepthFade20_g12 = (( eyeDepth -_ProjectionParams.y - 100.0 ) / 20.0);
+				float lerpResult25_g12 = lerp( tex2D( _WindNoise, ( panner8_g12 + ( tex2D( _DistortionTexture, ( appendResult87_g12 / _Distortionnearsize ) ).r * _Distortionnearintensity ) ) ).r , ( tex2D( _WindNoise, ( panner47_g12 + ( tex2D( _DistortionTexture, ( appendResult68_g12 / _Distortionmediumsize ) ).r * _Distortionmediumintensity ) ) ).r * saturate( smoothstepResult54_g12 ) ) , saturate( cameraDepthFade20_g12 ));
+				float2 appendResult26_g12 = (float2(PositionWS.x , PositionWS.z));
+				float2 panner31_g12 = ( 1.0 * _Time.y * _WindSpeedfar + ( appendResult26_g12 / _Sizefar ));
+				float2 appendResult79_g12 = (float2(PositionWS.x , PositionWS.z));
+				float smoothstepResult38_g12 = smoothstep( 0.5 , 1.0 , NormalWS.y);
+				float cameraDepthFade60_g12 = (( eyeDepth -_ProjectionParams.y - 400.0 ) / 100.0);
+				float lerpResult58_g12 = lerp( lerpResult25_g12 , ( tex2D( _WindNoise, ( panner31_g12 + ( tex2D( _DistortionTexture, ( appendResult79_g12 / _Distortionfarsize ) ).r * _Distortionfarintensity ) ) ).r * saturate( smoothstepResult38_g12 ) ) , saturate( cameraDepthFade60_g12 ));
+				float3 lerpResult110_g12 = lerp( _Color.rgb , float3( 1,1,1 ) , ( lerpResult107_g12 + ( lerpResult58_g12 * _Windinalbedo ) ));
+				
 				float2 uv_TextureSample0 = packedInput.ase_texcoord5.xy * _TextureSample0_ST.xy + _TextureSample0_ST.zw;
 				float4 ase_positionSS_Pixel = ASEScreenPositionNormalizedToPixel( ScreenPosNorm, _ScreenParams );
 				float dither66 = Dither4x4Bayer( fmod( ase_positionSS_Pixel.x, 4 ), fmod( ase_positionSS_Pixel.y, 4 ) );
@@ -1080,7 +1146,7 @@ Shader "Tree shader"
 
 				GlobalSurfaceDescription surfaceDescription = (GlobalSurfaceDescription)0;
 
-				surfaceDescription.BaseColor = ( _Color.rgb + ( ( 0.0 - 1.0 ) * _Windinalbedo ) );
+				surfaceDescription.BaseColor = lerpResult110_g12;
 				surfaceDescription.Normal = float3( 0, 0, 1 );
 				surfaceDescription.BentNormal = float3( 0, 0, 1 );
 				surfaceDescription.CoatMask = 0;
@@ -1293,15 +1359,30 @@ Shader "Tree shader"
             #endif
 
 			CBUFFER_START( UnityPerMaterial )
-			float4 _Color;
 			float4 _TextureSample0_ST;
-			float2 _WindSpeed;
-			float _Size;
-			float _Windintensity;
-			float _Windinalbedo;
-			float _Smoothness;
+			float4 _Color;
+			float2 _VertexWindSpeednear;
+			float2 _WindSpeednear;
+			float2 _WindSpeedfar;
+			float2 _WindSpeedmedium;
 			float _BottomGradientsize;
+			float _Smoothness;
+			float _Windinalbedo;
+			float _Distortionfarintensity;
+			float _Distortionfarsize;
+			float _Sizefar;
+			float _Distortionmediumintensity;
+			float _Sizemedium;
 			float _BottomGradient;
+			float _Distortionnearintensity;
+			float _Distortionnearsize;
+			float _Sizenear;
+			float _Gradientmaskforvertexoffsetinalebdo;
+			float _Vertexoffsetinalbedo;
+			float _Vertexoffsetgradient;
+			float _VertexWindintensity;
+			float _VertexoffsetSizenear;
+			float _Distortionmediumsize;
 			float _Fresneldither;
 			float4 _EmissionColor;
 			float _AlphaCutoff;
@@ -1367,7 +1448,9 @@ Shader "Tree shader"
 			int _PassValue;
             #endif
 
-			sampler2D _Noisetexture;
+			sampler2D _VertexoffsetNoisetexture;
+			sampler2D _WindNoise;
+			sampler2D _DistortionTexture;
 			sampler2D _TextureSample0;
 
 
@@ -1397,8 +1480,9 @@ Shader "Tree shader"
 
 			#define ASE_NEEDS_TEXTURE_COORDINATES0
 			#define ASE_NEEDS_VERT_TEXTURE_COORDINATES0
-			#define ASE_NEEDS_FRAG_TEXTURE_COORDINATES0
 			#define ASE_NEEDS_VERT_NORMAL
+			#define ASE_NEEDS_VERT_POSITION
+			#define ASE_NEEDS_FRAG_TEXTURE_COORDINATES0
 
 
 			struct AttributesMesh
@@ -1719,31 +1803,35 @@ Shader "Tree shader"
 				UNITY_TRANSFER_INSTANCE_ID(inputMesh, output);
 
 				float3 ase_positionWS = GetAbsolutePositionWS( TransformObjectToWorld( ( inputMesh.positionOS ).xyz ) );
-				float2 appendResult4_g12 = (float2(ase_positionWS.x , ase_positionWS.z));
-				float2 panner8_g12 = ( 1.0 * _Time.y * _WindSpeed + ( appendResult4_g12 / _Size ));
-				float4 tex2DNode9_g12 = tex2Dlod( _Noisetexture, float4( panner8_g12, 0, 0.0) );
+				float2 appendResult94_g12 = (float2(ase_positionWS.x , ase_positionWS.z));
+				float2 panner98_g12 = ( 1.0 * _Time.y * _VertexWindSpeednear + ( appendResult94_g12 / _VertexoffsetSizenear ));
+				float4 tex2DNode92_g12 = tex2Dlod( _VertexoffsetNoisetexture, float4( panner98_g12, 0, 0.0) );
 				float2 texCoord17_g12 = inputMesh.uv0.xy * float2( 1,1 ) + float2( 0,0 );
+				float lerpResult111_g12 = lerp( 1.0 , texCoord17_g12.y , _Vertexoffsetgradient);
+				
+				output.ase_texcoord2.xyz = ase_positionWS;
+				float3 ase_normalWS = TransformObjectToWorldNormal( inputMesh.normalOS );
+				output.ase_texcoord4.xyz = ase_normalWS;
+				float3 objectToViewPos = TransformWorldToView( TransformObjectToWorld( inputMesh.positionOS ) );
+				float eyeDepth = -objectToViewPos.z;
+				output.ase_texcoord2.w = eyeDepth;
 				
 				float4 ase_positionCS = TransformWorldToHClip( TransformObjectToWorld( ( inputMesh.positionOS ).xyz ) );
 				float4 screenPos = ComputeScreenPos( ase_positionCS, _ProjectionParams.x );
-				output.ase_texcoord3 = screenPos;
-				output.ase_texcoord4.xyz = ase_positionWS;
-				float3 ase_normalWS = TransformObjectToWorldNormal( inputMesh.normalOS );
-				output.ase_texcoord5.xyz = ase_normalWS;
+				output.ase_texcoord5 = screenPos;
 				
-				output.ase_texcoord2.xy = inputMesh.uv0.xy;
+				output.ase_texcoord3.xy = inputMesh.uv0.xy;
 				
 				//setting value to unused interpolator channels and avoid initialization warnings
-				output.ase_texcoord2.zw = 0;
+				output.ase_texcoord3.zw = 0;
 				output.ase_texcoord4.w = 0;
-				output.ase_texcoord5.w = 0;
 
 				#ifdef ASE_ABSOLUTE_VERTEX_POS
 				float3 defaultVertexValue = inputMesh.positionOS.xyz;
 				#else
 				float3 defaultVertexValue = float3( 0, 0, 0 );
 				#endif
-				float3 vertexValue = ( tex2DNode9_g12 * _Windintensity * texCoord17_g12.y ).rgb;
+				float3 vertexValue = ( tex2DNode92_g12.rgb * _VertexWindintensity * lerpResult111_g12 );
 
 				#ifdef ASE_ABSOLUTE_VERTEX_POS
 				inputMesh.positionOS.xyz = vertexValue;
@@ -1889,19 +1977,44 @@ Shader "Tree shader"
 
 				float3 V = float3(1.0, 1.0, 1.0);
 
-				float2 uv_TextureSample0 = packedInput.ase_texcoord2.xy * _TextureSample0_ST.xy + _TextureSample0_ST.zw;
-				float4 screenPos = packedInput.ase_texcoord3;
+				float3 ase_positionWS = packedInput.ase_texcoord2.xyz;
+				float2 appendResult94_g12 = (float2(ase_positionWS.x , ase_positionWS.z));
+				float2 panner98_g12 = ( 1.0 * _Time.y * _VertexWindSpeednear + ( appendResult94_g12 / _VertexoffsetSizenear ));
+				float4 tex2DNode92_g12 = tex2D( _VertexoffsetNoisetexture, panner98_g12 );
+				float temp_output_102_0_g12 = ( tex2DNode92_g12.r * _Vertexoffsetinalbedo );
+				float2 texCoord104_g12 = packedInput.ase_texcoord3.xy * float2( 1,1 ) + float2( 0,0 );
+				float lerpResult105_g12 = lerp( temp_output_102_0_g12 , 0.0 , ( 1.0 - texCoord104_g12.y ));
+				float lerpResult107_g12 = lerp( temp_output_102_0_g12 , lerpResult105_g12 , _Gradientmaskforvertexoffsetinalebdo);
+				float2 appendResult4_g12 = (float2(ase_positionWS.x , ase_positionWS.z));
+				float2 panner8_g12 = ( 1.0 * _Time.y * _WindSpeednear + ( appendResult4_g12 / _Sizenear ));
+				float2 appendResult87_g12 = (float2(ase_positionWS.x , ase_positionWS.z));
+				float2 appendResult51_g12 = (float2(ase_positionWS.x , ase_positionWS.z));
+				float2 panner47_g12 = ( 1.0 * _Time.y * _WindSpeedmedium + ( appendResult51_g12 / _Sizemedium ));
+				float2 appendResult68_g12 = (float2(ase_positionWS.x , ase_positionWS.z));
+				float3 ase_normalWS = packedInput.ase_texcoord4.xyz;
+				float smoothstepResult54_g12 = smoothstep( 0.5 , 1.0 , ase_normalWS.y);
+				float eyeDepth = packedInput.ase_texcoord2.w;
+				float cameraDepthFade20_g12 = (( eyeDepth -_ProjectionParams.y - 100.0 ) / 20.0);
+				float lerpResult25_g12 = lerp( tex2D( _WindNoise, ( panner8_g12 + ( tex2D( _DistortionTexture, ( appendResult87_g12 / _Distortionnearsize ) ).r * _Distortionnearintensity ) ) ).r , ( tex2D( _WindNoise, ( panner47_g12 + ( tex2D( _DistortionTexture, ( appendResult68_g12 / _Distortionmediumsize ) ).r * _Distortionmediumintensity ) ) ).r * saturate( smoothstepResult54_g12 ) ) , saturate( cameraDepthFade20_g12 ));
+				float2 appendResult26_g12 = (float2(ase_positionWS.x , ase_positionWS.z));
+				float2 panner31_g12 = ( 1.0 * _Time.y * _WindSpeedfar + ( appendResult26_g12 / _Sizefar ));
+				float2 appendResult79_g12 = (float2(ase_positionWS.x , ase_positionWS.z));
+				float smoothstepResult38_g12 = smoothstep( 0.5 , 1.0 , ase_normalWS.y);
+				float cameraDepthFade60_g12 = (( eyeDepth -_ProjectionParams.y - 400.0 ) / 100.0);
+				float lerpResult58_g12 = lerp( lerpResult25_g12 , ( tex2D( _WindNoise, ( panner31_g12 + ( tex2D( _DistortionTexture, ( appendResult79_g12 / _Distortionfarsize ) ).r * _Distortionfarintensity ) ) ).r * saturate( smoothstepResult38_g12 ) ) , saturate( cameraDepthFade60_g12 ));
+				float3 lerpResult110_g12 = lerp( _Color.rgb , float3( 1,1,1 ) , ( lerpResult107_g12 + ( lerpResult58_g12 * _Windinalbedo ) ));
+				
+				float2 uv_TextureSample0 = packedInput.ase_texcoord3.xy * _TextureSample0_ST.xy + _TextureSample0_ST.zw;
+				float4 screenPos = packedInput.ase_texcoord5;
 				float4 ase_positionSSNorm = screenPos / screenPos.w;
 				ase_positionSSNorm.z = ( UNITY_NEAR_CLIP_VALUE >= 0 ) ? ase_positionSSNorm.z : ase_positionSSNorm.z * 0.5 + 0.5;
 				float4 ase_positionSS_Pixel = ASEScreenPositionNormalizedToPixel( ase_positionSSNorm, _ScreenParams );
 				float dither66 = Dither4x4Bayer( fmod( ase_positionSS_Pixel.x, 4 ), fmod( ase_positionSS_Pixel.y, 4 ) );
-				float2 texCoord16 = packedInput.ase_texcoord2.xy * float2( 1,1 ) + float2( 0,0 );
+				float2 texCoord16 = packedInput.ase_texcoord3.xy * float2( 1,1 ) + float2( 0,0 );
 				float smoothstepResult23 = smoothstep( 0.0 , _BottomGradientsize , texCoord16.y);
 				float lerpResult55 = lerp( 1.0 , smoothstepResult23 , _BottomGradient);
-				float3 ase_positionWS = packedInput.ase_texcoord4.xyz;
 				float3 ase_viewVectorWS = ( _WorldSpaceCameraPos.xyz - ase_positionWS );
 				float3 ase_viewDirWS = normalize( ase_viewVectorWS );
-				float3 ase_normalWS = packedInput.ase_texcoord5.xyz;
 				float fresnelNdotV59 = dot( ase_normalWS, ase_viewDirWS );
 				float fresnelNode59 = ( -1.0 + 5.0 * pow( 1.0 - fresnelNdotV59, 2.0 ) );
 				float lerpResult63 = lerp( 1.0 , ( 1.0 - saturate( fresnelNode59 ) ) , _Fresneldither);
@@ -1910,7 +2023,7 @@ Shader "Tree shader"
 
 				GlobalSurfaceDescription surfaceDescription = (GlobalSurfaceDescription)0;
 
-				surfaceDescription.BaseColor = ( _Color.rgb + ( ( 0.0 - 1.0 ) * _Windinalbedo ) );
+				surfaceDescription.BaseColor = lerpResult110_g12;
 				surfaceDescription.Normal = float3( 0, 0, 1 );
 				surfaceDescription.BentNormal = float3( 0, 0, 1 );
 				surfaceDescription.CoatMask = 0;
@@ -2106,15 +2219,30 @@ Shader "Tree shader"
             #endif
 
 			CBUFFER_START( UnityPerMaterial )
-			float4 _Color;
 			float4 _TextureSample0_ST;
-			float2 _WindSpeed;
-			float _Size;
-			float _Windintensity;
-			float _Windinalbedo;
-			float _Smoothness;
+			float4 _Color;
+			float2 _VertexWindSpeednear;
+			float2 _WindSpeednear;
+			float2 _WindSpeedfar;
+			float2 _WindSpeedmedium;
 			float _BottomGradientsize;
+			float _Smoothness;
+			float _Windinalbedo;
+			float _Distortionfarintensity;
+			float _Distortionfarsize;
+			float _Sizefar;
+			float _Distortionmediumintensity;
+			float _Sizemedium;
 			float _BottomGradient;
+			float _Distortionnearintensity;
+			float _Distortionnearsize;
+			float _Sizenear;
+			float _Gradientmaskforvertexoffsetinalebdo;
+			float _Vertexoffsetinalbedo;
+			float _Vertexoffsetgradient;
+			float _VertexWindintensity;
+			float _VertexoffsetSizenear;
+			float _Distortionmediumsize;
 			float _Fresneldither;
 			float4 _EmissionColor;
 			float _AlphaCutoff;
@@ -2180,7 +2308,7 @@ Shader "Tree shader"
 			int _PassValue;
             #endif
 
-			sampler2D _Noisetexture;
+			sampler2D _VertexoffsetNoisetexture;
 			sampler2D _TextureSample0;
 
 
@@ -2466,10 +2594,11 @@ Shader "Tree shader"
 				UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO( output );
 
 				float3 ase_positionWS = GetAbsolutePositionWS( TransformObjectToWorld( ( inputMesh.positionOS ).xyz ) );
-				float2 appendResult4_g12 = (float2(ase_positionWS.x , ase_positionWS.z));
-				float2 panner8_g12 = ( 1.0 * _Time.y * _WindSpeed + ( appendResult4_g12 / _Size ));
-				float4 tex2DNode9_g12 = tex2Dlod( _Noisetexture, float4( panner8_g12, 0, 0.0) );
+				float2 appendResult94_g12 = (float2(ase_positionWS.x , ase_positionWS.z));
+				float2 panner98_g12 = ( 1.0 * _Time.y * _VertexWindSpeednear + ( appendResult94_g12 / _VertexoffsetSizenear ));
+				float4 tex2DNode92_g12 = tex2Dlod( _VertexoffsetNoisetexture, float4( panner98_g12, 0, 0.0) );
 				float2 texCoord17_g12 = inputMesh.ase_texcoord.xy * float2( 1,1 ) + float2( 0,0 );
+				float lerpResult111_g12 = lerp( 1.0 , texCoord17_g12.y , _Vertexoffsetgradient);
 				
 				output.ase_texcoord3.xy = inputMesh.ase_texcoord.xy;
 				
@@ -2481,7 +2610,7 @@ Shader "Tree shader"
 				#else
 				float3 defaultVertexValue = float3( 0, 0, 0 );
 				#endif
-				float3 vertexValue = ( tex2DNode9_g12 * _Windintensity * texCoord17_g12.y ).rgb;
+				float3 vertexValue = ( tex2DNode92_g12.rgb * _VertexWindintensity * lerpResult111_g12 );
 
 				#ifdef ASE_ABSOLUTE_VERTEX_POS
 				inputMesh.positionOS.xyz = vertexValue;
@@ -2830,15 +2959,30 @@ Shader "Tree shader"
             #endif
 
 			CBUFFER_START( UnityPerMaterial )
-			float4 _Color;
 			float4 _TextureSample0_ST;
-			float2 _WindSpeed;
-			float _Size;
-			float _Windintensity;
-			float _Windinalbedo;
-			float _Smoothness;
+			float4 _Color;
+			float2 _VertexWindSpeednear;
+			float2 _WindSpeednear;
+			float2 _WindSpeedfar;
+			float2 _WindSpeedmedium;
 			float _BottomGradientsize;
+			float _Smoothness;
+			float _Windinalbedo;
+			float _Distortionfarintensity;
+			float _Distortionfarsize;
+			float _Sizefar;
+			float _Distortionmediumintensity;
+			float _Sizemedium;
 			float _BottomGradient;
+			float _Distortionnearintensity;
+			float _Distortionnearsize;
+			float _Sizenear;
+			float _Gradientmaskforvertexoffsetinalebdo;
+			float _Vertexoffsetinalbedo;
+			float _Vertexoffsetgradient;
+			float _VertexWindintensity;
+			float _VertexoffsetSizenear;
+			float _Distortionmediumsize;
 			float _Fresneldither;
 			float4 _EmissionColor;
 			float _AlphaCutoff;
@@ -2904,7 +3048,7 @@ Shader "Tree shader"
 			int _PassValue;
             #endif
 
-			sampler2D _Noisetexture;
+			sampler2D _VertexoffsetNoisetexture;
 			sampler2D _TextureSample0;
 
 
@@ -3194,10 +3338,11 @@ Shader "Tree shader"
 				UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO( output );
 
 				float3 ase_positionWS = GetAbsolutePositionWS( TransformObjectToWorld( ( inputMesh.positionOS ).xyz ) );
-				float2 appendResult4_g12 = (float2(ase_positionWS.x , ase_positionWS.z));
-				float2 panner8_g12 = ( 1.0 * _Time.y * _WindSpeed + ( appendResult4_g12 / _Size ));
-				float4 tex2DNode9_g12 = tex2Dlod( _Noisetexture, float4( panner8_g12, 0, 0.0) );
+				float2 appendResult94_g12 = (float2(ase_positionWS.x , ase_positionWS.z));
+				float2 panner98_g12 = ( 1.0 * _Time.y * _VertexWindSpeednear + ( appendResult94_g12 / _VertexoffsetSizenear ));
+				float4 tex2DNode92_g12 = tex2Dlod( _VertexoffsetNoisetexture, float4( panner98_g12, 0, 0.0) );
 				float2 texCoord17_g12 = inputMesh.ase_texcoord.xy * float2( 1,1 ) + float2( 0,0 );
+				float lerpResult111_g12 = lerp( 1.0 , texCoord17_g12.y , _Vertexoffsetgradient);
 				
 				output.ase_texcoord3.xy = inputMesh.ase_texcoord.xy;
 				
@@ -3209,7 +3354,7 @@ Shader "Tree shader"
 				#else
 				float3 defaultVertexValue = float3( 0, 0, 0 );
 				#endif
-				float3 vertexValue = ( tex2DNode9_g12 * _Windintensity * texCoord17_g12.y ).rgb;
+				float3 vertexValue = ( tex2DNode92_g12.rgb * _VertexWindintensity * lerpResult111_g12 );
 
 				#ifdef ASE_ABSOLUTE_VERTEX_POS
 				inputMesh.positionOS.xyz = vertexValue;
@@ -3529,15 +3674,30 @@ Shader "Tree shader"
             #endif
 
 			CBUFFER_START( UnityPerMaterial )
-			float4 _Color;
 			float4 _TextureSample0_ST;
-			float2 _WindSpeed;
-			float _Size;
-			float _Windintensity;
-			float _Windinalbedo;
-			float _Smoothness;
+			float4 _Color;
+			float2 _VertexWindSpeednear;
+			float2 _WindSpeednear;
+			float2 _WindSpeedfar;
+			float2 _WindSpeedmedium;
 			float _BottomGradientsize;
+			float _Smoothness;
+			float _Windinalbedo;
+			float _Distortionfarintensity;
+			float _Distortionfarsize;
+			float _Sizefar;
+			float _Distortionmediumintensity;
+			float _Sizemedium;
 			float _BottomGradient;
+			float _Distortionnearintensity;
+			float _Distortionnearsize;
+			float _Sizenear;
+			float _Gradientmaskforvertexoffsetinalebdo;
+			float _Vertexoffsetinalbedo;
+			float _Vertexoffsetgradient;
+			float _VertexWindintensity;
+			float _VertexoffsetSizenear;
+			float _Distortionmediumsize;
 			float _Fresneldither;
 			float4 _EmissionColor;
 			float _AlphaCutoff;
@@ -3603,7 +3763,7 @@ Shader "Tree shader"
 			int _PassValue;
             #endif
 
-			sampler2D _Noisetexture;
+			sampler2D _VertexoffsetNoisetexture;
 			sampler2D _TextureSample0;
 
 
@@ -3905,10 +4065,11 @@ Shader "Tree shader"
 				UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO( output );
 
 				float3 ase_positionWS = GetAbsolutePositionWS( TransformObjectToWorld( ( inputMesh.positionOS ).xyz ) );
-				float2 appendResult4_g12 = (float2(ase_positionWS.x , ase_positionWS.z));
-				float2 panner8_g12 = ( 1.0 * _Time.y * _WindSpeed + ( appendResult4_g12 / _Size ));
-				float4 tex2DNode9_g12 = tex2Dlod( _Noisetexture, float4( panner8_g12, 0, 0.0) );
+				float2 appendResult94_g12 = (float2(ase_positionWS.x , ase_positionWS.z));
+				float2 panner98_g12 = ( 1.0 * _Time.y * _VertexWindSpeednear + ( appendResult94_g12 / _VertexoffsetSizenear ));
+				float4 tex2DNode92_g12 = tex2Dlod( _VertexoffsetNoisetexture, float4( panner98_g12, 0, 0.0) );
 				float2 texCoord17_g12 = inputMesh.uv0.xy * float2( 1,1 ) + float2( 0,0 );
+				float lerpResult111_g12 = lerp( 1.0 , texCoord17_g12.y , _Vertexoffsetgradient);
 				
 				output.ase_texcoord3.xy = inputMesh.uv0.xy;
 				
@@ -3920,7 +4081,7 @@ Shader "Tree shader"
 				#else
 				float3 defaultVertexValue = float3( 0, 0, 0 );
 				#endif
-				float3 vertexValue = ( tex2DNode9_g12 * _Windintensity * texCoord17_g12.y ).rgb;
+				float3 vertexValue = ( tex2DNode92_g12.rgb * _VertexWindintensity * lerpResult111_g12 );
 
 				#ifdef ASE_ABSOLUTE_VERTEX_POS
 				inputMesh.positionOS.xyz = vertexValue;
@@ -4309,15 +4470,30 @@ Shader "Tree shader"
             #endif
 
 			CBUFFER_START( UnityPerMaterial )
-			float4 _Color;
 			float4 _TextureSample0_ST;
-			float2 _WindSpeed;
-			float _Size;
-			float _Windintensity;
-			float _Windinalbedo;
-			float _Smoothness;
+			float4 _Color;
+			float2 _VertexWindSpeednear;
+			float2 _WindSpeednear;
+			float2 _WindSpeedfar;
+			float2 _WindSpeedmedium;
 			float _BottomGradientsize;
+			float _Smoothness;
+			float _Windinalbedo;
+			float _Distortionfarintensity;
+			float _Distortionfarsize;
+			float _Sizefar;
+			float _Distortionmediumintensity;
+			float _Sizemedium;
 			float _BottomGradient;
+			float _Distortionnearintensity;
+			float _Distortionnearsize;
+			float _Sizenear;
+			float _Gradientmaskforvertexoffsetinalebdo;
+			float _Vertexoffsetinalbedo;
+			float _Vertexoffsetgradient;
+			float _VertexWindintensity;
+			float _VertexoffsetSizenear;
+			float _Distortionmediumsize;
 			float _Fresneldither;
 			float4 _EmissionColor;
 			float _AlphaCutoff;
@@ -4383,7 +4559,7 @@ Shader "Tree shader"
 			int _PassValue;
             #endif
 
-			sampler2D _Noisetexture;
+			sampler2D _VertexoffsetNoisetexture;
 			sampler2D _TextureSample0;
 
 
@@ -4673,10 +4849,11 @@ Shader "Tree shader"
 				_TimeParameters.xyz = timeParameters;
 
 				float3 ase_positionWS = GetAbsolutePositionWS( TransformObjectToWorld( ( inputMesh.positionOS ).xyz ) );
-				float2 appendResult4_g12 = (float2(ase_positionWS.x , ase_positionWS.z));
-				float2 panner8_g12 = ( 1.0 * _Time.y * _WindSpeed + ( appendResult4_g12 / _Size ));
-				float4 tex2DNode9_g12 = tex2Dlod( _Noisetexture, float4( panner8_g12, 0, 0.0) );
+				float2 appendResult94_g12 = (float2(ase_positionWS.x , ase_positionWS.z));
+				float2 panner98_g12 = ( 1.0 * _Time.y * _VertexWindSpeednear + ( appendResult94_g12 / _VertexoffsetSizenear ));
+				float4 tex2DNode92_g12 = tex2Dlod( _VertexoffsetNoisetexture, float4( panner98_g12, 0, 0.0) );
 				float2 texCoord17_g12 = inputMesh.ase_texcoord.xy * float2( 1,1 ) + float2( 0,0 );
+				float lerpResult111_g12 = lerp( 1.0 , texCoord17_g12.y , _Vertexoffsetgradient);
 				
 				float3 ase_normalWS = TransformObjectToWorldNormal( inputMesh.normalOS );
 				output.ase_texcoord4.xyz = ase_normalWS;
@@ -4692,7 +4869,7 @@ Shader "Tree shader"
 				#else
 				float3 defaultVertexValue = float3( 0, 0, 0 );
 				#endif
-				float3 vertexValue = ( tex2DNode9_g12 * _Windintensity * texCoord17_g12.y ).rgb;
+				float3 vertexValue = ( tex2DNode92_g12.rgb * _VertexWindintensity * lerpResult111_g12 );
 
 				#ifdef ASE_ABSOLUTE_VERTEX_POS
 				inputMesh.positionOS.xyz = vertexValue;
@@ -5167,15 +5344,30 @@ Shader "Tree shader"
             #endif
 
 			CBUFFER_START( UnityPerMaterial )
-			float4 _Color;
 			float4 _TextureSample0_ST;
-			float2 _WindSpeed;
-			float _Size;
-			float _Windintensity;
-			float _Windinalbedo;
-			float _Smoothness;
+			float4 _Color;
+			float2 _VertexWindSpeednear;
+			float2 _WindSpeednear;
+			float2 _WindSpeedfar;
+			float2 _WindSpeedmedium;
 			float _BottomGradientsize;
+			float _Smoothness;
+			float _Windinalbedo;
+			float _Distortionfarintensity;
+			float _Distortionfarsize;
+			float _Sizefar;
+			float _Distortionmediumintensity;
+			float _Sizemedium;
 			float _BottomGradient;
+			float _Distortionnearintensity;
+			float _Distortionnearsize;
+			float _Sizenear;
+			float _Gradientmaskforvertexoffsetinalebdo;
+			float _Vertexoffsetinalbedo;
+			float _Vertexoffsetgradient;
+			float _VertexWindintensity;
+			float _VertexoffsetSizenear;
+			float _Distortionmediumsize;
 			float _Fresneldither;
 			float4 _EmissionColor;
 			float _AlphaCutoff;
@@ -5241,7 +5433,9 @@ Shader "Tree shader"
 			int _PassValue;
             #endif
 
-			sampler2D _Noisetexture;
+			sampler2D _VertexoffsetNoisetexture;
+			sampler2D _WindNoise;
+			sampler2D _DistortionTexture;
 			sampler2D _TextureSample0;
 
 
@@ -5272,11 +5466,13 @@ Shader "Tree shader"
 
 			#define ASE_NEEDS_TEXTURE_COORDINATES0
 			#define ASE_NEEDS_VERT_TEXTURE_COORDINATES0
-			#define ASE_NEEDS_FRAG_SCREEN_POSITION_NORMALIZED
-			#define ASE_NEEDS_FRAG_TEXTURE_COORDINATES0
-			#define ASE_NEEDS_FRAG_WORLD_VIEW_DIR
+			#define ASE_NEEDS_FRAG_WORLD_POSITION
 			#define ASE_NEEDS_WORLD_NORMAL
 			#define ASE_NEEDS_FRAG_WORLD_NORMAL
+			#define ASE_NEEDS_VERT_POSITION
+			#define ASE_NEEDS_FRAG_TEXTURE_COORDINATES0
+			#define ASE_NEEDS_FRAG_SCREEN_POSITION_NORMALIZED
+			#define ASE_NEEDS_FRAG_WORLD_VIEW_DIR
 
 
 			struct AttributesMesh
@@ -5593,22 +5789,27 @@ Shader "Tree shader"
 				_TimeParameters.xyz = timeParameters;
 
 				float3 ase_positionWS = GetAbsolutePositionWS( TransformObjectToWorld( ( inputMesh.positionOS ).xyz ) );
-				float2 appendResult4_g12 = (float2(ase_positionWS.x , ase_positionWS.z));
-				float2 panner8_g12 = ( 1.0 * _Time.y * _WindSpeed + ( appendResult4_g12 / _Size ));
-				float4 tex2DNode9_g12 = tex2Dlod( _Noisetexture, float4( panner8_g12, 0, 0.0) );
+				float2 appendResult94_g12 = (float2(ase_positionWS.x , ase_positionWS.z));
+				float2 panner98_g12 = ( 1.0 * _Time.y * _VertexWindSpeednear + ( appendResult94_g12 / _VertexoffsetSizenear ));
+				float4 tex2DNode92_g12 = tex2Dlod( _VertexoffsetNoisetexture, float4( panner98_g12, 0, 0.0) );
 				float2 texCoord17_g12 = inputMesh.uv0.xy * float2( 1,1 ) + float2( 0,0 );
+				float lerpResult111_g12 = lerp( 1.0 , texCoord17_g12.y , _Vertexoffsetgradient);
+				
+				float3 objectToViewPos = TransformWorldToView( TransformObjectToWorld( inputMesh.positionOS ) );
+				float eyeDepth = -objectToViewPos.z;
+				output.ase_texcoord7.z = eyeDepth;
 				
 				output.ase_texcoord7.xy = inputMesh.uv0.xy;
 				
 				//setting value to unused interpolator channels and avoid initialization warnings
-				output.ase_texcoord7.zw = 0;
+				output.ase_texcoord7.w = 0;
 
 				#ifdef ASE_ABSOLUTE_VERTEX_POS
 				float3 defaultVertexValue = inputMesh.positionOS.xyz;
 				#else
 				float3 defaultVertexValue = float3( 0, 0, 0 );
 				#endif
-				float3 vertexValue = ( tex2DNode9_g12 * _Windintensity * texCoord17_g12.y ).rgb;
+				float3 vertexValue = ( tex2DNode92_g12.rgb * _VertexWindintensity * lerpResult111_g12 );
 
 				#ifdef ASE_ABSOLUTE_VERTEX_POS
 				inputMesh.positionOS.xyz = vertexValue;
@@ -5893,6 +6094,31 @@ Shader "Tree shader"
 					BitangentWS = input.tangentToWorld[ 1 ];
 				#endif
 
+				float2 appendResult94_g12 = (float2(PositionWS.x , PositionWS.z));
+				float2 panner98_g12 = ( 1.0 * _Time.y * _VertexWindSpeednear + ( appendResult94_g12 / _VertexoffsetSizenear ));
+				float4 tex2DNode92_g12 = tex2D( _VertexoffsetNoisetexture, panner98_g12 );
+				float temp_output_102_0_g12 = ( tex2DNode92_g12.r * _Vertexoffsetinalbedo );
+				float2 texCoord104_g12 = packedInput.ase_texcoord7.xy * float2( 1,1 ) + float2( 0,0 );
+				float lerpResult105_g12 = lerp( temp_output_102_0_g12 , 0.0 , ( 1.0 - texCoord104_g12.y ));
+				float lerpResult107_g12 = lerp( temp_output_102_0_g12 , lerpResult105_g12 , _Gradientmaskforvertexoffsetinalebdo);
+				float2 appendResult4_g12 = (float2(PositionWS.x , PositionWS.z));
+				float2 panner8_g12 = ( 1.0 * _Time.y * _WindSpeednear + ( appendResult4_g12 / _Sizenear ));
+				float2 appendResult87_g12 = (float2(PositionWS.x , PositionWS.z));
+				float2 appendResult51_g12 = (float2(PositionWS.x , PositionWS.z));
+				float2 panner47_g12 = ( 1.0 * _Time.y * _WindSpeedmedium + ( appendResult51_g12 / _Sizemedium ));
+				float2 appendResult68_g12 = (float2(PositionWS.x , PositionWS.z));
+				float smoothstepResult54_g12 = smoothstep( 0.5 , 1.0 , NormalWS.y);
+				float eyeDepth = packedInput.ase_texcoord7.z;
+				float cameraDepthFade20_g12 = (( eyeDepth -_ProjectionParams.y - 100.0 ) / 20.0);
+				float lerpResult25_g12 = lerp( tex2D( _WindNoise, ( panner8_g12 + ( tex2D( _DistortionTexture, ( appendResult87_g12 / _Distortionnearsize ) ).r * _Distortionnearintensity ) ) ).r , ( tex2D( _WindNoise, ( panner47_g12 + ( tex2D( _DistortionTexture, ( appendResult68_g12 / _Distortionmediumsize ) ).r * _Distortionmediumintensity ) ) ).r * saturate( smoothstepResult54_g12 ) ) , saturate( cameraDepthFade20_g12 ));
+				float2 appendResult26_g12 = (float2(PositionWS.x , PositionWS.z));
+				float2 panner31_g12 = ( 1.0 * _Time.y * _WindSpeedfar + ( appendResult26_g12 / _Sizefar ));
+				float2 appendResult79_g12 = (float2(PositionWS.x , PositionWS.z));
+				float smoothstepResult38_g12 = smoothstep( 0.5 , 1.0 , NormalWS.y);
+				float cameraDepthFade60_g12 = (( eyeDepth -_ProjectionParams.y - 400.0 ) / 100.0);
+				float lerpResult58_g12 = lerp( lerpResult25_g12 , ( tex2D( _WindNoise, ( panner31_g12 + ( tex2D( _DistortionTexture, ( appendResult79_g12 / _Distortionfarsize ) ).r * _Distortionfarintensity ) ) ).r * saturate( smoothstepResult38_g12 ) ) , saturate( cameraDepthFade60_g12 ));
+				float3 lerpResult110_g12 = lerp( _Color.rgb , float3( 1,1,1 ) , ( lerpResult107_g12 + ( lerpResult58_g12 * _Windinalbedo ) ));
+				
 				float2 uv_TextureSample0 = packedInput.ase_texcoord7.xy * _TextureSample0_ST.xy + _TextureSample0_ST.zw;
 				float4 ase_positionSS_Pixel = ASEScreenPositionNormalizedToPixel( ScreenPosNorm, _ScreenParams );
 				float dither66 = Dither4x4Bayer( fmod( ase_positionSS_Pixel.x, 4 ), fmod( ase_positionSS_Pixel.y, 4 ) );
@@ -5907,7 +6133,7 @@ Shader "Tree shader"
 
 				GlobalSurfaceDescription surfaceDescription = (GlobalSurfaceDescription)0;
 
-				surfaceDescription.BaseColor = ( _Color.rgb + ( ( 0.0 - 1.0 ) * _Windinalbedo ) );
+				surfaceDescription.BaseColor = lerpResult110_g12;
 				surfaceDescription.Normal = float3( 0, 0, 1 );
 				surfaceDescription.BentNormal = float3( 0, 0, 1 );
 				surfaceDescription.CoatMask = 0;
@@ -6219,15 +6445,30 @@ Shader "Tree shader"
             #endif
 
             CBUFFER_START( UnityPerMaterial )
-			float4 _Color;
 			float4 _TextureSample0_ST;
-			float2 _WindSpeed;
-			float _Size;
-			float _Windintensity;
-			float _Windinalbedo;
-			float _Smoothness;
+			float4 _Color;
+			float2 _VertexWindSpeednear;
+			float2 _WindSpeednear;
+			float2 _WindSpeedfar;
+			float2 _WindSpeedmedium;
 			float _BottomGradientsize;
+			float _Smoothness;
+			float _Windinalbedo;
+			float _Distortionfarintensity;
+			float _Distortionfarsize;
+			float _Sizefar;
+			float _Distortionmediumintensity;
+			float _Sizemedium;
 			float _BottomGradient;
+			float _Distortionnearintensity;
+			float _Distortionnearsize;
+			float _Sizenear;
+			float _Gradientmaskforvertexoffsetinalebdo;
+			float _Vertexoffsetinalbedo;
+			float _Vertexoffsetgradient;
+			float _VertexWindintensity;
+			float _VertexoffsetSizenear;
+			float _Distortionmediumsize;
 			float _Fresneldither;
 			float4 _EmissionColor;
 			float _AlphaCutoff;
@@ -6293,7 +6534,7 @@ Shader "Tree shader"
             int _PassValue;
             #endif
 
-			sampler2D _Noisetexture;
+			sampler2D _VertexoffsetNoisetexture;
 			sampler2D _TextureSample0;
 
 
@@ -6436,10 +6677,11 @@ Shader "Tree shader"
 				UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO( output );
 
 				float3 ase_positionWS = GetAbsolutePositionWS( TransformObjectToWorld( ( inputMesh.positionOS ).xyz ) );
-				float2 appendResult4_g12 = (float2(ase_positionWS.x , ase_positionWS.z));
-				float2 panner8_g12 = ( 1.0 * _Time.y * _WindSpeed + ( appendResult4_g12 / _Size ));
-				float4 tex2DNode9_g12 = tex2Dlod( _Noisetexture, float4( panner8_g12, 0, 0.0) );
+				float2 appendResult94_g12 = (float2(ase_positionWS.x , ase_positionWS.z));
+				float2 panner98_g12 = ( 1.0 * _Time.y * _VertexWindSpeednear + ( appendResult94_g12 / _VertexoffsetSizenear ));
+				float4 tex2DNode92_g12 = tex2Dlod( _VertexoffsetNoisetexture, float4( panner98_g12, 0, 0.0) );
 				float2 texCoord17_g12 = inputMesh.ase_texcoord.xy * float2( 1,1 ) + float2( 0,0 );
+				float lerpResult111_g12 = lerp( 1.0 , texCoord17_g12.y , _Vertexoffsetgradient);
 				
 				output.ase_texcoord3.xy = inputMesh.ase_texcoord.xy;
 				
@@ -6451,7 +6693,7 @@ Shader "Tree shader"
 				#else
 				float3 defaultVertexValue = float3( 0, 0, 0 );
 				#endif
-				float3 vertexValue = ( tex2DNode9_g12 * _Windintensity * texCoord17_g12.y ).rgb;
+				float3 vertexValue = ( tex2DNode92_g12.rgb * _VertexWindintensity * lerpResult111_g12 );
 
 				#ifdef ASE_ABSOLUTE_VERTEX_POS
 				inputMesh.positionOS.xyz = vertexValue;
@@ -6946,12 +7188,12 @@ Shader "Tree shader"
 Version=19904
 Node;AmplifyShaderEditor.FresnelNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;59;-1424,944;Inherit;True;Standard;WorldNormal;ViewDir;False;False;5;0;FLOAT3;0,0,1;False;4;FLOAT3;0,0,0;False;1;FLOAT;-1;False;2;FLOAT;5;False;3;FLOAT;2;False;1;FLOAT;0
 Node;AmplifyShaderEditor.TextureCoordinatesNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;16;-1264,352;Inherit;True;0;-1;2;3;2;SAMPLER2D;;False;0;FLOAT2;1,1;False;1;FLOAT2;0,0;False;5;FLOAT2;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
-Node;AmplifyShaderEditor.RangedFloatNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;58;-1248,640;Inherit;False;Property;_BottomGradientsize;Bottom Gradient size;10;0;Create;True;0;0;0;False;0;False;0.5;0.5;0;1;0;1;FLOAT;0
+Node;AmplifyShaderEditor.RangedFloatNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;58;-1248,640;Inherit;False;Property;_BottomGradientsize;Bottom Gradient size;27;0;Create;True;0;0;0;False;0;False;0.5;0.5;0;1;0;1;FLOAT;0
 Node;AmplifyShaderEditor.SaturateNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;60;-1072,944;Inherit;True;1;0;FLOAT;0;False;1;FLOAT;0
 Node;AmplifyShaderEditor.SmoothstepOpNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;23;-928,400;Inherit;True;3;0;FLOAT;0;False;1;FLOAT;0;False;2;FLOAT;0.5;False;1;FLOAT;0
-Node;AmplifyShaderEditor.RangedFloatNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;56;-816,656;Inherit;False;Property;_BottomGradient;Bottom Gradient;9;1;[Toggle];Create;True;0;0;0;False;0;False;0;0;0;1;0;1;FLOAT;0
+Node;AmplifyShaderEditor.RangedFloatNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;56;-816,656;Inherit;False;Property;_BottomGradient;Bottom Gradient;26;1;[Toggle];Create;True;0;0;0;False;0;False;0;0;0;1;0;1;FLOAT;0
 Node;AmplifyShaderEditor.OneMinusNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;61;-864,944;Inherit;False;1;0;FLOAT;0;False;1;FLOAT;0
-Node;AmplifyShaderEditor.RangedFloatNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;64;-688,1088;Inherit;False;Property;_Fresneldither;Fresnel dither;11;1;[Toggle];Create;True;0;0;0;False;0;False;0;0;0;1;0;1;FLOAT;0
+Node;AmplifyShaderEditor.RangedFloatNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;64;-688,1088;Inherit;False;Property;_Fresneldither;Fresnel dither;28;1;[Toggle];Create;True;0;0;0;False;0;False;0;0;0;1;0;1;FLOAT;0
 Node;AmplifyShaderEditor.LerpOp, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;55;-496,368;Inherit;False;3;0;FLOAT;1;False;1;FLOAT;0;False;2;FLOAT;0;False;1;FLOAT;0
 Node;AmplifyShaderEditor.LerpOp, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;63;-464,896;Inherit;False;3;0;FLOAT;1;False;1;FLOAT;0;False;2;FLOAT;0;False;1;FLOAT;0
 Node;AmplifyShaderEditor.SaturateNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;70;-288,800;Inherit;False;1;0;FLOAT;0;False;1;FLOAT;0
@@ -6963,9 +7205,9 @@ Node;AmplifyShaderEditor.DitheringNode, AmplifyShaderEditor, Version=0.0.0.0, Cu
 Node;AmplifyShaderEditor.CameraDepthFade, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;65;-416,1232;Inherit;False;3;2;FLOAT3;0,0,0;False;0;FLOAT;20;False;1;FLOAT;100;False;1;FLOAT;0
 Node;AmplifyShaderEditor.SaturateNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;69;-91.64563,1230.367;Inherit;False;1;0;FLOAT;0;False;1;FLOAT;0
 Node;AmplifyShaderEditor.OneMinusNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;68;0,1136;Inherit;False;1;0;FLOAT;0;False;1;FLOAT;0
-Node;AmplifyShaderEditor.RangedFloatNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;24;-366.515,38.49323;Inherit;False;Property;_Smoothness;Smoothness;8;0;Create;True;0;0;0;False;0;False;0;0;0;1;0;1;FLOAT;0
+Node;AmplifyShaderEditor.RangedFloatNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;24;-366.515,38.49323;Inherit;False;Property;_Smoothness;Smoothness;25;0;Create;True;0;0;0;False;0;False;0;0;0;1;0;1;FLOAT;0
 Node;AmplifyShaderEditor.SimpleMultiplyOpNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;67;262.8389,299.1447;Inherit;False;2;2;0;FLOAT;0;False;1;FLOAT;0;False;1;FLOAT;0
-Node;AmplifyShaderEditor.FunctionNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;54;480,32;Inherit;False;Wind;2;;12;92e1d73dca5e28844aad95a1e3678f3b;0;1;14;FLOAT3;1,1,1;False;2;FLOAT3;0;COLOR;16
+Node;AmplifyShaderEditor.FunctionNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;54;480,32;Inherit;False;Wind;2;;12;92e1d73dca5e28844aad95a1e3678f3b;0;2;14;FLOAT3;1,1,1;False;109;FLOAT3;1,1,1;False;2;FLOAT3;0;FLOAT3;16
 Node;AmplifyShaderEditor.TemplateMultiPassMasterNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;1;0,0;Float;False;False;-1;2;Rendering.HighDefinition.LightingShaderGraphGUI;0;12;New Amplify Shader;53b46d85872c5b24c8f4f0a1c3fe4c87;True;META;0;1;META;0;False;False;False;False;False;False;False;False;False;False;False;False;True;0;False;;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;3;RenderPipeline=HDRenderPipeline;RenderType=Opaque=RenderType;Queue=Geometry=Queue=0;True;5;True;7;d3d11;metal;vulkan;xboxone;xboxseries;playstation;switch;0;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;2;False;;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;1;LightMode=Meta;False;False;0;;0;0;Standard;0;False;0
 Node;AmplifyShaderEditor.TemplateMultiPassMasterNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;2;0,0;Float;False;False;-1;2;Rendering.HighDefinition.LightingShaderGraphGUI;0;12;New Amplify Shader;53b46d85872c5b24c8f4f0a1c3fe4c87;True;ShadowCaster;0;2;ShadowCaster;0;False;False;False;False;False;False;False;False;False;False;False;False;True;0;False;;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;3;RenderPipeline=HDRenderPipeline;RenderType=Opaque=RenderType;Queue=Geometry=Queue=0;True;5;True;7;d3d11;metal;vulkan;xboxone;xboxseries;playstation;switch;0;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;0;True;_CullMode;False;True;False;False;False;False;0;False;;False;False;False;False;False;False;False;False;False;True;1;False;;True;3;False;;False;True;1;LightMode=ShadowCaster;False;False;0;;0;0;Standard;0;False;0
 Node;AmplifyShaderEditor.TemplateMultiPassMasterNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;3;0,0;Float;False;False;-1;2;Rendering.HighDefinition.LightingShaderGraphGUI;0;12;New Amplify Shader;53b46d85872c5b24c8f4f0a1c3fe4c87;True;SceneSelectionPass;0;3;SceneSelectionPass;0;False;False;False;False;False;False;False;False;False;False;False;False;True;0;False;;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;3;RenderPipeline=HDRenderPipeline;RenderType=Opaque=RenderType;Queue=Geometry=Queue=0;True;5;True;7;d3d11;metal;vulkan;xboxone;xboxseries;playstation;switch;0;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;2;False;;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;1;LightMode=SceneSelectionPass;False;False;0;;0;0;Standard;0;False;0
@@ -7000,4 +7242,4 @@ WireConnection;0;7;24;0
 WireConnection;0;9;67;0
 WireConnection;0;11;54;16
 ASEEND*/
-//CHKSM=5870309898D858B036C06ED7376C01F8413B33FD
+//CHKSM=BD854B329C95A5CC62090C7AB28935F9091D0520

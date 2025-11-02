@@ -2,7 +2,13 @@ fileFormatVersion: 2
 guid: 7244b253bb57d8b4bb8421e2860dce9b
 ShaderImporter:
   externalObjects: {}
-  defaultTextures: []
+  defaultTextures:
+  - _GrassNoise: {fileID: 2800000, guid: a1e0f0161d6a10f4f9b8faef214d4c22, type: 3}
+  - _VertexoffsetNoisetexture: {fileID: 2800000, guid: 841ad33c2bd5af8448cf499ac7c0c073,
+      type: 3}
+  - _WindNoise: {fileID: 2800000, guid: 841ad33c2bd5af8448cf499ac7c0c073, type: 3}
+  - _DistortionTexture: {fileID: 2800000, guid: e11c14f991c341149b76ad6a3e4791e9,
+      type: 3}
   nonModifiableTextures: []
   userData: 
   assetBundleName: 

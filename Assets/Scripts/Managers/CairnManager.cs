@@ -18,6 +18,8 @@ public class CairnManager : MonoBehaviour
 
     public CharacterController controller;
 
+    public AudioManager audioManager;
+
     private void OnEnable() {
         InputActions.FindActionMap("Player").Enable(); //activer le systeme d'input du joueur
     }
@@ -42,30 +44,39 @@ public class CairnManager : MonoBehaviour
             controller.enabled = false; //disable character controller to avoid teleportation issues
             player.transform.position = Cairns[0].transform.position;
             controller.enabled = true; //re-enable character controller
+            audioManager.MusicTriggerExit();
         }
 
         if (Numpad2Action.WasPressedThisFrame()) {
             controller.enabled = false; //disable character controller to avoid teleportation issues
             player.transform.position = Cairns[1].transform.position;
             controller.enabled = true; //re-enable character controller
+            audioManager.MusicTriggerExit();
+
         }
 
         if (Numpad3Action.WasPressedThisFrame()) {
             controller.enabled = false; //disable character controller to avoid teleportation issues
             player.transform.position = Cairns[2].transform.position;
             controller.enabled = true; //re-enable character controller
+            audioManager.MusicTriggerExit();
+
         }
 
         if (Numpad4Action.WasPressedThisFrame()) {
             controller.enabled = false; //disable character controller to avoid teleportation issues
             player.transform.position = Cairns[3].transform.position;
             controller.enabled = true; //re-enable character controller
+            audioManager.MusicTriggerExit();
+
         }
 
         if (Numpad5Action.WasPressedThisFrame()) {
             controller.enabled = false; //disable character controller to avoid teleportation issues
             player.transform.position = Cairns[4].transform.position;
             controller.enabled = true; //re-enable character controller
+            audioManager.MusicTriggerExit();
+
         }
 
     }

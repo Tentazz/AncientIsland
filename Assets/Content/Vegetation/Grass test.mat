@@ -14,11 +14,16 @@ Material:
   m_ValidKeywords:
   - _ALPHATEST_ON
   m_InvalidKeywords:
+  - _ADD_PRECOMPUTED_VELOCITY
   - _BOTTOMGRADIENT_ON
+  - _CONSERVATIVE_DEPTH_OFFSET
+  - _DEPTHOFFSET_ON
   - _DISABLE_SSR_TRANSPARENT
-  - _NORMALMAP_TANGENT_SPACE
+  - _GRADIENTMASKFORVERTEXOFFSETINALEBDO_ON
+  - _USEBASECOLORINSTEDOFTEXTURE_ON
+  - _VERTEXOFFSETGRADIENT_ON
   m_LightmapFlags: 4
-  m_EnableInstancingVariants: 1
+  m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
   m_CustomRenderQueue: 2475
   stringTagMap:
@@ -28,7 +33,6 @@ Material:
   - TransparentDepthPostpass
   - TransparentBackface
   - RayTracingPrepass
-  - MOTIONVECTORS
   m_LockedProperties: 
   m_SavedProperties:
     serializedVersion: 3
@@ -57,6 +61,10 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _DistortionTexture:
+        m_Texture: {fileID: 2800000, guid: 8cfaee07b8614c84d884dad6e07b8d7d, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _EmissiveColorMap:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
@@ -82,6 +90,14 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _Noisetexture:
+        m_Texture: {fileID: 2800000, guid: 841ad33c2bd5af8448cf499ac7c0c073, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Noisetexture1:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Noisetexture3:
         m_Texture: {fileID: 2800000, guid: 841ad33c2bd5af8448cf499ac7c0c073, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
@@ -125,6 +141,14 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _VertexoffsetNoisetexture:
+        m_Texture: {fileID: 2800000, guid: 841ad33c2bd5af8448cf499ac7c0c073, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _WindNoise:
+        m_Texture: {fileID: 2800000, guid: 0cb9fa76518b0f547b9402d9078061d6, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _texcoord:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
@@ -146,7 +170,7 @@ Material:
     - _AORemapMax: 1
     - _AORemapMin: 0
     - _ATDistance: 1
-    - _AddPrecomputedVelocity: 0
+    - _AddPrecomputedVelocity: 1
     - _AlbedoAffectEmissive: 0
     - _AlphaCutoff: 0.5
     - _AlphaCutoffEnable: 1
@@ -162,13 +186,13 @@ Material:
     - _Anisotropy: 0
     - _BlendMode: 0
     - _BottomGradient: 1
-    - _BottomGradientsize: 0.4
+    - _BottomGradientsize: 0.2
     - _CoatMask: 0
     - _ConservativeDepthOffsetEnable: 1
     - _CullMode: 2
     - _CullModeForward: 2
     - _Cutoff: 0.5
-    - _DepthOffsetEnable: 0
+    - _DepthOffsetEnable: 1
     - _DetailAlbedoScale: 1
     - _DetailNormalScale: 1
     - _DetailSmoothnessScale: 1
@@ -177,9 +201,15 @@ Material:
     - _DisplacementLockObjectScale: 1
     - _DisplacementLockTilingScale: 1
     - _DisplacementMode: 0
+    - _Distortionfarintensity: 0.0675
+    - _Distortionfarsize: 259
+    - _Distortionmediumintensity: 0.1
+    - _Distortionmediumsize: 160
+    - _Distortionnearintensity: 0.095
+    - _Distortionnearsize: 50
     - _DoubleSidedEnable: 0
     - _DoubleSidedGIMode: 0
-    - _DoubleSidedNormalMode: 1
+    - _DoubleSidedNormalMode: 2
     - _DstBlend: 0
     - _DstBlend2: 0
     - _EmissiveColorMode: 1
@@ -191,6 +221,7 @@ Material:
     - _EnableGeometricSpecularAA: 0
     - _EnergyConservingSpecularColor: 1
     - _Fresneldither: 0
+    - _Gradientmaskforvertexoffsetinalebdo: 1
     - _HeightAmplitude: 0.02
     - _HeightCenter: 0.5
     - _HeightMapParametrization: 0
@@ -227,7 +258,10 @@ Material:
     - _RenderQueueType: 1
     - _RequireSplitLighting: 0
     - _Size: 50
-    - _Smoothness: 0.031
+    - _Sizefar: 448
+    - _Sizemedium: 200
+    - _Sizenear: 100
+    - _Smoothness: 0
     - _SmoothnessRemapMax: 1
     - _SmoothnessRemapMin: 0
     - _SpecularAAScreenSpaceVariance: 0.1
@@ -264,17 +298,23 @@ Material:
     - _UVEmissive: 0
     - _UseEmissiveIntensity: 0
     - _UseShadowThreshold: 0
-    - _Windinalbedo: 0.0214
+    - _Usebasecolorinstedoftexture: 1
+    - _VertexWindintensity: 1
+    - _VertexoffsetSizenear: 50
+    - _Vertexoffsetgradient: 1
+    - _Vertexoffsetinalbedo: 0.04
+    - _Windinalbedo: 0.05
     - _Windintensity: 1
     - _ZTestDepthEqualForOpaque: 3
     - _ZTestGBuffer: 3
     - _ZTestTransparent: 4
     - _ZWrite: 1
     m_Colors:
-    - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
+    - _BaseColor: {r: 0.25882354, g: 0.46666667, b: 0.24705882, a: 1}
     - _BaseColorMap_MipInfo: {r: 0, g: 0, b: 0, a: 0}
-    - _Color: {r: 0.24461785, g: 0.44, b: 0.231, a: 1}
+    - _Color: {r: 0.25907144, g: 0.468, b: 0.2465357, a: 1}
     - _Color0: {r: 0.2985048, g: 0.49056602, b: 0.3715895, a: 1}
+    - _ColorWind: {r: 0.81547517, g: 1, b: 0.8066038, a: 1}
     - _DiffusionProfileAsset: {r: 0, g: 0, b: 0, a: 0}
     - _DoubleSidedConstants: {r: 1, g: 1, b: -1, a: 0}
     - _EmissionColor: {r: 1, g: 1, b: 1, a: 1}
@@ -288,7 +328,11 @@ Material:
     - _UVDetailsMappingMask: {r: 1, g: 0, b: 0, a: 0}
     - _UVMappingMask: {r: 1, g: 0, b: 0, a: 0}
     - _UVMappingMaskEmissive: {r: 1, g: 0, b: 0, a: 0}
+    - _VertexWindSpeednear: {r: 0, g: 0.1, b: 0, a: 0}
     - _WindSpeed: {r: 0.1, g: 0.1, b: 0, a: 0}
+    - _WindSpeedfar: {r: 0, g: 0.02, b: 0, a: 0}
+    - _WindSpeedmedium: {r: 0.02, g: 0.05, b: 0, a: 0}
+    - _WindSpeednear: {r: 0, g: 0.1, b: 0, a: 0}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
 --- !u!114 &564476044740202861
