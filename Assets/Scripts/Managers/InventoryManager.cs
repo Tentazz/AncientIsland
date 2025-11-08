@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 using System.Collections;
+using DG.Tweening;
 
 public class InventoryManager : MonoBehaviour
 {
@@ -11,6 +12,10 @@ public class InventoryManager : MonoBehaviour
     public GameObject torchObject;
     public GameObject jumellesObject;
     private GameObject currentObjet;
+
+    public Light torchLight1;
+    public Light torchLight2;
+    public Light torchLight3;
 
     public Animator cameraAnimator;
 
@@ -37,7 +42,9 @@ public class InventoryManager : MonoBehaviour
 
     void Start()
     {
-        
+        torchLight1.color = new Color(0f, 0f, 0f, 0f);
+        torchLight2.color = new Color(0f, 0f, 0f, 0f);
+        torchLight3.color = new Color(0f, 0f, 0f, 0f);
     }
 
 
@@ -52,6 +59,7 @@ public class InventoryManager : MonoBehaviour
 
             else if (torchAction.WasReleasedThisFrame() && currentObjet == torchObject) {
                 StartCoroutine(switchObjet(torchObject, null));
+                
             }
 
         }
@@ -74,6 +82,11 @@ public class InventoryManager : MonoBehaviour
         // Ranger l'ancien objet
 
         if (oldObject != null) {
+            if (oldObject == torchObject) {
+                torchLight1.DOColor(new Color(0f, 0f, 0f, 0f), 0.5f);
+                torchLight2.DOColor(new Color(0f, 0f, 0f, 0f), 0.5f);
+                torchLight3.DOColor(new Color(0f, 0f, 0f, 0f), 0.5f);
+            }
             cameraAnimator.SetBool("ObjetSorti", false); //lancer l'animation de rangement
             yield return new WaitForSeconds(rangementSpeed); //attendre la fin de l'animation
             oldObject.SetActive(false); //desactiver l'ancien objet
@@ -82,6 +95,11 @@ public class InventoryManager : MonoBehaviour
 
         //Sortir le nouvel objet seulement s'il y en a un
         if (newObject != oldObject && newObject != null) {
+            if (newObject == torchObject) {
+                torchLight1.DOColor(new Color(1f, 1f, 1f, 1f), 0.66f);
+                torchLight2.DOColor(new Color(1f, 1f, 1f, 1f), 0.66f);
+                torchLight3.DOColor(new Color(1f, 1f, 1f, 1f), 0.66f);
+            }
             newObject. SetActive(true); //activer le nouvel objet
             cameraAnimator.SetBool("ObjetSorti", true);//   lancer l'animation de sortie
             currentObjet = newObject; //mettre a jour l'objet actuellement sorti

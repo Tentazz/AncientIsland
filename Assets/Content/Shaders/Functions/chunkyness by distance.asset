@@ -1,0 +1,48 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 78b2425a2284af743826c689403a4924, type: 3}
+  m_Name: chunkyness by distance
+  m_EditorClassIdentifier: 
+  m_functionInfo: "// Made with Amplify Shader Editor\n// Available at the Unity
+    Asset Store - http://u3d.as/y3X \n/*ASEBEGIN\nVersion=18900\n1920;0;1920;1019;458.3463;480.565;1;True;False\nNode;AmplifyShaderEditor.CommentaryNode;1;381.4128,-898.5601;Inherit;False;598.2788;374.2336;Comment;4;5;4;3;2;Albedo
+    in emission;1,1,1,1;0;0\nNode;AmplifyShaderEditor.RangedFloatNode;2;431.4128,-610.4391;Inherit;False;Property;_Albedoinemission2;Albedo
+    in emission;0;0;Create;True;0;0;0;False;0;False;100;0;0;100;0;1;FLOAT;0\nNode;AmplifyShaderEditor.GetLocalVarNode;3;555.9709,-848.5601;Inherit;False;-1;;1;0;OBJECT;;False;1;FLOAT;0\nNode;AmplifyShaderEditor.SimpleMultiplyOpNode;4;688.9658,-721.712;Inherit;False;2;2;0;FLOAT;0;False;1;FLOAT;0;False;1;FLOAT;0\nNode;AmplifyShaderEditor.SimpleAddOpNode;5;849.4299,-750.635;Inherit;False;2;2;0;FLOAT;0;False;1;FLOAT;0;False;1;FLOAT;0\nNode;AmplifyShaderEditor.SimpleAddOpNode;15;847.7395,-293.7899;Inherit;False;2;2;0;FLOAT3;0,0,0;False;1;FLOAT3;0,0,0;False;1;FLOAT3;0\nNode;AmplifyShaderEditor.NormalVertexDataNode;11;305.686,-136.9215;Inherit;False;0;5;FLOAT3;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4\nNode;AmplifyShaderEditor.SimpleMultiplyOpNode;12;586.9658,-108.7466;Inherit;False;2;2;0;FLOAT3;0,0,0;False;1;FLOAT;0;False;1;FLOAT3;0\nNode;AmplifyShaderEditor.RangedFloatNode;10;275.001,50.04136;Inherit;False;Property;_Chunkiness2;Chunkiness;1;0;Create;True;0;0;0;False;0;False;1;0;0;1;0;1;FLOAT;0\nNode;AmplifyShaderEditor.SimpleMultiplyOpNode;14;743.8989,-107.7576;Inherit;False;2;2;0;FLOAT3;0,0,0;False;1;FLOAT;0;False;1;FLOAT3;0\nNode;AmplifyShaderEditor.CameraDepthFade;9;443.8989,238.2424;Inherit;False;3;2;FLOAT3;0,0,0;False;0;FLOAT;1;False;1;FLOAT;0;False;1;FLOAT;0\nNode;AmplifyShaderEditor.RangedFloatNode;7;151.8989,247.2424;Inherit;False;Property;_ChunkinessFadelength2;Chunkiness
+    Fade length;2;0;Create;True;0;0;0;False;0;False;0;0;0;0;0;1;FLOAT;0\nNode;AmplifyShaderEditor.RangedFloatNode;8;150.8989,325.2424;Inherit;False;Property;_ChunkinessFadeoffset2;Chunkiness
+    Fade offset;3;0;Create;True;0;0;0;False;0;False;0;0;0;0;0;1;FLOAT;0\nNode;AmplifyShaderEditor.SaturateNode;13;698.8989,224.2424;Inherit;False;1;0;FLOAT;0;False;1;FLOAT;0\nNode;AmplifyShaderEditor.FunctionInput;16;490.4681,-301.2832;Inherit;False;Vertex
+    position;3;0;False;1;0;FLOAT3;0,0,0;False;1;FLOAT3;0\nNode;AmplifyShaderEditor.FunctionOutput;0;1233.372,-237.7255;Inherit;False;True;-1;Output;0;False;1;0;FLOAT3;0,0,0;False;1;FLOAT3;0\nWireConnection;4;1;2;0\nWireConnection;5;0;3;0\nWireConnection;5;1;4;0\nWireConnection;15;0;16;0\nWireConnection;15;1;14;0\nWireConnection;12;0;11;0\nWireConnection;12;1;10;0\nWireConnection;14;0;12;0\nWireConnection;14;1;13;0\nWireConnection;9;0;7;0\nWireConnection;9;1;8;0\nWireConnection;13;0;9;0\nWireConnection;0;0;15;0\nASEEND*/\n//CHKSM=6C2EB10AB03FD81CF852D866A4A65DCC7B6F216E"
+  m_functionName: 
+  m_description: 
+  m_additionalIncludes:
+    m_additionalIncludes: []
+    m_outsideIncludes: []
+  m_additionalPragmas:
+    m_additionalPragmas: []
+    m_outsidePragmas: []
+  m_additionalDirectives:
+    m_validData: 0
+    m_isDirty: 0
+    m_moduleName: ' Additional Directives'
+    m_independentModule: 1
+    m_customEdited: 0
+    m_additionalDirectives: []
+    m_shaderFunctionDirectives: []
+    m_nativeDirectives: []
+    m_nativeDirectivesIndex: -1
+    m_nativeDirectivesFoldout: 0
+    m_directivesSaveItems: []
+  m_nodeCategory: 3
+  m_headerStyle: 0
+  m_headerColor: {r: 1, g: 0.4, b: 0, a: 1}
+  m_customNodeCategory: 
+  m_previewPosition: 0
+  m_hidden: 0
+  m_url: 

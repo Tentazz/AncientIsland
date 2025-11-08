@@ -1,0 +1,53 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 78b2425a2284af743826c689403a4924, type: 3}
+  m_Name: PropsEmission
+  m_EditorClassIdentifier: 
+  m_functionInfo: "// Made with Amplify Shader Editor\n// Available at the Unity
+    Asset Store - http://u3d.as/y3X \n/*ASEBEGIN\nVersion=15401\n0;92;1920;1046;941.5297;449.7971;1;True;False\nNode;AmplifyShaderEditor.CommentaryNode;48;-1570.307,-285.6376;Float;False;796.5142;480.0439;;5;44;45;39;43;51;Pattern;1,1,1,1;0;0\nNode;AmplifyShaderEditor.CommentaryNode;1;-2974.86,-395.1328;Float;False;1165.313;634.4957;Comment;7;16;10;8;6;4;3;2;Noosphere
+    Emission;1,1,1,1;0;0\nNode;AmplifyShaderEditor.CommentaryNode;7;-374.775,-510.6543;Float;False;1652.664;735.4625;;15;23;22;21;19;18;25;26;27;28;52;54;55;56;57;58;Emission;1,1,1,1;0;0\nNode;AmplifyShaderEditor.SimpleMultiplyOpNode;54;91.35657,95.97064;Float;False;2;2;0;COLOR;0,0,0,0;False;1;FLOAT;0;False;1;COLOR;0\nNode;AmplifyShaderEditor.SimpleAddOpNode;55;578.827,-7.716187;Float;False;2;2;0;COLOR;0,0,0,0;False;1;COLOR;0,0,0,0;False;1;COLOR;0\nNode;AmplifyShaderEditor.SimpleMultiplyOpNode;18;384.1079,-380.2729;Float;False;3;3;0;FLOAT;0;False;1;COLOR;0,0,0,0;False;2;FLOAT;0;False;1;COLOR;0\nNode;AmplifyShaderEditor.FresnelNode;2;-2938.472,-133.7774;Float;True;Standard;WorldNormal;ViewDir;False;5;0;FLOAT3;0,0,0;False;4;FLOAT3;0,0,0;False;1;FLOAT;0;False;2;FLOAT;1;False;3;FLOAT;2;False;1;FLOAT;0\nNode;AmplifyShaderEditor.SimpleMultiplyOpNode;8;-2420.862,-269.9323;Float;False;3;3;0;FLOAT;0;False;1;COLOR;0,0,0,0;False;2;FLOAT;0;False;1;COLOR;0\nNode;AmplifyShaderEditor.FunctionInput;26;14.59784,-461.7061;Float;False;Emission
+    Intensity;1;2;False;1;0;FLOAT;0;False;1;FLOAT;0\nNode;AmplifyShaderEditor.OneMinusNode;57;74.82703,-24.71619;Float;False;1;0;FLOAT;0;False;1;FLOAT;0\nNode;AmplifyShaderEditor.SimpleMultiplyOpNode;56;357.827,-57.71619;Float;False;2;2;0;COLOR;0,0,0,0;False;1;FLOAT;0;False;1;COLOR;0\nNode;AmplifyShaderEditor.FunctionInput;25;45.45587,-381.4735;Float;False;Emission
+    Color;5;1;False;1;0;COLOR;0,0,0,0;False;1;COLOR;0\nNode;AmplifyShaderEditor.SimpleAddOpNode;16;-2122.047,-147.157;Float;False;2;2;0;COLOR;0,0,0,0;False;1;COLOR;0,0,0,0;False;1;COLOR;0\nNode;AmplifyShaderEditor.FunctionInput;27;95.9048,-289.8158;Float;False;Emission;1;0;False;1;0;FLOAT;0;False;1;FLOAT;0\nNode;AmplifyShaderEditor.StaticSwitch;22;27.6509,-143.1846;Float;False;Property;_Interactive;Interactive;1;0;Create;True;0;0;False;0;0;0;0;True;;Toggle;2;Key0;Key1;9;1;COLOR;0,0,0,0;False;0;COLOR;0,0,0,0;False;2;COLOR;0,0,0,0;False;3;COLOR;0,0,0,0;False;4;COLOR;0,0,0,0;False;5;COLOR;0,0,0,0;False;6;COLOR;0,0,0,0;False;7;COLOR;0,0,0,0;False;8;COLOR;0,0,0,0;False;1;COLOR;0\nNode;AmplifyShaderEditor.SimpleMultiplyOpNode;39;-1128.093,-135.8826;Float;False;2;2;0;FLOAT;0;False;1;COLOR;0,0,0,0;False;1;COLOR;0\nNode;AmplifyShaderEditor.ColorNode;3;-2920.918,-324.2827;Float;False;Property;_NoosphereColor;Noosphere
+    Color;5;0;Create;True;0;0;False;0;0,1,1,0;0,1,1,0;0;5;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4\nNode;AmplifyShaderEditor.SimpleMultiplyOpNode;45;-1202.71,-15.49367;Float;False;2;2;0;COLOR;0,0,0,0;False;1;FLOAT;0;False;1;COLOR;0\nNode;AmplifyShaderEditor.SimpleMultiplyOpNode;10;-2316.297,-51.2733;Float;False;2;2;0;COLOR;0,0,0,0;False;1;FLOAT;0;False;1;COLOR;0\nNode;AmplifyShaderEditor.LerpOp;23;830.8054,-12.85437;Float;False;3;0;COLOR;0,0,0,0;False;1;COLOR;0,0,0,0;False;2;FLOAT;0;False;1;COLOR;0\nNode;AmplifyShaderEditor.SimpleAddOpNode;43;-927.7924,-32.04919;Float;False;2;2;0;COLOR;0,0,0,0;False;1;COLOR;0,0,0,0;False;1;COLOR;0\nNode;AmplifyShaderEditor.StaticSwitch;21;572.5835,-116.2061;Float;False;Property;_Emission;Emission;0;0;Create;True;0;0;False;0;0;0;0;True;;Toggle;2;Key0;Key1;9;1;COLOR;0,0,0,0;False;0;COLOR;0,0,0,0;False;2;COLOR;0,0,0,0;False;3;COLOR;0,0,0,0;False;4;COLOR;0,0,0,0;False;5;COLOR;0,0,0,0;False;6;COLOR;0,0,0,0;False;7;COLOR;0,0,0,0;False;8;COLOR;0,0,0,0;False;1;COLOR;0\nNode;AmplifyShaderEditor.RangedFloatNode;6;-2946.34,86.19326;Float;False;Constant;_NoosphereColorIntensity;Noosphere
+    Color Intensity;20;0;Create;True;0;0;False;0;0.5;0;0;0;0;1;FLOAT;0\nNode;AmplifyShaderEditor.ColorNode;19;-320.962,-271.8971;Float;False;Constant;_DefaultNoosphereColor;Default
+    Noosphere Color;20;0;Create;True;0;0;False;0;0,0,0,0;0,0,0,0;0;5;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4\nNode;AmplifyShaderEditor.RangedFloatNode;4;-2597.853,-31.19862;Float;False;Constant;_NoosphereColorBoost;Noosphere
+    Color Boost;20;0;Create;True;0;0;False;0;0.3;0;0;0;0;1;FLOAT;0\nNode;AmplifyShaderEditor.RangedFloatNode;44;-1373.01,79.40634;Float;False;Constant;_Float0;Float
+    0;5;0;Create;True;0;0;False;0;0.5;0;0;0;0;1;FLOAT;0\nNode;AmplifyShaderEditor.FunctionInput;28;562.8362,102.1298;Float;False;Noosphere
+    Intensity;1;3;False;1;0;FLOAT;0;False;1;FLOAT;0\nNode;AmplifyShaderEditor.RangedFloatNode;52;-326.192,145.1959;Float;False;Global;HUBNOOSPHERE;HUBNOOSPHERE;4;0;Create;True;0;0;False;0;1;0;0;1;0;1;FLOAT;0\nNode;AmplifyShaderEditor.RangedFloatNode;58;-223.5085,59.6228;Float;False;Constant;_Float0;Float
+    0;4;0;Create;True;0;0;False;0;1;0;0;0;0;1;FLOAT;0\nNode;AmplifyShaderEditor.FunctionNode;51;-1520.307,-235.6376;Float;False;ScreenSpaceMechanicusPattern;2;;78;959cafcf9636bde4db7d44bdbe81c941;0;0;1;FLOAT;0\nNode;AmplifyShaderEditor.FunctionOutput;0;1425.533,-13.82621;Float;False;True;Output;0;False;1;0;COLOR;0,0,0,0;False;1;COLOR;0\nWireConnection;54;0;43;0\nWireConnection;54;1;52;0\nWireConnection;55;0;56;0\nWireConnection;55;1;54;0\nWireConnection;18;0;26;0\nWireConnection;18;1;25;0\nWireConnection;18;2;27;0\nWireConnection;8;0;2;0\nWireConnection;8;1;3;0\nWireConnection;8;2;6;0\nWireConnection;57;0;52;0\nWireConnection;56;0;22;0\nWireConnection;56;1;57;0\nWireConnection;16;0;8;0\nWireConnection;16;1;10;0\nWireConnection;22;1;19;0\nWireConnection;22;0;43;0\nWireConnection;39;0;51;0\nWireConnection;39;1;16;0\nWireConnection;45;0;16;0\nWireConnection;45;1;44;0\nWireConnection;10;0;3;0\nWireConnection;10;1;4;0\nWireConnection;23;0;21;0\nWireConnection;23;1;55;0\nWireConnection;23;2;28;0\nWireConnection;43;0;39;0\nWireConnection;43;1;45;0\nWireConnection;21;0;18;0\nWireConnection;0;0;23;0\nASEEND*/\n//CHKSM=7D8548CC723DC180721C95D22BA9B757A0955D36"
+  m_functionName: 
+  m_description: 
+  m_additionalIncludes:
+    m_additionalIncludes: []
+    m_outsideIncludes: []
+  m_additionalPragmas:
+    m_additionalPragmas: []
+    m_outsidePragmas: []
+  m_additionalDirectives:
+    m_validData: 0
+    m_isDirty: 0
+    m_moduleName: ' Additional Directives'
+    m_independentModule: 1
+    m_customEdited: 0
+    m_additionalDirectives: []
+    m_shaderFunctionDirectives: []
+    m_nativeDirectives: []
+    m_nativeDirectivesIndex: -1
+    m_nativeDirectivesFoldout: 0
+    m_directivesSaveItems: []
+  m_nodeCategory: 3
+  m_headerStyle: 0
+  m_headerColor: {r: 1, g: 0.4, b: 0, a: 1}
+  m_customNodeCategory: 
+  m_previewPosition: 0
+  m_hidden: 0
+  m_url: 

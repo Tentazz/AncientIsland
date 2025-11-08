@@ -1,0 +1,46 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 78b2425a2284af743826c689403a4924, type: 3}
+  m_Name: Switch by faction
+  m_EditorClassIdentifier: 
+  m_functionInfo: "// Made with Amplify Shader Editor v1.9.2.1\n// Available at the
+    Unity Asset Store - http://u3d.as/y3X \n/*ASEBEGIN\nVersion=19201\nNode;AmplifyShaderEditor.FunctionOutput;0;879,-215;Inherit;False;True;-1;Output;0;False;1;0;COLOR;0,0,0,0;False;1;COLOR;0\nNode;AmplifyShaderEditor.LerpOp;6;333,-291.5;Inherit;True;3;0;COLOR;0,0,0,0;False;1;COLOR;0,0,0,0;False;2;FLOAT;0;False;1;COLOR;0\nNode;AmplifyShaderEditor.StepOpNode;11;525,-418.5;Inherit;False;2;0;FLOAT;0.99;False;1;FLOAT;1.99;False;1;FLOAT;0\nNode;AmplifyShaderEditor.StepOpNode;2;216,-392.5;Inherit;False;2;0;FLOAT;0.99;False;1;FLOAT;0.99;False;1;FLOAT;0\nNode;AmplifyShaderEditor.LerpOp;10;593,-95.5;Inherit;True;3;0;COLOR;0,0,0,0;False;1;COLOR;0,0,0,0;False;2;FLOAT;0;False;1;COLOR;0\nNode;AmplifyShaderEditor.RangedFloatNode;1;-34,-485.5;Inherit;False;Global;_Global_Faction;_Global_Faction;6;1;[Enum];Create;True;0;3;Mechanicus;0;Necron;1;Vottan;2;0;False;0;False;0;1;0;0;0;1;FLOAT;0\nNode;AmplifyShaderEditor.FunctionInput;5;-224,-397.5;Inherit;True;Color
+    Admech;5;0;False;1;0;COLOR;1,0,0,0;False;1;COLOR;0\nNode;AmplifyShaderEditor.FunctionInput;7;-120,-146.5;Inherit;True;Color
+    Necron;5;1;False;1;0;COLOR;0.02937579,1,0,0;False;1;COLOR;0\nNode;AmplifyShaderEditor.FunctionInput;8;-151,90.5;Inherit;True;Color
+    Votann;5;2;False;1;0;COLOR;0,0.2200644,1,0;False;1;COLOR;0\nWireConnection;0;0;10;0\nWireConnection;6;0;5;0\nWireConnection;6;1;7;0\nWireConnection;6;2;2;0\nWireConnection;11;0;1;0\nWireConnection;2;1;1;0\nWireConnection;10;0;8;0\nWireConnection;10;1;6;0\nWireConnection;10;2;11;0\nASEEND*/\n//CHKSM=C03B63BD6722592DE396F2C4D1E42EF9C40E3C15"
+  m_functionName: 
+  m_description: 
+  m_additionalIncludes:
+    m_additionalIncludes: []
+    m_outsideIncludes: []
+  m_additionalPragmas:
+    m_additionalPragmas: []
+    m_outsidePragmas: []
+  m_additionalDirectives:
+    m_validData: 0
+    m_isDirty: 0
+    m_moduleName: ' Additional Directives'
+    m_independentModule: 1
+    m_customEdited: 0
+    m_additionalDirectives: []
+    m_shaderFunctionDirectives: []
+    m_nativeDirectives: []
+    m_nativeDirectivesIndex: -1
+    m_nativeDirectivesFoldout: 0
+    m_directivesSaveItems: []
+  m_nodeCategory: 3
+  m_headerStyle: 0
+  m_headerColor: {r: 1, g: 0.4, b: 0, a: 1}
+  m_customNodeCategory: 
+  m_previewPosition: 0
+  m_hidden: 0
+  m_url: 

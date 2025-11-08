@@ -1,0 +1,48 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 78b2425a2284af743826c689403a4924, type: 3}
+  m_Name: RotateAroundAxis
+  m_EditorClassIdentifier: 
+  m_functionInfo: "// Made with Amplify Shader Editor\n// Available at the Unity
+    Asset Store - http://u3d.as/y3X \n/*ASEBEGIN\nVersion=13101\n1927;29;1906;1124;2463.031;985.0331;2.300713;True;True\nNode;AmplifyShaderEditor.FunctionInput;7;-1114.814,-129.1681;Float;False;Angle
+    In Degrees;1;2;False;1;0;FLOAT;0.0;False;1;FLOAT\nNode;AmplifyShaderEditor.FunctionInput;8;-1036.59,-287.9171;Float;False;Axis;3;1;False;1;0;FLOAT3;0,0,0;False;1;FLOAT3\nNode;AmplifyShaderEditor.FunctionInput;9;-551.1375,-32.5383;Float;False;Position;3;0;False;1;0;FLOAT3;0,0,0;False;1;FLOAT3\nNode;AmplifyShaderEditor.FunctionNode;2;-713.7928,-287.4072;Float;False;Quaternion
+    From Axis Angle;-1;;17;2;0;FLOAT3;0,0,0;False;1;FLOAT;0.0;False;1;FLOAT4\nNode;AmplifyShaderEditor.FunctionNode;3;-276.0699,-354.2814;Float;False;Quaternion
+    Conjugate;-1;;18;1;0;FLOAT4;0,0,0,0;False;1;FLOAT4\nNode;AmplifyShaderEditor.FunctionNode;4;-239.593,-237.2511;Float;False;Quaternion
+    Multiply;-1;;19;2;0;FLOAT4;0,0,0,0;False;1;FLOAT4;0,0,0,0;False;1;FLOAT4\nNode;AmplifyShaderEditor.SimpleSubtractOpNode;6;312.688,-109.9028;Float;False;2;0;FLOAT4;0.0;False;1;FLOAT3;0,0,0,0;False;1;FLOAT4\nNode;AmplifyShaderEditor.FunctionNode;5;38.5435,-304.1257;Float;False;Quaternion
+    Multiply;-1;;20;2;0;FLOAT4;0,0,0,0;False;1;FLOAT4;0,0,0,0;False;1;FLOAT4\nNode;AmplifyShaderEditor.FunctionOutput;0;749.1998,-167.2172;Float;False;True;Offset;1;1;0;FLOAT4;0.0;False;0\nNode;AmplifyShaderEditor.FunctionOutput;1;755.1998,-269.2172;Float;False;False;Absolute;0;1;0;FLOAT4;0.0;False;0\nWireConnection;2;0;8;0\nWireConnection;2;1;7;0\nWireConnection;3;0;2;0\nWireConnection;4;0;2;0\nWireConnection;4;1;9;0\nWireConnection;6;0;5;0\nWireConnection;6;1;9;0\nWireConnection;5;0;4;0\nWireConnection;5;1;3;0\nWireConnection;0;0;6;0\nWireConnection;1;0;5;0\nASEEND*/\n//CHKSM=923A5803EC8671F352B2268B075F48B95EDC14DD"
+  m_functionName: 
+  m_description: 
+  m_additionalIncludes:
+    m_additionalIncludes: []
+    m_outsideIncludes: []
+  m_additionalPragmas:
+    m_additionalPragmas: []
+    m_outsidePragmas: []
+  m_additionalDirectives:
+    m_validData: 0
+    m_isDirty: 0
+    m_moduleName: ' Additional Directives'
+    m_independentModule: 1
+    m_customEdited: 0
+    m_additionalDirectives: []
+    m_shaderFunctionDirectives: []
+    m_nativeDirectives: []
+    m_nativeDirectivesIndex: -1
+    m_nativeDirectivesFoldout: 0
+    m_directivesSaveItems: []
+  m_nodeCategory: 3
+  m_headerStyle: 0
+  m_headerColor: {r: 1, g: 0.4, b: 0, a: 1}
+  m_customNodeCategory: 
+  m_previewPosition: 0
+  m_hidden: 0
+  m_url: 

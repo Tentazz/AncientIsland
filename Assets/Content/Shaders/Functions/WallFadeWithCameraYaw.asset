@@ -1,0 +1,58 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 78b2425a2284af743826c689403a4924, type: 3}
+  m_Name: WallFadeWithCameraYaw
+  m_EditorClassIdentifier: 
+  m_functionInfo: "// Made with Amplify Shader Editor\n// Available at the Unity
+    Asset Store - http://u3d.as/y3X \n/*ASEBEGIN\nVersion=18900\n570;393;1064;474;697.9071;193.0666;1.049521;True;False\nNode;AmplifyShaderEditor.DynamicAppendNode;22;-1179.363,-181.8806;Inherit;False;FLOAT2;4;0;FLOAT;0;False;1;FLOAT;0;False;2;FLOAT;0;False;3;FLOAT;0;False;1;FLOAT2;0\nNode;AmplifyShaderEditor.ClampOpNode;25;-834.1015,26.54642;Inherit;False;3;0;FLOAT;0;False;1;FLOAT;0;False;2;FLOAT;1;False;1;FLOAT;0\nNode;AmplifyShaderEditor.StaticSwitch;34;-385.6589,36.24701;Inherit;False;Property;_ISEDITOR;_ISEDITOR;0;0;Create;True;0;0;0;False;0;False;0;0;0;True;;Toggle;2;Key0;Key1;Create;False;True;9;1;FLOAT;0;False;0;FLOAT;0;False;2;FLOAT;0;False;3;FLOAT;0;False;4;FLOAT;0;False;5;FLOAT;0;False;6;FLOAT;0;False;7;FLOAT;0;False;8;FLOAT;0;False;1;FLOAT;0\nNode;AmplifyShaderEditor.FunctionInput;29;-1905.531,-395.3496;Inherit;False;AngleInTorus;1;0;False;1;0;FLOAT;0;False;1;FLOAT;0\nNode;AmplifyShaderEditor.SinOpNode;17;-1412.858,-368.6217;Inherit;False;1;0;FLOAT;0;False;1;FLOAT;0\nNode;AmplifyShaderEditor.IntNode;39;-224.6591,129.247;Inherit;False;Global;Global_IS_IN_GAMEPLAYDATA;Global_IS_IN_GAMEPLAYDATA;1;0;Create;True;0;0;0;False;0;False;0;0;False;0;1;INT;0\nNode;AmplifyShaderEditor.DotProductOpNode;23;-1008.363,-255.8807;Inherit;False;2;0;FLOAT2;0,0;False;1;FLOAT2;0,0;False;1;FLOAT;0\nNode;AmplifyShaderEditor.CustomExpressionNode;31;-607.6001,-82.45432;Inherit;False;int
+    lessThan0 = (int) (Value < 0)@$int betwen0AndPoint1 = (int) (Value > 0 && Value
+    <=0.1)@$int moreThanPoint1 = (int) (Value > 0.1)@$$return $(lessThan0 * 1) +$(betwen0AndPoint1
+    *InverseLerpRes) + $(moreThanPoint1 * 0 )@ $$$// old method with \"if\"$// return
+    Value < 0 ? 1 : (Value > 0 && Value <=0.1 ? InverseLerpRes : 0)@;1;False;2;True;Value;FLOAT;0;In;;Inherit;False;True;InverseLerpRes;FLOAT;0;In;;Inherit;False;My
+    Custom Expression;True;False;0;2;0;FLOAT;0;False;1;FLOAT;0;False;1;FLOAT;0\nNode;AmplifyShaderEditor.DynamicAppendNode;21;-1245.363,-392.8807;Inherit;False;FLOAT2;4;0;FLOAT;0;False;1;FLOAT;0;False;2;FLOAT;0;False;3;FLOAT;0;False;1;FLOAT2;0\nNode;AmplifyShaderEditor.SinOpNode;20;-1350.863,-125.8806;Inherit;False;1;0;FLOAT;0;False;1;FLOAT;0\nNode;AmplifyShaderEditor.RangedFloatNode;33;-494.6589,158.247;Inherit;False;Constant;_Float0;Float
+    0;0;0;Create;True;0;0;0;False;0;False;1;0;0;0;0;1;FLOAT;0\nNode;AmplifyShaderEditor.CosOpNode;19;-1349.863,-189.8806;Inherit;False;1;0;FLOAT;0;False;1;FLOAT;0\nNode;AmplifyShaderEditor.CosOpNode;18;-1411.858,-432.6217;Inherit;False;1;0;FLOAT;0;False;1;FLOAT;0\nNode;AmplifyShaderEditor.RangedFloatNode;14;-1812.51,-174.2478;Inherit;False;Global;Global_CameraYawAngle;Global_CameraYawAngle;12;0;Create;True;0;0;0;False;0;False;0;8.335785;0;0;0;1;FLOAT;0\nNode;AmplifyShaderEditor.RadiansOpNode;15;-1611.298,-378.9106;Inherit;False;1;0;FLOAT;0;False;1;FLOAT;0\nNode;AmplifyShaderEditor.FunctionNode;24;-1073.102,21.5464;Inherit;False;Inverse
+    Lerp;-1;;651;09cbe79402f023141a4dc1fddd4c9511;0;3;1;FLOAT;0.1;False;2;FLOAT;0;False;3;FLOAT;0;False;1;FLOAT;0\nNode;AmplifyShaderEditor.RadiansOpNode;16;-1530.298,-160.9106;Inherit;False;1;0;FLOAT;0;False;1;FLOAT;0\nNode;AmplifyShaderEditor.CustomExpressionNode;38;-5.659058,-25.75299;Inherit;False;
+    int isInGameplayAsInt = (int) (IsInGameplayData == 1 )@$ int isNotInGameplayAsInt
+    = (int) (IsInGameplayData != 1 )@$$return $(isInGameplayAsInt * Alpha) +$( isNotInGameplayAsInt
+    * 1)@$$// old condition with \"if\"$//return IsInGameplayData == 1 ? Alpha :
+    1@;1;False;2;True;IsInGameplayData;INT;0;In;;Inherit;False;True;Alpha;FLOAT;0;In;;Inherit;False;My
+    Custom Expression;True;False;0;2;0;INT;0;False;1;FLOAT;0;False;1;FLOAT;0\nNode;AmplifyShaderEditor.FunctionOutput;0;334.8999,-89.1001;Inherit;False;True;-1;Alpha
+    value;0;False;1;0;FLOAT;0;False;1;FLOAT;0\nNode;AmplifyShaderEditor.CommentaryNode;30;-1624.404,-627.5975;Inherit;False;918;105;Determines
+    the fade value according to the camera yaw and the angle of the object relative
+    to the torus;0;;1,1,1,1;0;0\nWireConnection;22;0;19;0\nWireConnection;22;1;20;0\nWireConnection;25;0;24;0\nWireConnection;34;0;33;0\nWireConnection;17;0;15;0\nWireConnection;23;0;21;0\nWireConnection;23;1;22;0\nWireConnection;31;0;23;0\nWireConnection;31;1;25;0\nWireConnection;21;0;18;0\nWireConnection;21;1;17;0\nWireConnection;20;0;16;0\nWireConnection;19;0;16;0\nWireConnection;18;0;15;0\nWireConnection;15;0;29;0\nWireConnection;24;3;23;0\nWireConnection;16;0;14;0\nWireConnection;38;0;39;0\nWireConnection;38;1;31;0\nWireConnection;0;0;38;0\nASEEND*/\n//CHKSM=75934CC3105C027703425FD671892FA4E0F77405"
+  m_functionName: 
+  m_description: 
+  m_additionalIncludes:
+    m_additionalIncludes: []
+    m_outsideIncludes: []
+  m_additionalPragmas:
+    m_additionalPragmas: []
+    m_outsidePragmas: []
+  m_additionalDirectives:
+    m_validData: 0
+    m_isDirty: 0
+    m_moduleName: ' Additional Directives'
+    m_independentModule: 1
+    m_customEdited: 0
+    m_additionalDirectives: []
+    m_shaderFunctionDirectives: []
+    m_nativeDirectives: []
+    m_nativeDirectivesIndex: -1
+    m_nativeDirectivesFoldout: 0
+    m_directivesSaveItems: []
+  m_nodeCategory: 3
+  m_headerStyle: 0
+  m_headerColor: {r: 1, g: 0.4, b: 0, a: 1}
+  m_customNodeCategory: 
+  m_previewPosition: 0
+  m_hidden: 0
+  m_url: 

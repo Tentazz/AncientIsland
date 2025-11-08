@@ -1,0 +1,60 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 78b2425a2284af743826c689403a4924, type: 3}
+  m_Name: GetCellData
+  m_EditorClassIdentifier: 
+  m_functionInfo: "// Made with Amplify Shader Editor v1.9.1.3\n// Available at the
+    Unity Asset Store - http://u3d.as/y3X \n/*ASEBEGIN\nVersion=19103\nNode;AmplifyShaderEditor.FunctionOutput;3;19.97276,2.572464;Inherit;False;True;-1;Region
+    Index;1;False;1;0;INT;0;False;1;INT;0\nNode;AmplifyShaderEditor.FunctionOutput;5;22.14977,78.76453;Inherit;False;False;-1;BiomeType;2;False;1;0;INT;0;False;1;INT;0\nNode;AmplifyShaderEditor.FunctionInput;6;-665.5103,-81.40051;Inherit;False;Cell
+    Index;0;0;False;1;0;INT;0;False;1;INT;0\nNode;AmplifyShaderEditor.FunctionOutput;7;24.48999,156.5995;Inherit;False;False;-1;Cell
+    Center;0;False;1;0;FLOAT3;0,0,0;False;1;FLOAT3;0\nNode;AmplifyShaderEditor.CustomExpressionNode;1;-407.4443,-84.76941;Inherit;False;WarmapCellShaderStruct
+    cell = _WarmapCellsBuffer[index]@$region_index = cell.regionIndex@$biome_type
+    = cell.biomeType@$cell_center = cell.position@;7;Create;4;True;index;INT;0;In;;Inherit;False;True;region_index;INT;0;Out;;Inherit;False;True;biome_type;INT;0;Out;;Inherit;False;True;cell_center;FLOAT3;0,0,0;Out;;Inherit;False;GetCell;True;False;0;;False;5;0;FLOAT3;0,0,0;False;1;INT;0;False;2;INT;0;False;3;INT;0;False;4;FLOAT3;0,0,0;False;4;FLOAT3;0;INT;3;INT;4;FLOAT3;5\nWireConnection;3;0;1;3\nWireConnection;5;0;1;4\nWireConnection;7;0;1;5\nWireConnection;1;1;6;0\nASEEND*/\n//CHKSM=181C69C0ED65B39934635C1EE9C6D894C57CC5BB"
+  m_functionName: 
+  m_description: 'Given the cell index , returns the data of the cell.
+
+    BiomeType
+    : int going from 0 to 3 with the following indication:
+
+    - 0 : Ocean
+
+    -
+    1 : Desert
+
+    - 2 : Swamp
+
+    - 3 : Montain'
+  m_additionalIncludes:
+    m_additionalIncludes: []
+    m_outsideIncludes: []
+  m_additionalPragmas:
+    m_additionalPragmas: []
+    m_outsidePragmas: []
+  m_additionalDirectives:
+    m_validData: 0
+    m_isDirty: 0
+    m_moduleName: ' Additional Directives'
+    m_independentModule: 1
+    m_customEdited: 0
+    m_additionalDirectives: []
+    m_shaderFunctionDirectives: []
+    m_nativeDirectives: []
+    m_nativeDirectivesIndex: -1
+    m_nativeDirectivesFoldout: 0
+    m_directivesSaveItems: []
+  m_nodeCategory: 3
+  m_headerStyle: 0
+  m_headerColor: {r: 1, g: 0.4, b: 0, a: 1}
+  m_customNodeCategory: 
+  m_previewPosition: 0
+  m_hidden: 0
+  m_url: 

@@ -1,0 +1,45 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 78b2425a2284af743826c689403a4924, type: 3}
+  m_Name: Quaternion Conjugate
+  m_EditorClassIdentifier: 
+  m_functionInfo: "// Made with Amplify Shader Editor\n// Available at the Unity
+    Asset Store - http://u3d.as/y3X \n/*ASEBEGIN\nVersion=13101\n1927;29;1906;1124;953;562;1;True;True\nNode;AmplifyShaderEditor.FunctionInput;2;-431,-6;Float;False;Q;4;0;False;1;0;FLOAT4;0,0,0,0;False;1;FLOAT4\nNode;AmplifyShaderEditor.CustomExpressionNode;1;-261,0;Float;False;return
+    float4(-q.x, -q.y, -q.z, q.w)@;4;False;1;True;q;FLOAT4;0,0,0,0;In;Quaternion
+    Conjugate;1;0;FLOAT4;0,0,0,0;False;1;FLOAT4\nNode;AmplifyShaderEditor.FunctionOutput;0;0,0;Float;False;True;Q;0;1;0;FLOAT4;0.0;False;0\nWireConnection;1;0;2;0\nWireConnection;0;0;1;0\nASEEND*/\n//CHKSM=DDFBEE2AA2E1A2C4300572F47698EB28C51CD427"
+  m_functionName: 
+  m_description: 
+  m_additionalIncludes:
+    m_additionalIncludes: []
+    m_outsideIncludes: []
+  m_additionalPragmas:
+    m_additionalPragmas: []
+    m_outsidePragmas: []
+  m_additionalDirectives:
+    m_validData: 0
+    m_isDirty: 0
+    m_moduleName: ' Additional Directives'
+    m_independentModule: 1
+    m_customEdited: 0
+    m_additionalDirectives: []
+    m_shaderFunctionDirectives: []
+    m_nativeDirectives: []
+    m_nativeDirectivesIndex: -1
+    m_nativeDirectivesFoldout: 0
+    m_directivesSaveItems: []
+  m_nodeCategory: 3
+  m_headerStyle: 0
+  m_headerColor: {r: 1, g: 0.4, b: 0, a: 1}
+  m_customNodeCategory: 
+  m_previewPosition: 0
+  m_hidden: 0
+  m_url: 

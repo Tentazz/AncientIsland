@@ -1,0 +1,46 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 78b2425a2284af743826c689403a4924, type: 3}
+  m_Name: Albedo in emissive
+  m_EditorClassIdentifier: 
+  m_functionInfo: "// Made with Amplify Shader Editor\n// Available at the Unity
+    Asset Store - http://u3d.as/y3X \n/*ASEBEGIN\nVersion=18900\n0;0;1920;1019;2150.1;474.3917;1.3;True;False\nNode;AmplifyShaderEditor.FunctionInput;4;-1249,-386.5;Inherit;True;Albedo;4;2;False;1;0;FLOAT4;1,1,1,1;False;1;FLOAT4;0\nNode;AmplifyShaderEditor.FunctionInput;2;-1256.4,13.70001;Inherit;False;Power
+    Mode;1;1;False;1;0;FLOAT;1;False;1;FLOAT;0\nNode;AmplifyShaderEditor.FunctionInput;1;-1290.4,-113.8;Inherit;False;Ambient
+    Occlusion;1;0;False;1;0;FLOAT;1;False;1;FLOAT;0\nNode;AmplifyShaderEditor.SimpleMultiplyOpNode;3;-429.6006,-202.8;Inherit;True;5;5;0;FLOAT4;0,0,0,0;False;1;FLOAT;0;False;2;FLOAT;0;False;3;COLOR;0,0,0,0;False;4;FLOAT;0;False;1;FLOAT4;0\nNode;AmplifyShaderEditor.GradientSampleNode;9;-973.7996,159;Inherit;True;2;0;OBJECT;;False;1;FLOAT;0;False;5;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4\nNode;AmplifyShaderEditor.RangedFloatNode;6;-1315,245.3999;Inherit;False;Global;AlbedoInEmissive_Global;AlbedoInEmissive_Global;0;0;Create;True;0;0;0;False;0;False;0.33;0;0;1;0;1;FLOAT;0\nNode;AmplifyShaderEditor.GradientNode;8;-1242.701,147.8999;Inherit;False;0;3;2;0,0,0,0;0.7264151,0.7264151,0.7264151,0.5000076;0.7698961,0.5676483,0.4658324,1;1,0;1,1;0;1;OBJECT;0\nNode;AmplifyShaderEditor.RangedFloatNode;10;-812.4003,451.2083;Inherit;False;Property;_AlbedoinEmissiveSlider;AlbedoinEmissive
+    Slider;0;0;Create;True;0;0;0;False;0;False;1;0;0;1;0;1;FLOAT;0\nNode;AmplifyShaderEditor.FunctionOutput;0;4,-125;Inherit;True;True;-1;Output;0;False;1;0;FLOAT4;0,0,0,0;False;1;FLOAT4;0\nWireConnection;3;0;4;0\nWireConnection;3;1;1;0\nWireConnection;3;2;2;0\nWireConnection;3;3;9;0\nWireConnection;3;4;10;0\nWireConnection;9;0;8;0\nWireConnection;9;1;6;0\nWireConnection;0;0;3;0\nASEEND*/\n//CHKSM=D0DF0C126F547AD72BA62456064F04560618321A"
+  m_functionName: 
+  m_description: 
+  m_additionalIncludes:
+    m_additionalIncludes: []
+    m_outsideIncludes: []
+  m_additionalPragmas:
+    m_additionalPragmas: []
+    m_outsidePragmas: []
+  m_additionalDirectives:
+    m_validData: 0
+    m_isDirty: 0
+    m_moduleName: ' Additional Directives'
+    m_independentModule: 1
+    m_customEdited: 0
+    m_additionalDirectives: []
+    m_shaderFunctionDirectives: []
+    m_nativeDirectives: []
+    m_nativeDirectivesIndex: -1
+    m_nativeDirectivesFoldout: 0
+    m_directivesSaveItems: []
+  m_nodeCategory: 3
+  m_headerStyle: 0
+  m_headerColor: {r: 1, g: 0.4, b: 0, a: 1}
+  m_customNodeCategory: 
+  m_previewPosition: 0
+  m_hidden: 0
+  m_url: 

@@ -9,7 +9,12 @@ public class MouseLook : MonoBehaviour
     public InputActionAsset InputActions;
     public InputAction lookAction;
 
+    public Animator cameraAnimator;
+    private float lookAmountXAnimator;
+    private float lookAmountXAnimatorPreviousFrame;
+
     private Vector2 lookAmount;
+
 
     public float mouseSensitivityX = 100f;
     public float mouseSensitivityY = 100f;
@@ -47,6 +52,12 @@ public class MouseLook : MonoBehaviour
     void Update()
     {
         lookAmount = lookAction.ReadValue<Vector2>();
+
+        lookAmountXAnimator = (lookAmount.x/50) + 0.5f;
+
+        cameraAnimator.SetFloat("LookAmountX", (lookAmountXAnimator + lookAmountXAnimatorPreviousFrame)/2);
+        lookAmountXAnimatorPreviousFrame = lookAmountXAnimator;
+        //cameraAnimator.SetFloat("LookAmountY", lookAmount.y);
 
         var control = lookAction.activeControl;
         bool fromMouse = control != null && control.device is Mouse; 
