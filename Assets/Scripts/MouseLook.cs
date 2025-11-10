@@ -27,6 +27,8 @@ public class MouseLook : MonoBehaviour
 
     float xRotation = 0f;
 
+    public float jumellesMultiplyier = 1f;
+
 
 
     //Activer le systeme d'input du joueur
@@ -68,14 +70,14 @@ public class MouseLook : MonoBehaviour
         if (fromMouse)
         {
             // Mouse gives a per-frame delta (pixels since last frame) -> don't multiply by Time.deltaTime
-            mouseX = lookAmount.x * mouseSensitivityX / 100;
-            mouseY = lookAmount.y * mouseSensitivityY / 100;
+            mouseX = lookAmount.x * mouseSensitivityX / 100 * jumellesMultiplyier;
+            mouseY = lookAmount.y * mouseSensitivityY / 100 * jumellesMultiplyier;
         }
         else
         {
             // Gamepad/joystick gives axis values [-1,1] -> treat as units/sec so multiply by Time.deltaTime
-            mouseX = lookAmount.x * gamepadSensitivityX * Time.deltaTime;
-            mouseY = lookAmount.y * gamepadSensitivityY * Time.deltaTime;
+            mouseX = lookAmount.x * gamepadSensitivityX * Time.deltaTime * jumellesMultiplyier;
+            mouseY = lookAmount.y * gamepadSensitivityY * Time.deltaTime * jumellesMultiplyier;
         }
 
         xRotation -= mouseY;
