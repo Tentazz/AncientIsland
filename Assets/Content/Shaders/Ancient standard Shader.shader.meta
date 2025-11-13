@@ -1,0 +1,13 @@
+fileFormatVersion: 2
+guid: 85c75951e7fd0824c83fae3a0855dd13
+ShaderImporter:
+  externalObjects: {}
+  defaultTextures:
+  - _Albedo: {fileID: 2800000, guid: 9bc959af760ff2449aab8b6cf77794cb, type: 3}
+  - _Albedo2: {fileID: 2800000, guid: 9bc959af760ff2449aab8b6cf77794cb, type: 3}
+  - _Texture1: {fileID: 2800000, guid: ab349d414a1143749abad8a1fe8eaa2d, type: 3}
+  - _NormalMap: {fileID: 2800000, guid: f30d9a07f8fe44f4a9752b5385d6c759, type: 3}
+  nonModifiableTextures: []
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

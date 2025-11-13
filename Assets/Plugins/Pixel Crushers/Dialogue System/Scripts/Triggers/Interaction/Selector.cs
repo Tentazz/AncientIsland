@@ -659,7 +659,7 @@ namespace PixelCrushers.DialogueSystem
                     return CustomPosition;
                 default:
                 case SelectAt.CenterOfScreen:
-                    return new Vector3(Screen.width / 2, Screen.height / 2);
+                    return new Vector3(320, 180);
             }
         }
 

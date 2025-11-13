@@ -126,11 +126,12 @@ Material:
     - _ScaleX: 1
     - _ScaleY: 1
     - _ShaderFlags: 0
+    - _ShadowMatteFilter: 2.006836
     - _Sharpness: 0
     - _SpecularPower: 2.4
     - _SrcBlend: 1
     - _Stencil: 0
-    - _StencilComp: 0
+    - _StencilComp: 8
     - _StencilOp: 0
     - _StencilReadMask: 255
     - _StencilRef: 0
@@ -144,6 +145,13 @@ Material:
     - _StencilWriteMaskGBuffer: 14
     - _StencilWriteMaskMV: 43
     - _SurfaceType: 1
+    - _TessellationBackFaceCullEpsilon: -0.25
+    - _TessellationFactorMaxDistance: 50
+    - _TessellationFactorMinDistance: 20
+    - _TessellationFactorTriangleSize: 100
+    - _TessellationMaxDisplacement: 0.01
+    - _TessellationMode: 0
+    - _TessellationShapeFactor: 0.75
     - _TextureHeight: 1024
     - _TextureWidth: 1024
     - _TransparentBackfaceEnable: 0

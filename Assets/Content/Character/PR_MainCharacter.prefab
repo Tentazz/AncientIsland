@@ -10085,7 +10085,6 @@ GameObject:
   - component: {fileID: 3785810493244169471}
   - component: {fileID: 4942620392142972436}
   - component: {fileID: 350598442283297951}
-  - component: {fileID: 8923825389900180316}
   - component: {fileID: 4449931184628916006}
   m_Layer: 0
   m_Name: PR_MainCharacter
@@ -10226,56 +10225,6 @@ MonoBehaviour:
   m_DefaultActionMap: Player
   m_SplitScreenIndex: -1
   m_Camera: {fileID: 0}
---- !u!114 &8923825389900180316
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4607285457530146397}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 624654ff0a68ee844994f728ddf3d991, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp-firstpass::PixelCrushers.DialogueSystem.Wrappers.Selector
-  selectAt: 0
-  layerMask:
-    serializedVersion: 2
-    m_Bits: 1
-  distanceFrom: 0
-  maxSelectionDistance: 2
-  runRaycasts: 1
-  raycastAll: 0
-  selectBehindUIObjects: 0
-  useDefaultGUI: 1
-  guiSkin: {fileID: 0}
-  guiStyleName: label
-  alignment: 1
-  textStyle: 1
-  textStyleColor: {r: 0, g: 0, b: 0, a: 1}
-  inRangeColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
-  outOfRangeColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
-  reticle:
-    inRange: {fileID: 0}
-    outOfRange: {fileID: 0}
-    width: 64
-    height: 64
-  useKey: 0
-  useButton: Interact
-  m_defaultUseMessage: (spacebar to interact)
-  broadcastToChildren: 1
-  actorTransform: {fileID: 0}
-  tooFarMessage: 
-  onSelectedUsable:
-    m_PersistentCalls:
-      m_Calls: []
-  onDeselectedUsable:
-    m_PersistentCalls:
-      m_Calls: []
-  tooFarEvent:
-    m_PersistentCalls:
-      m_Calls: []
-  debug: 0
 --- !u!114 &4449931184628916006
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -10338,6 +10287,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: '::'
   InputActions: {fileID: -944628639613478452, guid: 57ee71ee826d017449e054ba027627b3,
     type: 3}
+  moveAction:
+    m_Name: Move
+    m_Type: 0
+    m_ExpectedControlType: 
+    m_Id: e3d7701f-492c-4e98-a554-98b2c7e48065
+    m_Processors: 
+    m_Interactions: 
+    m_SingletonActionBindings: []
+    m_Flags: 0
   AttackAction:
     m_Name: Attack
     m_Type: 0
@@ -10347,6 +10305,8 @@ MonoBehaviour:
     m_Interactions: 
     m_SingletonActionBindings: []
     m_Flags: 0
+  vignetteObject: {fileID: 0}
+  playerCamera: {fileID: 8677153287364739573}
   mainVirtualCamera: {fileID: 2452860037062734681}
 --- !u!1 &5752670711531132529
 GameObject:
@@ -21112,6 +21072,7 @@ MonoBehaviour:
   gamepadSensitivityX: 10
   gamepadSensitivityY: 10
   playerBody: {fileID: 438938360663840763}
+  jumellesMultiplyier: 1
 --- !u!114 &7472866150321594533
 MonoBehaviour:
   m_ObjectHideFlags: 0

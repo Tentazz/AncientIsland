@@ -7,7 +7,7 @@ public class GameManager : MonoBehaviour
     void Start()
     {
         // Switch to 640 x 480 full-screen
-        Screen.SetResolution(screenResolutionX, screenResolutionY, true);
+        //Screen.SetResolution(screenResolutionX, screenResolutionY, true);
     }
 
     void Update()

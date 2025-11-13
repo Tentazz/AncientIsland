@@ -13,6 +13,9 @@ namespace PixelCrushers.DialogueSystem.Wrappers
     [AddComponentMenu("Pixel Crushers/Dialogue System/Actor/Player/Selector")]
     public class Selector : PixelCrushers.DialogueSystem.Selector
     {
+        /*protected override Vector3 GetSelectionPoint() {
+            return new Vector3(320, 180);
+        }*/
     }
 
 }
