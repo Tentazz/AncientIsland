@@ -34,7 +34,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _GrassNoise:
-        m_Texture: {fileID: 2800000, guid: 078bc36861dd5ad429d5ef140bd418d8, type: 3}
+        m_Texture: {fileID: 2800000, guid: 373ea9afea84dda41a9d55f805e07f35, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _Noisetexture:
@@ -103,7 +103,9 @@ Material:
     - _EnableBlendModePreserveSpecularLighting: 1
     - _EnableFogOnTransparent: 1
     - _Gradientmaskforvertexoffsetinalebdo: 0
-    - _Grasscolorsize: 620
+    - _GrasscolorDistortionsize: 107
+    - _Grasscolordistortionintensity: 0.3
+    - _Grasscolorsize: 150
     - _OpaqueCullMode: 2
     - _PerPixelSorting: 0
     - _ReceivesSSR: 1
@@ -133,6 +135,7 @@ Material:
     - _TransparentSortPriority: 0
     - _TransparentWritingMotionVec: 0
     - _TransparentZWrite: 0
+    - _UVforgradient: 0
     - _UseShadowThreshold: 0
     - _VertexoffsetSizenear: 50
     - _Vertexoffsetinalbedo: 0
@@ -143,7 +146,7 @@ Material:
     - _ZWrite: 1
     m_Colors:
     - _BaseColor: {r: 0.25882354, g: 0.46666667, b: 0.24705882, a: 1}
-    - _BaseColor2: {r: 0.21839999, g: 0.56, b: 0.39027295, a: 1}
+    - _BaseColor2: {r: 0, g: 1, b: 0.5057471, a: 1}
     - _DoubleSidedConstants: {r: 1, g: 1, b: -1, a: 0}
     - _EmissionColor: {r: 1, g: 1, b: 1, a: 1}
     - _VertexWindSpeednear: {r: 0, g: 0.1, b: 0, a: 0}
