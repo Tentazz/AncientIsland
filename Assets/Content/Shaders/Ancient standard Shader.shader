@@ -10,10 +10,21 @@ Shader "Ancient standard Shader"
 		_MainTexture( "Main Texture", 2D ) = "white" {}
 		_Texturesize( "Texture size", Float ) = 1
 		_SmallTexturesize( "Small Texture size", Float ) = 1
+		_GrassColor( "Grass Color", Color ) = ( 0.105263, 1, 0, 1 )
 		_Color1( "Color 1", Color ) = ( 0.4251958, 0.5557389, 0.6132076, 0 )
+		_Darkeninggradient( "Darkening gradient", Range( 0, 1 ) ) = 0
+		_darkeninggradientsize( "darkening gradient size", Float ) = 1
 		_Basesmoothness( "Base smoothness", Range( 0, 1 ) ) = 0.5
 		_Texturesmoothness( "Texture smoothness", Range( 0, 1 ) ) = 0.5
 		_DeformationIntensity( "Deformation Intensity", Range( 0, 0.1 ) ) = 0
+		[Normal] _NormalMap( "Normal Map", 2D ) = "bump" {}
+		_Normalmapintensity( "Normal map intensity", Float ) = 1
+		_Normalmapscale( "Normal map scale", Float ) = 1
+		[Header(Proximity with Terrain)] _RawTexture( "Raw Texture", 2D ) = "white" {}
+		_Noiseoffset( "Noise offset ", 2D ) = "white" {}
+		_Gradientsize( "Gradient size", Float ) = 20
+		_Noiseoffsetintensity( "Noise offset intensity", Float ) = 1
+		_Noiseoffsetsize( "Noise offset size", Float ) = 5
 
 		[HideInInspector] _RenderQueueType("Render Queue Type", Float) = 1
 		[HideInInspector][ToggleUI] _AddPrecomputedVelocity("Add Precomputed Velocity", Float) = 1
@@ -457,12 +468,21 @@ Shader "Ancient standard Shader"
 
 			CBUFFER_START( UnityPerMaterial )
 			float4 _Basecolor;
+			float4 _NormalMap_ST;
+			float4 _GrassColor;
 			float4 _Color1;
-			float _Texturesize;
 			float _SmallTexturesize;
 			float _DeformationIntensity;
 			float _Textureintentity;
+			float _darkeninggradientsize;
+			float _Darkeninggradient;
 			float _Basesmoothness;
+			float _Noiseoffsetsize;
+			float _Noiseoffsetintensity;
+			float _Gradientsize;
+			float _Normalmapscale;
+			float _Normalmapintensity;
+			float _Texturesize;
 			float _Texturesmoothness;
 			float4 _EmissionColor;
 			float _AlphaCutoff;
@@ -529,6 +549,9 @@ Shader "Ancient standard Shader"
             #endif
 
 			sampler2D _MainTexture;
+			sampler2D _RawTexture;
+			sampler2D _Noiseoffset;
+			sampler2D _NormalMap;
 
 
             #ifdef DEBUG_DISPLAY
@@ -552,6 +575,9 @@ Shader "Ancient standard Shader"
 			#define ASE_NEEDS_FRAG_WORLD_POSITION
 			#define ASE_NEEDS_WORLD_NORMAL
 			#define ASE_NEEDS_FRAG_WORLD_NORMAL
+			#define ASE_NEEDS_WORLD_TANGENT
+			#define ASE_NEEDS_FRAG_WORLD_TANGENT
+			#define ASE_NEEDS_FRAG_WORLD_BITANGENT
 
 
 			struct AttributesMesh
@@ -574,7 +600,7 @@ Shader "Ancient standard Shader"
 				float4 tangentWS : TEXCOORD2; // holds terrainUV ifdef ENABLE_TERRAIN_PERPIXEL_NORMAL
 				float4 uv1 : TEXCOORD3;
 				float4 uv2 : TEXCOORD4;
-				
+				float4 ase_texcoord5 : TEXCOORD5;
 				UNITY_VERTEX_INPUT_INSTANCE_ID
 				UNITY_VERTEX_OUTPUT_STEREO
 				#if defined(SHADER_STAGE_FRAGMENT) && defined(ASE_NEED_CULLFACE)
@@ -583,7 +609,22 @@ Shader "Ancient standard Shader"
 			};
 
 
+			inline float3 TriplanarSampling107( sampler2D topTexMap, float3 worldPos, float3 worldNormal, float falloff, float2 tiling, float3 normalScale, float3 index )
+			{
+				float3 projNormal = ( pow( abs( worldNormal ), falloff ) );
+				projNormal /= ( projNormal.x + projNormal.y + projNormal.z ) + 0.00001;
+				float3 nsign = sign( worldNormal );
+				half4 xNorm; half4 yNorm; half4 zNorm;
+				xNorm = tex2D( topTexMap, tiling * worldPos.zy * float2(  nsign.x, 1.0 ) * _NormalMap_ST.xy + _NormalMap_ST.zw );
+				yNorm = tex2D( topTexMap, tiling * worldPos.xz * float2(  nsign.y, 1.0 ) * _NormalMap_ST.xy + _NormalMap_ST.zw );
+				zNorm = tex2D( topTexMap, tiling * worldPos.xy * float2( -nsign.z, 1.0 ) * _NormalMap_ST.xy + _NormalMap_ST.zw );
+				xNorm.xyz  = half3( UnpackNormalScale( xNorm, normalScale.y ).xy * float2(  nsign.x, 1.0 ) + worldNormal.zy, worldNormal.x ).zyx;
+				yNorm.xyz  = half3( UnpackNormalScale( yNorm, normalScale.x ).xy * float2(  nsign.y, 1.0 ) + worldNormal.xz, worldNormal.y ).xzy;
+				zNorm.xyz  = half3( UnpackNormalScale( zNorm, normalScale.y ).xy * float2( -nsign.z, 1.0 ) + worldNormal.xy, worldNormal.z ).xyz;
+				return normalize( xNorm.xyz * projNormal.x + yNorm.xyz * projNormal.y + zNorm.xyz * projNormal.z );
+			}
 			
+
 			void BuildSurfaceData(FragInputs fragInputs, inout GlobalSurfaceDescription surfaceDescription, float3 V, PositionInputs posInput, out SurfaceData surfaceData, out float3 bentNormalWS)
 			{
 				ZERO_INITIALIZE(SurfaceData, surfaceData);
@@ -844,7 +885,7 @@ Shader "Ancient standard Shader"
 				UNITY_TRANSFER_INSTANCE_ID(inputMesh, output);
 				UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO( output );
 
-				
+				output.ase_texcoord5 = float4(inputMesh.positionOS,1);
 
 				#ifdef ASE_ABSOLUTE_VERTEX_POS
 				float3 defaultVertexValue = inputMesh.positionOS.xyz;
@@ -1063,14 +1104,24 @@ Shader "Ancient standard Shader"
 				float4 lerpResult3_g7 = lerp( lerpResult33_g7 , tex2D( _MainTexture, ( panner48_g7 + temp_output_56_0_g7 ) ) , saturate( break20_g7.z ));
 				float Main_texture_Noise85 = lerpResult3_g7.r;
 				float3 lerpResult72 = lerp( _Basecolor.rgb , _Color1.rgb , ( Main_texture_Noise85 * _Textureintentity ));
+				float3 temp_cast_2 = (0.0).xxx;
+				float3 lerpResult75 = lerp( lerpResult72 , temp_cast_2 , ( ( 1.0 - saturate( ( packedInput.ase_texcoord5.xyz.y / _darkeninggradientsize ) ) ) * _Darkeninggradient ));
+				float2 appendResult8_g21 = (float2(PositionWS.x , PositionWS.z));
+				float2 appendResult31_g21 = (float2(PositionWS.x , PositionWS.z));
+				float3 lerpResult60 = lerp( lerpResult75 , _GrassColor.rgb , saturate( ( ( ( ( ( tex2D( _RawTexture, ( ( appendResult8_g21 * ( 1.0 / 2000.0 ) ) + 0.5 ) ).r * 500.0 ) + ( tex2D( _Noiseoffset, ( appendResult31_g21 / _Noiseoffsetsize ) ).r * _Noiseoffsetintensity ) ) + _Gradientsize ) - PositionWS.y ) * ( 1.0 / _Gradientsize ) ) ));
+				
+				float2 temp_cast_3 = (( 1.0 / _Normalmapscale )).xx;
+				float3x3 ase_worldToTangent = float3x3( TangentWS, BitangentWS, NormalWS );
+				float3 triplanar107 = TriplanarSampling107( _NormalMap, PositionWS, NormalWS, 1.0, temp_cast_3, _Normalmapintensity, 0 );
+				float3 tanTriplanarNormal107 = mul( ase_worldToTangent, triplanar107 );
 				
 				float lerpResult91 = lerp( _Basesmoothness , _Texturesmoothness , Main_texture_Noise85);
 				
 
 				GlobalSurfaceDescription surfaceDescription = (GlobalSurfaceDescription)0;
 
-				surfaceDescription.BaseColor = lerpResult72;
-				surfaceDescription.Normal = float3( 0, 0, 1 );
+				surfaceDescription.BaseColor = lerpResult60;
+				surfaceDescription.Normal = tanTriplanarNormal107;
 				surfaceDescription.BentNormal = float3( 0, 0, 1 );
 				surfaceDescription.CoatMask = 0;
 				surfaceDescription.Metallic = 0;
@@ -1281,12 +1332,21 @@ Shader "Ancient standard Shader"
 
 			CBUFFER_START( UnityPerMaterial )
 			float4 _Basecolor;
+			float4 _NormalMap_ST;
+			float4 _GrassColor;
 			float4 _Color1;
-			float _Texturesize;
 			float _SmallTexturesize;
 			float _DeformationIntensity;
 			float _Textureintentity;
+			float _darkeninggradientsize;
+			float _Darkeninggradient;
 			float _Basesmoothness;
+			float _Noiseoffsetsize;
+			float _Noiseoffsetintensity;
+			float _Gradientsize;
+			float _Normalmapscale;
+			float _Normalmapintensity;
+			float _Texturesize;
 			float _Texturesmoothness;
 			float4 _EmissionColor;
 			float _AlphaCutoff;
@@ -1353,6 +1413,9 @@ Shader "Ancient standard Shader"
             #endif
 
 			sampler2D _MainTexture;
+			sampler2D _RawTexture;
+			sampler2D _Noiseoffset;
+			sampler2D _NormalMap;
 
 
             #ifdef DEBUG_DISPLAY
@@ -1380,6 +1443,7 @@ Shader "Ancient standard Shader"
         	#endif
 
 			#define ASE_NEEDS_VERT_NORMAL
+			#define ASE_NEEDS_VERT_TANGENT
 
 
 			struct AttributesMesh
@@ -1404,13 +1468,31 @@ Shader "Ancient standard Shader"
 				#endif
 				float4 ase_texcoord2 : TEXCOORD2;
 				float4 ase_texcoord3 : TEXCOORD3;
+				float4 ase_texcoord4 : TEXCOORD4;
+				float4 ase_texcoord5 : TEXCOORD5;
+				float4 ase_texcoord6 : TEXCOORD6;
 				UNITY_VERTEX_INPUT_INSTANCE_ID
 				#if defined(SHADER_STAGE_FRAGMENT) && defined(ASE_NEED_CULLFACE)
 				FRONT_FACE_TYPE cullFace : FRONT_FACE_SEMANTIC;
 				#endif
 			};
 
+			inline float3 TriplanarSampling107( sampler2D topTexMap, float3 worldPos, float3 worldNormal, float falloff, float2 tiling, float3 normalScale, float3 index )
+			{
+				float3 projNormal = ( pow( abs( worldNormal ), falloff ) );
+				projNormal /= ( projNormal.x + projNormal.y + projNormal.z ) + 0.00001;
+				float3 nsign = sign( worldNormal );
+				half4 xNorm; half4 yNorm; half4 zNorm;
+				xNorm = tex2D( topTexMap, tiling * worldPos.zy * float2(  nsign.x, 1.0 ) * _NormalMap_ST.xy + _NormalMap_ST.zw );
+				yNorm = tex2D( topTexMap, tiling * worldPos.xz * float2(  nsign.y, 1.0 ) * _NormalMap_ST.xy + _NormalMap_ST.zw );
+				zNorm = tex2D( topTexMap, tiling * worldPos.xy * float2( -nsign.z, 1.0 ) * _NormalMap_ST.xy + _NormalMap_ST.zw );
+				xNorm.xyz  = half3( UnpackNormalScale( xNorm, normalScale.y ).xy * float2(  nsign.x, 1.0 ) + worldNormal.zy, worldNormal.x ).zyx;
+				yNorm.xyz  = half3( UnpackNormalScale( yNorm, normalScale.x ).xy * float2(  nsign.y, 1.0 ) + worldNormal.xz, worldNormal.y ).xzy;
+				zNorm.xyz  = half3( UnpackNormalScale( zNorm, normalScale.y ).xy * float2( -nsign.z, 1.0 ) + worldNormal.xy, worldNormal.z ).xyz;
+				return normalize( xNorm.xyz * projNormal.x + yNorm.xyz * projNormal.y + zNorm.xyz * projNormal.z );
+			}
 			
+
 			void BuildSurfaceData(FragInputs fragInputs, inout GlobalSurfaceDescription surfaceDescription, float3 V, PositionInputs posInput, out SurfaceData surfaceData, out float3 bentNormalWS)
 			{
 				ZERO_INITIALIZE(SurfaceData, surfaceData);
@@ -1680,10 +1762,19 @@ Shader "Ancient standard Shader"
 				float3 ase_normalWS = TransformObjectToWorldNormal( inputMesh.normalOS );
 				output.ase_texcoord3.xyz = ase_normalWS;
 				
+				float3 ase_tangentWS = TransformObjectToWorldDir( inputMesh.tangentOS.xyz );
+				output.ase_texcoord5.xyz = ase_tangentWS;
+				float ase_tangentSign = inputMesh.tangentOS.w * ( unity_WorldTransformParams.w >= 0.0 ? 1.0 : -1.0 );
+				float3 ase_bitangentWS = cross( ase_normalWS, ase_tangentWS ) * ase_tangentSign;
+				output.ase_texcoord6.xyz = ase_bitangentWS;
+				
+				output.ase_texcoord4 = float4(inputMesh.positionOS,1);
 				
 				//setting value to unused interpolator channels and avoid initialization warnings
 				output.ase_texcoord2.w = 0;
 				output.ase_texcoord3.w = 0;
+				output.ase_texcoord5.w = 0;
+				output.ase_texcoord6.w = 0;
 
 				#ifdef ASE_ABSOLUTE_VERTEX_POS
 				float3 defaultVertexValue = inputMesh.positionOS.xyz;
@@ -1878,14 +1969,26 @@ Shader "Ancient standard Shader"
 				float4 lerpResult3_g7 = lerp( lerpResult33_g7 , tex2D( _MainTexture, ( panner48_g7 + temp_output_56_0_g7 ) ) , saturate( break20_g7.z ));
 				float Main_texture_Noise85 = lerpResult3_g7.r;
 				float3 lerpResult72 = lerp( _Basecolor.rgb , _Color1.rgb , ( Main_texture_Noise85 * _Textureintentity ));
+				float3 temp_cast_2 = (0.0).xxx;
+				float3 lerpResult75 = lerp( lerpResult72 , temp_cast_2 , ( ( 1.0 - saturate( ( packedInput.ase_texcoord4.xyz.y / _darkeninggradientsize ) ) ) * _Darkeninggradient ));
+				float2 appendResult8_g21 = (float2(ase_positionWS.x , ase_positionWS.z));
+				float2 appendResult31_g21 = (float2(ase_positionWS.x , ase_positionWS.z));
+				float3 lerpResult60 = lerp( lerpResult75 , _GrassColor.rgb , saturate( ( ( ( ( ( tex2D( _RawTexture, ( ( appendResult8_g21 * ( 1.0 / 2000.0 ) ) + 0.5 ) ).r * 500.0 ) + ( tex2D( _Noiseoffset, ( appendResult31_g21 / _Noiseoffsetsize ) ).r * _Noiseoffsetintensity ) ) + _Gradientsize ) - ase_positionWS.y ) * ( 1.0 / _Gradientsize ) ) ));
+				
+				float2 temp_cast_3 = (( 1.0 / _Normalmapscale )).xx;
+				float3 ase_tangentWS = packedInput.ase_texcoord5.xyz;
+				float3 ase_bitangentWS = packedInput.ase_texcoord6.xyz;
+				float3x3 ase_worldToTangent = float3x3( ase_tangentWS, ase_bitangentWS, ase_normalWS );
+				float3 triplanar107 = TriplanarSampling107( _NormalMap, ase_positionWS, ase_normalWS, 1.0, temp_cast_3, _Normalmapintensity, 0 );
+				float3 tanTriplanarNormal107 = mul( ase_worldToTangent, triplanar107 );
 				
 				float lerpResult91 = lerp( _Basesmoothness , _Texturesmoothness , Main_texture_Noise85);
 				
 
 				GlobalSurfaceDescription surfaceDescription = (GlobalSurfaceDescription)0;
 
-				surfaceDescription.BaseColor = lerpResult72;
-				surfaceDescription.Normal = float3( 0, 0, 1 );
+				surfaceDescription.BaseColor = lerpResult60;
+				surfaceDescription.Normal = tanTriplanarNormal107;
 				surfaceDescription.BentNormal = float3( 0, 0, 1 );
 				surfaceDescription.CoatMask = 0;
 				surfaceDescription.Metallic = 0;
@@ -2079,12 +2182,21 @@ Shader "Ancient standard Shader"
 
 			CBUFFER_START( UnityPerMaterial )
 			float4 _Basecolor;
+			float4 _NormalMap_ST;
+			float4 _GrassColor;
 			float4 _Color1;
-			float _Texturesize;
 			float _SmallTexturesize;
 			float _DeformationIntensity;
 			float _Textureintentity;
+			float _darkeninggradientsize;
+			float _Darkeninggradient;
 			float _Basesmoothness;
+			float _Noiseoffsetsize;
+			float _Noiseoffsetintensity;
+			float _Gradientsize;
+			float _Normalmapscale;
+			float _Normalmapintensity;
+			float _Texturesize;
 			float _Texturesmoothness;
 			float4 _EmissionColor;
 			float _AlphaCutoff;
@@ -2749,12 +2861,21 @@ Shader "Ancient standard Shader"
 
 			CBUFFER_START( UnityPerMaterial )
 			float4 _Basecolor;
+			float4 _NormalMap_ST;
+			float4 _GrassColor;
 			float4 _Color1;
-			float _Texturesize;
 			float _SmallTexturesize;
 			float _DeformationIntensity;
 			float _Textureintentity;
+			float _darkeninggradientsize;
+			float _Darkeninggradient;
 			float _Basesmoothness;
+			float _Noiseoffsetsize;
+			float _Noiseoffsetintensity;
+			float _Gradientsize;
+			float _Normalmapscale;
+			float _Normalmapintensity;
+			float _Texturesize;
 			float _Texturesmoothness;
 			float4 _EmissionColor;
 			float _AlphaCutoff;
@@ -3394,12 +3515,21 @@ Shader "Ancient standard Shader"
 
 			CBUFFER_START( UnityPerMaterial )
 			float4 _Basecolor;
+			float4 _NormalMap_ST;
+			float4 _GrassColor;
 			float4 _Color1;
-			float _Texturesize;
 			float _SmallTexturesize;
 			float _DeformationIntensity;
 			float _Textureintentity;
+			float _darkeninggradientsize;
+			float _Darkeninggradient;
 			float _Basesmoothness;
+			float _Noiseoffsetsize;
+			float _Noiseoffsetintensity;
+			float _Gradientsize;
+			float _Normalmapscale;
+			float _Normalmapintensity;
+			float _Texturesize;
 			float _Texturesmoothness;
 			float4 _EmissionColor;
 			float _AlphaCutoff;
@@ -3465,6 +3595,7 @@ Shader "Ancient standard Shader"
 			int _PassValue;
             #endif
 
+			sampler2D _NormalMap;
 			sampler2D _MainTexture;
 
 
@@ -3493,6 +3624,9 @@ Shader "Ancient standard Shader"
 			#define ASE_NEEDS_FRAG_WORLD_POSITION
 			#define ASE_NEEDS_WORLD_NORMAL
 			#define ASE_NEEDS_FRAG_WORLD_NORMAL
+			#define ASE_NEEDS_WORLD_TANGENT
+			#define ASE_NEEDS_FRAG_WORLD_TANGENT
+			#define ASE_NEEDS_FRAG_WORLD_BITANGENT
 
 
 			struct AttributesMesh
@@ -3519,7 +3653,22 @@ Shader "Ancient standard Shader"
 				#endif
 			};
 
+			inline float3 TriplanarSampling107( sampler2D topTexMap, float3 worldPos, float3 worldNormal, float falloff, float2 tiling, float3 normalScale, float3 index )
+			{
+				float3 projNormal = ( pow( abs( worldNormal ), falloff ) );
+				projNormal /= ( projNormal.x + projNormal.y + projNormal.z ) + 0.00001;
+				float3 nsign = sign( worldNormal );
+				half4 xNorm; half4 yNorm; half4 zNorm;
+				xNorm = tex2D( topTexMap, tiling * worldPos.zy * float2(  nsign.x, 1.0 ) * _NormalMap_ST.xy + _NormalMap_ST.zw );
+				yNorm = tex2D( topTexMap, tiling * worldPos.xz * float2(  nsign.y, 1.0 ) * _NormalMap_ST.xy + _NormalMap_ST.zw );
+				zNorm = tex2D( topTexMap, tiling * worldPos.xy * float2( -nsign.z, 1.0 ) * _NormalMap_ST.xy + _NormalMap_ST.zw );
+				xNorm.xyz  = half3( UnpackNormalScale( xNorm, normalScale.y ).xy * float2(  nsign.x, 1.0 ) + worldNormal.zy, worldNormal.x ).zyx;
+				yNorm.xyz  = half3( UnpackNormalScale( yNorm, normalScale.x ).xy * float2(  nsign.y, 1.0 ) + worldNormal.xz, worldNormal.y ).xzy;
+				zNorm.xyz  = half3( UnpackNormalScale( zNorm, normalScale.y ).xy * float2( -nsign.z, 1.0 ) + worldNormal.xy, worldNormal.z ).xyz;
+				return normalize( xNorm.xyz * projNormal.x + yNorm.xyz * projNormal.y + zNorm.xyz * projNormal.z );
+			}
 			
+
 			void BuildSurfaceData(FragInputs fragInputs, inout SmoothSurfaceDescription surfaceDescription, float3 V, PositionInputs posInput, out SurfaceData surfaceData, out float3 bentNormalWS)
 			{
 				ZERO_INITIALIZE(SurfaceData, surfaceData);
@@ -3933,6 +4082,11 @@ Shader "Ancient standard Shader"
 					BitangentWS = input.tangentToWorld[ 1 ];
 				#endif
 
+				float2 temp_cast_0 = (( 1.0 / _Normalmapscale )).xx;
+				float3x3 ase_worldToTangent = float3x3( TangentWS, BitangentWS, NormalWS );
+				float3 triplanar107 = TriplanarSampling107( _NormalMap, PositionWS, NormalWS, 1.0, temp_cast_0, _Normalmapintensity, 0 );
+				float3 tanTriplanarNormal107 = mul( ase_worldToTangent, triplanar107 );
+				
 				float3 temp_output_45_0_g7 = ( PositionWS * ( 1.0 / _Texturesize ) );
 				float3 break7_g7 = temp_output_45_0_g7;
 				float3 ProjectionInversion16_g7 = ( sign( NormalWS ) * float3( 1, -1, -1 ) );
@@ -3949,8 +4103,8 @@ Shader "Ancient standard Shader"
 				float3 break13_g6 = temp_output_45_0_g6;
 				float2 appendResult11_g6 = (float2(break13_g6.x , ( break13_g6.z * break28_g6.y )));
 				float2 panner47_g6 = ( 1.0 * _Time.y * float2( 0,0 ) + appendResult11_g6);
-				float3 temp_cast_0 = (32.0).xxx;
-				float3 temp_output_22_0_g6 = pow( abs( NormalWS ) , temp_cast_0 );
+				float3 temp_cast_1 = (32.0).xxx;
+				float3 temp_output_22_0_g6 = pow( abs( NormalWS ) , temp_cast_1 );
 				float dotResult24_g6 = dot( temp_output_22_0_g6 , float3( 1, 1, 1 ) );
 				float3 break20_g6 = ( temp_output_22_0_g6 / dotResult24_g6 );
 				float4 lerpResult33_g6 = lerp( tex2D( _MainTexture, ( panner46_g6 + temp_output_56_0_g6 ) ) , tex2D( _MainTexture, ( panner47_g6 + temp_output_56_0_g6 ) ) , saturate( break20_g6.y ));
@@ -3962,8 +4116,8 @@ Shader "Ancient standard Shader"
 				float3 break13_g7 = temp_output_45_0_g7;
 				float2 appendResult11_g7 = (float2(break13_g7.x , ( break13_g7.z * break28_g7.y )));
 				float2 panner47_g7 = ( 1.0 * _Time.y * float2( 0,0 ) + appendResult11_g7);
-				float3 temp_cast_1 = (32.0).xxx;
-				float3 temp_output_22_0_g7 = pow( abs( NormalWS ) , temp_cast_1 );
+				float3 temp_cast_2 = (32.0).xxx;
+				float3 temp_output_22_0_g7 = pow( abs( NormalWS ) , temp_cast_2 );
 				float dotResult24_g7 = dot( temp_output_22_0_g7 , float3( 1, 1, 1 ) );
 				float3 break20_g7 = ( temp_output_22_0_g7 / dotResult24_g7 );
 				float4 lerpResult33_g7 = lerp( tex2D( _MainTexture, ( panner46_g7 + temp_output_56_0_g7 ) ) , tex2D( _MainTexture, ( panner47_g7 + temp_output_56_0_g7 ) ) , saturate( break20_g7.y ));
@@ -3977,7 +4131,7 @@ Shader "Ancient standard Shader"
 
 				SmoothSurfaceDescription surfaceDescription = (SmoothSurfaceDescription)0;
 
-				surfaceDescription.Normal = float3( 0, 0, 1 );
+				surfaceDescription.Normal = tanTriplanarNormal107;
 				surfaceDescription.Smoothness = lerpResult91;
 				surfaceDescription.Alpha = 1;
 
@@ -4164,12 +4318,21 @@ Shader "Ancient standard Shader"
 
 			CBUFFER_START( UnityPerMaterial )
 			float4 _Basecolor;
+			float4 _NormalMap_ST;
+			float4 _GrassColor;
 			float4 _Color1;
-			float _Texturesize;
 			float _SmallTexturesize;
 			float _DeformationIntensity;
 			float _Textureintentity;
+			float _darkeninggradientsize;
+			float _Darkeninggradient;
 			float _Basesmoothness;
+			float _Noiseoffsetsize;
+			float _Noiseoffsetintensity;
+			float _Gradientsize;
+			float _Normalmapscale;
+			float _Normalmapintensity;
+			float _Texturesize;
 			float _Texturesmoothness;
 			float4 _EmissionColor;
 			float _AlphaCutoff;
@@ -4235,6 +4398,7 @@ Shader "Ancient standard Shader"
 			int _PassValue;
             #endif
 
+			sampler2D _NormalMap;
 			sampler2D _MainTexture;
 
 
@@ -4258,6 +4422,7 @@ Shader "Ancient standard Shader"
 
 			#define ASE_NEEDS_FRAG_WORLD_POSITION
 			#define ASE_NEEDS_VERT_NORMAL
+			#define ASE_NEEDS_VERT_TANGENT
 
 
 			struct AttributesMesh
@@ -4278,6 +4443,8 @@ Shader "Ancient standard Shader"
 				float3 vpassPositionCS : TEXCOORD1;
 				float3 vpassPreviousPositionCS : TEXCOORD2;
 				float4 ase_texcoord3 : TEXCOORD3;
+				float4 ase_texcoord4 : TEXCOORD4;
+				float4 ase_texcoord5 : TEXCOORD5;
 				UNITY_VERTEX_INPUT_INSTANCE_ID
 				UNITY_VERTEX_OUTPUT_STEREO
 				#if defined(SHADER_STAGE_FRAGMENT) && defined(ASE_NEED_CULLFACE)
@@ -4285,7 +4452,22 @@ Shader "Ancient standard Shader"
 				#endif
 			};
 
+			inline float3 TriplanarSampling107( sampler2D topTexMap, float3 worldPos, float3 worldNormal, float falloff, float2 tiling, float3 normalScale, float3 index )
+			{
+				float3 projNormal = ( pow( abs( worldNormal ), falloff ) );
+				projNormal /= ( projNormal.x + projNormal.y + projNormal.z ) + 0.00001;
+				float3 nsign = sign( worldNormal );
+				half4 xNorm; half4 yNorm; half4 zNorm;
+				xNorm = tex2D( topTexMap, tiling * worldPos.zy * float2(  nsign.x, 1.0 ) * _NormalMap_ST.xy + _NormalMap_ST.zw );
+				yNorm = tex2D( topTexMap, tiling * worldPos.xz * float2(  nsign.y, 1.0 ) * _NormalMap_ST.xy + _NormalMap_ST.zw );
+				zNorm = tex2D( topTexMap, tiling * worldPos.xy * float2( -nsign.z, 1.0 ) * _NormalMap_ST.xy + _NormalMap_ST.zw );
+				xNorm.xyz  = half3( UnpackNormalScale( xNorm, normalScale.y ).xy * float2(  nsign.x, 1.0 ) + worldNormal.zy, worldNormal.x ).zyx;
+				yNorm.xyz  = half3( UnpackNormalScale( yNorm, normalScale.x ).xy * float2(  nsign.y, 1.0 ) + worldNormal.xz, worldNormal.y ).xzy;
+				zNorm.xyz  = half3( UnpackNormalScale( zNorm, normalScale.y ).xy * float2( -nsign.z, 1.0 ) + worldNormal.xy, worldNormal.z ).xyz;
+				return normalize( xNorm.xyz * projNormal.x + yNorm.xyz * projNormal.y + zNorm.xyz * projNormal.z );
+			}
 			
+
 			void BuildSurfaceData(FragInputs fragInputs, inout SmoothSurfaceDescription surfaceDescription, float3 V, PositionInputs posInput, out SurfaceData surfaceData, out float3 bentNormalWS)
 			{
 				ZERO_INITIALIZE(SurfaceData, surfaceData);
@@ -4499,10 +4681,17 @@ Shader "Ancient standard Shader"
 
 				float3 ase_normalWS = TransformObjectToWorldNormal( inputMesh.normalOS );
 				output.ase_texcoord3.xyz = ase_normalWS;
+				float3 ase_tangentWS = TransformObjectToWorldDir( inputMesh.tangentOS.xyz );
+				output.ase_texcoord4.xyz = ase_tangentWS;
+				float ase_tangentSign = inputMesh.tangentOS.w * ( unity_WorldTransformParams.w >= 0.0 ? 1.0 : -1.0 );
+				float3 ase_bitangentWS = cross( ase_normalWS, ase_tangentWS ) * ase_tangentSign;
+				output.ase_texcoord5.xyz = ase_bitangentWS;
 				
 				
 				//setting value to unused interpolator channels and avoid initialization warnings
 				output.ase_texcoord3.w = 0;
+				output.ase_texcoord4.w = 0;
+				output.ase_texcoord5.w = 0;
 
 				#ifdef ASE_ABSOLUTE_VERTEX_POS
 				float3 defaultVertexValue = inputMesh.positionOS.xyz;
@@ -4750,9 +4939,16 @@ Shader "Ancient standard Shader"
 
 				SmoothSurfaceDescription surfaceDescription = (SmoothSurfaceDescription)0;
 
+				float2 temp_cast_0 = (( 1.0 / _Normalmapscale )).xx;
+				float3 ase_normalWS = packedInput.ase_texcoord3.xyz;
+				float3 ase_tangentWS = packedInput.ase_texcoord4.xyz;
+				float3 ase_bitangentWS = packedInput.ase_texcoord5.xyz;
+				float3x3 ase_worldToTangent = float3x3( ase_tangentWS, ase_bitangentWS, ase_normalWS );
+				float3 triplanar107 = TriplanarSampling107( _NormalMap, PositionWS, ase_normalWS, 1.0, temp_cast_0, _Normalmapintensity, 0 );
+				float3 tanTriplanarNormal107 = mul( ase_worldToTangent, triplanar107 );
+				
 				float3 temp_output_45_0_g7 = ( PositionWS * ( 1.0 / _Texturesize ) );
 				float3 break7_g7 = temp_output_45_0_g7;
-				float3 ase_normalWS = packedInput.ase_texcoord3.xyz;
 				float3 ProjectionInversion16_g7 = ( sign( ase_normalWS ) * float3( 1, -1, -1 ) );
 				float3 break28_g7 = ProjectionInversion16_g7;
 				float2 appendResult15_g7 = (float2(( break7_g7.z * break28_g7.x ) , break7_g7.y));
@@ -4767,8 +4963,8 @@ Shader "Ancient standard Shader"
 				float3 break13_g6 = temp_output_45_0_g6;
 				float2 appendResult11_g6 = (float2(break13_g6.x , ( break13_g6.z * break28_g6.y )));
 				float2 panner47_g6 = ( 1.0 * _Time.y * float2( 0,0 ) + appendResult11_g6);
-				float3 temp_cast_0 = (32.0).xxx;
-				float3 temp_output_22_0_g6 = pow( abs( ase_normalWS ) , temp_cast_0 );
+				float3 temp_cast_1 = (32.0).xxx;
+				float3 temp_output_22_0_g6 = pow( abs( ase_normalWS ) , temp_cast_1 );
 				float dotResult24_g6 = dot( temp_output_22_0_g6 , float3( 1, 1, 1 ) );
 				float3 break20_g6 = ( temp_output_22_0_g6 / dotResult24_g6 );
 				float4 lerpResult33_g6 = lerp( tex2D( _MainTexture, ( panner46_g6 + temp_output_56_0_g6 ) ) , tex2D( _MainTexture, ( panner47_g6 + temp_output_56_0_g6 ) ) , saturate( break20_g6.y ));
@@ -4780,8 +4976,8 @@ Shader "Ancient standard Shader"
 				float3 break13_g7 = temp_output_45_0_g7;
 				float2 appendResult11_g7 = (float2(break13_g7.x , ( break13_g7.z * break28_g7.y )));
 				float2 panner47_g7 = ( 1.0 * _Time.y * float2( 0,0 ) + appendResult11_g7);
-				float3 temp_cast_1 = (32.0).xxx;
-				float3 temp_output_22_0_g7 = pow( abs( ase_normalWS ) , temp_cast_1 );
+				float3 temp_cast_2 = (32.0).xxx;
+				float3 temp_output_22_0_g7 = pow( abs( ase_normalWS ) , temp_cast_2 );
 				float dotResult24_g7 = dot( temp_output_22_0_g7 , float3( 1, 1, 1 ) );
 				float3 break20_g7 = ( temp_output_22_0_g7 / dotResult24_g7 );
 				float4 lerpResult33_g7 = lerp( tex2D( _MainTexture, ( panner46_g7 + temp_output_56_0_g7 ) ) , tex2D( _MainTexture, ( panner47_g7 + temp_output_56_0_g7 ) ) , saturate( break20_g7.y ));
@@ -4793,7 +4989,7 @@ Shader "Ancient standard Shader"
 				float lerpResult91 = lerp( _Basesmoothness , _Texturesmoothness , Main_texture_Noise85);
 				
 
-				surfaceDescription.Normal = float3( 0, 0, 1 );
+				surfaceDescription.Normal = tanTriplanarNormal107;
 				surfaceDescription.Smoothness = lerpResult91;
 				surfaceDescription.Alpha = 1;
 
@@ -5012,12 +5208,21 @@ Shader "Ancient standard Shader"
 
 			CBUFFER_START( UnityPerMaterial )
 			float4 _Basecolor;
+			float4 _NormalMap_ST;
+			float4 _GrassColor;
 			float4 _Color1;
-			float _Texturesize;
 			float _SmallTexturesize;
 			float _DeformationIntensity;
 			float _Textureintentity;
+			float _darkeninggradientsize;
+			float _Darkeninggradient;
 			float _Basesmoothness;
+			float _Noiseoffsetsize;
+			float _Noiseoffsetintensity;
+			float _Gradientsize;
+			float _Normalmapscale;
+			float _Normalmapintensity;
+			float _Texturesize;
 			float _Texturesmoothness;
 			float4 _EmissionColor;
 			float _AlphaCutoff;
@@ -5084,6 +5289,9 @@ Shader "Ancient standard Shader"
             #endif
 
 			sampler2D _MainTexture;
+			sampler2D _RawTexture;
+			sampler2D _Noiseoffset;
+			sampler2D _NormalMap;
 
 
             #ifdef DEBUG_DISPLAY
@@ -5114,6 +5322,9 @@ Shader "Ancient standard Shader"
 			#define ASE_NEEDS_FRAG_WORLD_POSITION
 			#define ASE_NEEDS_WORLD_NORMAL
 			#define ASE_NEEDS_FRAG_WORLD_NORMAL
+			#define ASE_NEEDS_WORLD_TANGENT
+			#define ASE_NEEDS_FRAG_WORLD_TANGENT
+			#define ASE_NEEDS_FRAG_WORLD_BITANGENT
 
 
 			struct AttributesMesh
@@ -5142,7 +5353,7 @@ Shader "Ancient standard Shader"
 					float3 vpassPositionCS : TEXCOORD5;
 					float3 vpassPreviousPositionCS : TEXCOORD6;
 				#endif
-				
+				float4 ase_texcoord7 : TEXCOORD7;
 				UNITY_VERTEX_INPUT_INSTANCE_ID
 				UNITY_VERTEX_OUTPUT_STEREO
 				#if defined(SHADER_STAGE_FRAGMENT) && defined(ASE_NEED_CULLFACE)
@@ -5150,7 +5361,22 @@ Shader "Ancient standard Shader"
 				#endif
 			};
 
+			inline float3 TriplanarSampling107( sampler2D topTexMap, float3 worldPos, float3 worldNormal, float falloff, float2 tiling, float3 normalScale, float3 index )
+			{
+				float3 projNormal = ( pow( abs( worldNormal ), falloff ) );
+				projNormal /= ( projNormal.x + projNormal.y + projNormal.z ) + 0.00001;
+				float3 nsign = sign( worldNormal );
+				half4 xNorm; half4 yNorm; half4 zNorm;
+				xNorm = tex2D( topTexMap, tiling * worldPos.zy * float2(  nsign.x, 1.0 ) * _NormalMap_ST.xy + _NormalMap_ST.zw );
+				yNorm = tex2D( topTexMap, tiling * worldPos.xz * float2(  nsign.y, 1.0 ) * _NormalMap_ST.xy + _NormalMap_ST.zw );
+				zNorm = tex2D( topTexMap, tiling * worldPos.xy * float2( -nsign.z, 1.0 ) * _NormalMap_ST.xy + _NormalMap_ST.zw );
+				xNorm.xyz  = half3( UnpackNormalScale( xNorm, normalScale.y ).xy * float2(  nsign.x, 1.0 ) + worldNormal.zy, worldNormal.x ).zyx;
+				yNorm.xyz  = half3( UnpackNormalScale( yNorm, normalScale.x ).xy * float2(  nsign.y, 1.0 ) + worldNormal.xz, worldNormal.y ).xzy;
+				zNorm.xyz  = half3( UnpackNormalScale( zNorm, normalScale.y ).xy * float2( -nsign.z, 1.0 ) + worldNormal.xy, worldNormal.z ).xyz;
+				return normalize( xNorm.xyz * projNormal.x + yNorm.xyz * projNormal.y + zNorm.xyz * projNormal.z );
+			}
 			
+
 			void BuildSurfaceData(FragInputs fragInputs, inout GlobalSurfaceDescription surfaceDescription, float3 V, PositionInputs posInput, out SurfaceData surfaceData, out float3 bentNormalWS)
 			{
 				ZERO_INITIALIZE(SurfaceData, surfaceData);
@@ -5407,7 +5633,7 @@ Shader "Ancient standard Shader"
 				float3 currentTimeParams = _TimeParameters.xyz;
 				_TimeParameters.xyz = timeParameters;
 
-				
+				output.ase_texcoord7 = float4(inputMesh.positionOS,1);
 
 				#ifdef ASE_ABSOLUTE_VERTEX_POS
 				float3 defaultVertexValue = inputMesh.positionOS.xyz;
@@ -5739,14 +5965,24 @@ Shader "Ancient standard Shader"
 				float4 lerpResult3_g7 = lerp( lerpResult33_g7 , tex2D( _MainTexture, ( panner48_g7 + temp_output_56_0_g7 ) ) , saturate( break20_g7.z ));
 				float Main_texture_Noise85 = lerpResult3_g7.r;
 				float3 lerpResult72 = lerp( _Basecolor.rgb , _Color1.rgb , ( Main_texture_Noise85 * _Textureintentity ));
+				float3 temp_cast_2 = (0.0).xxx;
+				float3 lerpResult75 = lerp( lerpResult72 , temp_cast_2 , ( ( 1.0 - saturate( ( packedInput.ase_texcoord7.xyz.y / _darkeninggradientsize ) ) ) * _Darkeninggradient ));
+				float2 appendResult8_g21 = (float2(PositionWS.x , PositionWS.z));
+				float2 appendResult31_g21 = (float2(PositionWS.x , PositionWS.z));
+				float3 lerpResult60 = lerp( lerpResult75 , _GrassColor.rgb , saturate( ( ( ( ( ( tex2D( _RawTexture, ( ( appendResult8_g21 * ( 1.0 / 2000.0 ) ) + 0.5 ) ).r * 500.0 ) + ( tex2D( _Noiseoffset, ( appendResult31_g21 / _Noiseoffsetsize ) ).r * _Noiseoffsetintensity ) ) + _Gradientsize ) - PositionWS.y ) * ( 1.0 / _Gradientsize ) ) ));
+				
+				float2 temp_cast_3 = (( 1.0 / _Normalmapscale )).xx;
+				float3x3 ase_worldToTangent = float3x3( TangentWS, BitangentWS, NormalWS );
+				float3 triplanar107 = TriplanarSampling107( _NormalMap, PositionWS, NormalWS, 1.0, temp_cast_3, _Normalmapintensity, 0 );
+				float3 tanTriplanarNormal107 = mul( ase_worldToTangent, triplanar107 );
 				
 				float lerpResult91 = lerp( _Basesmoothness , _Texturesmoothness , Main_texture_Noise85);
 				
 
 				GlobalSurfaceDescription surfaceDescription = (GlobalSurfaceDescription)0;
 
-				surfaceDescription.BaseColor = lerpResult72;
-				surfaceDescription.Normal = float3( 0, 0, 1 );
+				surfaceDescription.BaseColor = lerpResult60;
+				surfaceDescription.Normal = tanTriplanarNormal107;
 				surfaceDescription.BentNormal = float3( 0, 0, 1 );
 				surfaceDescription.CoatMask = 0;
 				surfaceDescription.Metallic = 0;
@@ -6056,12 +6292,21 @@ Shader "Ancient standard Shader"
 
             CBUFFER_START( UnityPerMaterial )
 			float4 _Basecolor;
+			float4 _NormalMap_ST;
+			float4 _GrassColor;
 			float4 _Color1;
-			float _Texturesize;
 			float _SmallTexturesize;
 			float _DeformationIntensity;
 			float _Textureintentity;
+			float _darkeninggradientsize;
+			float _Darkeninggradient;
 			float _Basesmoothness;
+			float _Noiseoffsetsize;
+			float _Noiseoffsetintensity;
+			float _Gradientsize;
+			float _Normalmapscale;
+			float _Normalmapintensity;
+			float _Texturesize;
 			float _Texturesmoothness;
 			float4 _EmissionColor;
 			float _AlphaCutoff;
@@ -6728,7 +6973,7 @@ Shader "Ancient standard Shader"
 }
 /*ASEBEGIN
 Version=19904
-Node;AmplifyShaderEditor.TexturePropertyNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;53;-2608,-352;Inherit;True;Property;_MainTexture;Main Texture;4;0;Create;True;0;0;0;False;0;False;9aa431943de223d47b853a0935dcf5a3;None;False;white;Auto;Texture2D;False;-1;0;2;SAMPLER2D;0;SAMPLERSTATE;1
+Node;AmplifyShaderEditor.TexturePropertyNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;53;-2608,-352;Inherit;True;Property;_MainTexture;Main Texture;4;0;Create;True;0;0;0;False;0;False;9aa431943de223d47b853a0935dcf5a3;9aa431943de223d47b853a0935dcf5a3;False;white;Auto;Texture2D;False;-1;0;2;SAMPLER2D;0;SAMPLERSTATE;1
 Node;AmplifyShaderEditor.LerpOp, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;75;-368,-1568;Inherit;False;3;0;FLOAT3;0,0,0;False;1;FLOAT3;0,0,0;False;2;FLOAT;0;False;1;FLOAT3;0
 Node;AmplifyShaderEditor.RangedFloatNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;76;-752,-1504;Inherit;False;Constant;_Float1;Float 1;7;0;Create;True;0;0;0;False;0;False;0;0;0;0;0;1;FLOAT;0
 Node;AmplifyShaderEditor.PosVertexDataNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;61;-1376,-1056;Inherit;False;0;0;5;FLOAT3;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
@@ -6737,7 +6982,6 @@ Node;AmplifyShaderEditor.SaturateNode, AmplifyShaderEditor, Version=0.0.0.0, Cul
 Node;AmplifyShaderEditor.SimpleDivideOpNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;79;-1008,-1296;Inherit;False;2;0;FLOAT;0;False;1;FLOAT;0;False;1;FLOAT;0
 Node;AmplifyShaderEditor.RangedFloatNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;78;-1264,-1184;Inherit;False;Property;_darkeninggradientsize;darkening gradient size;11;0;Create;True;0;0;0;False;0;False;1;1;0;0;0;1;FLOAT;0
 Node;AmplifyShaderEditor.LerpOp, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;60;240,-1504;Inherit;False;3;0;FLOAT3;0,0,0;False;1;FLOAT3;0,0,0;False;2;FLOAT;0;False;1;FLOAT3;0
-Node;AmplifyShaderEditor.ColorNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;65;-48,-1344;Inherit;False;Property;_GrassColor;Grass Color;7;0;Create;True;0;0;0;False;0;False;0.105263,1,0,1;0.105263,1,0,1;True;True;0;6;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4;FLOAT3;5
 Node;AmplifyShaderEditor.OneMinusNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;70;64,-960;Inherit;False;1;0;FLOAT;0;False;1;FLOAT;0
 Node;AmplifyShaderEditor.RangedFloatNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;67;-608,-736;Inherit;False;Property;_Grassgradientsize;Grass gradient size;9;0;Create;True;0;0;0;False;0;False;1;1;0;0;0;1;FLOAT;0
 Node;AmplifyShaderEditor.SimpleDivideOpNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;69;-368,-880;Inherit;False;2;0;FLOAT;0;False;1;FLOAT;0;False;1;FLOAT;0
@@ -6765,11 +7009,21 @@ Node;AmplifyShaderEditor.RangedFloatNode, AmplifyShaderEditor, Version=0.0.0.0, 
 Node;AmplifyShaderEditor.GetLocalVarNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;87;-1376,-1984;Inherit;False;85;Main texture Noise;1;0;OBJECT;;False;1;FLOAT;0
 Node;AmplifyShaderEditor.GetLocalVarNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;98;-1408,-1888;Inherit;False;92;small texture Noise;1;0;OBJECT;;False;1;FLOAT;0
 Node;AmplifyShaderEditor.FunctionNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;100;-2048,-16;Inherit;True;Triplanal Projection;1;;6;37914bd65dc864646a8263ceadc27096;0;7;56;FLOAT;0;False;49;FLOAT2;0,0;False;50;FLOAT2;0,0;False;51;FLOAT2;0,0;False;44;FLOAT;0;False;38;SAMPLER2D;;False;37;FLOAT;32;False;1;COLOR;0
-Node;AmplifyShaderEditor.FunctionNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;101;-2128,-304;Inherit;True;Triplanal Projection;1;;7;37914bd65dc864646a8263ceadc27096;0;7;56;FLOAT;0;False;49;FLOAT2;0,0;False;50;FLOAT2;0,0;False;51;FLOAT2;0,0;False;44;FLOAT;0;False;38;SAMPLER2D;;False;37;FLOAT;32;False;1;COLOR;0
 Node;AmplifyShaderEditor.SimpleAddOpNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;99;-1168,-1872;Inherit;False;2;2;0;FLOAT;0;False;1;FLOAT;0;False;1;FLOAT;0
 Node;AmplifyShaderEditor.SimpleMultiplyOpNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;102;-1504,-96;Inherit;False;2;2;0;FLOAT;0;False;1;FLOAT;0;False;1;FLOAT;0
 Node;AmplifyShaderEditor.RegisterLocalVarNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;92;-1232,128;Inherit;False;small texture Noise;-1;True;1;0;FLOAT;0;False;1;FLOAT;0
 Node;AmplifyShaderEditor.RangedFloatNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;103;-1808,-96;Inherit;False;Property;_DeformationIntensity;Deformation Intensity;14;0;Create;True;0;0;0;False;0;False;0;0;0;0.1;0;1;FLOAT;0
+Node;AmplifyShaderEditor.FunctionNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;101;-2128,-304;Inherit;True;Triplanal Projection;1;;7;37914bd65dc864646a8263ceadc27096;0;7;56;FLOAT;0;False;49;FLOAT2;0,0;False;50;FLOAT2;0,0;False;51;FLOAT2;0,0;False;44;FLOAT;0;False;38;SAMPLER2D;;False;37;FLOAT;32;False;1;COLOR;0
+Node;AmplifyShaderEditor.TriplanarNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;107;160,-288;Inherit;True;Spherical;World;True;Top Texture 0;_TopTexture0;white;-1;None;Mid Texture 0;_MidTexture0;white;-1;None;Bot Texture 0;_BotTexture0;white;-1;None;Triplanar Sample;Tangent;10;0;SAMPLER2D;;False;5;FLOAT;1;False;1;SAMPLER2D;;False;6;FLOAT;0;False;2;SAMPLER2D;;False;7;FLOAT;0;False;9;FLOAT3;0,0,0;False;8;FLOAT;1;False;3;FLOAT2;1,1;False;4;FLOAT;1;False;5;FLOAT3;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
+Node;AmplifyShaderEditor.TexturePropertyNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;106;-288,-560;Inherit;True;Property;_NormalMap;Normal Map;15;1;[Normal];Create;True;0;0;0;False;0;False;0ceb8e9af8bf4da41bc7749be5da3226;0ceb8e9af8bf4da41bc7749be5da3226;True;bump;Auto;Texture2D;False;-1;0;2;SAMPLER2D;0;SAMPLERSTATE;1
+Node;AmplifyShaderEditor.RangedFloatNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;108;-288,-352;Inherit;False;Property;_Normalmapintensity;Normal map intensity;16;0;Create;True;0;0;0;False;0;False;1;1;0;0;0;1;FLOAT;0
+Node;AmplifyShaderEditor.RangedFloatNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;109;-368,-96;Inherit;False;Property;_Normalmapscale;Normal map scale;17;0;Create;True;0;0;0;False;0;False;1;1;0;0;0;1;FLOAT;0
+Node;AmplifyShaderEditor.RangedFloatNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;110;-260.3344,-202.1377;Inherit;False;Constant;_Float3;Float 3;18;0;Create;True;0;0;0;False;0;False;1;0;0;0;0;1;FLOAT;0
+Node;AmplifyShaderEditor.SimpleDivideOpNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;111;-96.33435,-117.1377;Inherit;False;2;0;FLOAT;0;False;1;FLOAT;0;False;1;FLOAT;0
+Node;AmplifyShaderEditor.ColorNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;65;-160,-1392;Inherit;False;Property;_GrassColor;Grass Color;7;0;Create;True;0;0;0;False;0;False;0.105263,1,0,1;0.105263,1,0,1;True;True;0;6;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4;FLOAT3;5
+Node;AmplifyShaderEditor.SmoothstepOpNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;124;288,-1024;Inherit;False;3;0;FLOAT;0;False;1;FLOAT;0.5;False;2;FLOAT;1;False;1;FLOAT;0
+Node;AmplifyShaderEditor.FunctionNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;134;-192,-1040;Inherit;False;Proximity With terrain;18;;21;2dc08cea2089b3a46ac43f4863e4969e;0;0;1;FLOAT;0
+Node;AmplifyShaderEditor.SmoothstepOpNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;135;736,-1280;Inherit;False;3;0;FLOAT;0;False;1;FLOAT;0.4;False;2;FLOAT;0.6;False;1;FLOAT;0
 Node;AmplifyShaderEditor.TemplateMultiPassMasterNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;0;816,-32;Float;False;True;-1;3;Rendering.HighDefinition.LightingShaderGraphGUI;0;12;Ancient standard Shader;53b46d85872c5b24c8f4f0a1c3fe4c87;True;GBuffer;0;0;GBuffer;35;False;False;False;False;False;False;False;False;False;False;False;False;True;0;False;;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;3;RenderPipeline=HDRenderPipeline;RenderType=Opaque=RenderType;Queue=Geometry=Queue=0;True;5;True;7;d3d11;metal;vulkan;xboxone;xboxseries;playstation;switch;0;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;0;True;_CullMode;False;False;False;False;False;False;False;False;False;True;True;0;True;_StencilRefGBuffer;255;False;;255;True;_StencilWriteMaskGBuffer;7;False;;3;False;;0;False;;0;False;;7;False;;3;False;;0;False;;0;False;;False;False;True;0;True;_ZTestGBuffer;False;True;1;LightMode=GBuffer;False;False;0;;0;0;Standard;42;Category;0;0;  Instanced Terrain Normals;1;0;Surface Type;0;0;  Rendering Pass;1;0;  Refraction Model;0;0;    Blending Mode;0;0;    Blend Preserves Specular;1;0;  Back Then Front Rendering;0;0;  Transparent Depth Prepass;0;0;  Transparent Depth Postpass;0;0;  ZWrite;0;0;  Z Test;4;0;Double-Sided;0;0;Alpha Clipping;0;0;  Use Shadow Threshold;0;0;Material Type;0;0;  Energy Conserving Specular;1;0;  Transmission;1;0;Normal Space;0;0;Receive Decals;1;0;Receive SSR;1;0;Receive SSR Transparent;0;0;Motion Vectors;1;0;  Add Precomputed Velocity;0;0;Specular AA;0;0;Specular Occlusion Mode;1;0;Override Baked GI;0;0;Write Depth;0;0;  Depth Offset;0;0;  Conservative;0;0;GPU Instancing;1;0;LOD CrossFade;0;0;Tessellation;0;0;  Phong;0;0;  Strength;0.5,False,;0;  Type;0;0;  Tess;16,False,;0;  Min;10,False,;0;  Max;25,False,;0;  Edge Length;16,False,;0;  Max Displacement;25,False,;0;Vertex Position;1;0;0;11;True;True;True;True;True;True;False;False;False;True;True;False;;False;0
 Node;AmplifyShaderEditor.TemplateMultiPassMasterNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;1;0,0;Float;False;False;-1;3;Rendering.HighDefinition.LightingShaderGraphGUI;0;1;New Amplify Shader;53b46d85872c5b24c8f4f0a1c3fe4c87;True;META;0;1;META;0;False;False;False;False;False;False;False;False;False;False;False;False;True;0;False;;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;3;RenderPipeline=HDRenderPipeline;RenderType=Opaque=RenderType;Queue=Geometry=Queue=0;True;5;True;7;d3d11;metal;vulkan;xboxone;xboxseries;playstation;switch;0;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;2;False;;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;1;LightMode=Meta;False;False;0;;0;0;Standard;0;False;0
 Node;AmplifyShaderEditor.TemplateMultiPassMasterNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;2;0,0;Float;False;False;-1;3;Rendering.HighDefinition.LightingShaderGraphGUI;0;1;New Amplify Shader;53b46d85872c5b24c8f4f0a1c3fe4c87;True;ShadowCaster;0;2;ShadowCaster;0;False;False;False;False;False;False;False;False;False;False;False;False;True;0;False;;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;3;RenderPipeline=HDRenderPipeline;RenderType=Opaque=RenderType;Queue=Geometry=Queue=0;True;5;True;7;d3d11;metal;vulkan;xboxone;xboxseries;playstation;switch;0;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;0;True;_CullMode;False;True;False;False;False;False;0;False;;False;False;False;False;False;False;False;False;False;True;1;False;;True;3;False;;False;True;1;LightMode=ShadowCaster;False;False;0;;0;0;Standard;0;False;0
@@ -6790,7 +7044,7 @@ WireConnection;79;0;61;2
 WireConnection;79;1;78;0
 WireConnection;60;0;75;0
 WireConnection;60;1;65;5
-WireConnection;60;2;70;0
+WireConnection;60;2;134;0
 WireConnection;70;0;71;0
 WireConnection;69;0;61;2
 WireConnection;69;1;67;0
@@ -6814,15 +7068,21 @@ WireConnection;83;0;87;0
 WireConnection;83;1;84;0
 WireConnection;100;44;95;0
 WireConnection;100;38;53;0
-WireConnection;101;56;102;0
-WireConnection;101;44;56;0
-WireConnection;101;38;53;0
 WireConnection;99;0;87;0
 WireConnection;99;1;98;0
 WireConnection;102;0;97;0
 WireConnection;102;1;103;0
 WireConnection;92;0;97;0
-WireConnection;0;0;72;0
+WireConnection;101;56;102;0
+WireConnection;101;44;56;0
+WireConnection;101;38;53;0
+WireConnection;107;0;106;0
+WireConnection;107;8;108;0
+WireConnection;107;3;111;0
+WireConnection;111;0;110;0
+WireConnection;111;1;109;0
+WireConnection;0;0;60;0
+WireConnection;0;1;107;0
 WireConnection;0;7;91;0
 ASEEND*/
-//CHKSM=67B9CFF67DC47940FB228EFC68C8433889694C4F
+//CHKSM=9692EE6ADD58424DBCD233218FAE91BAE8A1C27F

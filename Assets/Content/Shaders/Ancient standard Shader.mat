@@ -40,8 +40,16 @@ Material:
         m_Texture: {fileID: 2800000, guid: 9aa431943de223d47b853a0935dcf5a3, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _Noiseoffset:
+        m_Texture: {fileID: 2800000, guid: 841ad33c2bd5af8448cf499ac7c0c073, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _NormalMap:
-        m_Texture: {fileID: 2800000, guid: f30d9a07f8fe44f4a9752b5385d6c759, type: 3}
+        m_Texture: {fileID: 2800000, guid: aee6e26e75d70bc41a956992a56fba1f, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _RawTexture:
+        m_Texture: {fileID: 2800000, guid: b2db3f0cc22200945a9dd1f2d267975d, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _Texture1:
@@ -50,6 +58,10 @@ Material:
         m_Offset: {x: 0, y: 0}
     - _TextureSample0:
         m_Texture: {fileID: 2800000, guid: 9aa431943de223d47b853a0935dcf5a3, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _TextureSample1:
+        m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _texcoord:
@@ -82,8 +94,8 @@ Material:
     - _ConservativeDepthOffsetEnable: 1
     - _CullMode: 2
     - _CullModeForward: 2
-    - _Darkeninggradient: 0.517
-    - _DeformationIntensity: 0.02
+    - _Darkeninggradient: 0.5
+    - _DeformationIntensity: 0.03
     - _DepthOffsetEnable: 1
     - _DoubleSidedEnable: 0
     - _DoubleSidedGIMode: 0
@@ -92,18 +104,24 @@ Material:
     - _DstBlend2: 0
     - _EnableBlendModePreserveSpecularLighting: 1
     - _EnableFogOnTransparent: 1
+    - _Float0: 15.33
     - _Float2: 0.7682
     - _Float3: 0.02
-    - _Grassgradientsize: 3.8
+    - _Gradientsize: 7.11
+    - _Grassgradientsize: 4.8
     - _Metalness: 0
+    - _Noiseoffsetintensity: 2.08
+    - _Noiseoffsetsize: 10
     - _NormalScale: 1
+    - _Normalmapintensity: 0.05
+    - _Normalmapscale: 15
     - _OpaqueCullMode: 2
     - _PerPixelSorting: 0
     - _ReceivesSSR: 1
     - _ReceivesSSRTransparent: 0
     - _RenderQueueType: 1
     - _RequireSplitLighting: 0
-    - _SmallTexturesize: 8.45
+    - _SmallTexturesize: 16
     - _Smoothness: 0.5
     - _SrcBlend: 1
     - _StencilRef: 0
@@ -133,14 +151,14 @@ Material:
     - _ZTestGBuffer: 4
     - _ZTestTransparent: 4
     - _ZWrite: 1
-    - _darkeninggradientsize: 12.2
+    - _darkeninggradientsize: 17.63
     - _dfsgsdf: 0.6
     m_Colors:
     - _Basecolor: {r: 0.7075472, g: 0.66415983, b: 0.66415983, a: 1}
     - _Color1: {r: 0.41489986, g: 0.509434, b: 0.40129942, a: 1}
     - _DoubleSidedConstants: {r: 1, g: 1, b: -1, a: 0}
     - _EmissionColor: {r: 1, g: 1, b: 1, a: 1}
-    - _GrassColor: {r: 0.25882354, g: 0.46666667, b: 0.24705882, a: 1}
+    - _GrassColor: {r: 0.34741667, g: 0.46666667, b: 0.34066665, a: 1}
     - _Tiling: {r: 1, g: 1, b: 0, a: 0}
     - _Tint: {r: 1, g: 1, b: 1, a: 1}
   m_BuildTextureStacks: []

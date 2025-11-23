@@ -4,6 +4,9 @@ ShaderImporter:
   externalObjects: {}
   defaultTextures:
   - _MainTexture: {fileID: 2800000, guid: 9aa431943de223d47b853a0935dcf5a3, type: 3}
+  - _RawTexture: {fileID: 2800000, guid: 9a678fbea463ebf4eb3a3b311a698bcb, type: 3}
+  - _Noiseoffset: {fileID: 2800000, guid: 841ad33c2bd5af8448cf499ac7c0c073, type: 3}
+  - _NormalMap: {fileID: 2800000, guid: 0ceb8e9af8bf4da41bc7749be5da3226, type: 3}
   nonModifiableTextures: []
   userData: 
   assetBundleName: 
