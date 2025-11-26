@@ -52,6 +52,10 @@ Material:
         m_Texture: {fileID: 2800000, guid: b2db3f0cc22200945a9dd1f2d267975d, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _TertiaryTexture:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _Texture1:
         m_Texture: {fileID: 2800000, guid: 9aa431943de223d47b853a0935dcf5a3, type: 3}
         m_Scale: {x: 1, y: 1}
@@ -109,6 +113,7 @@ Material:
     - _Float3: 0.02
     - _Gradientsize: 7.11
     - _Grassgradientsize: 4.8
+    - _InvertTertiary: 0
     - _Metalness: 0
     - _Noiseoffsetintensity: 2.08
     - _Noiseoffsetsize: 10
@@ -136,6 +141,8 @@ Material:
     - _StencilWriteMaskMV: 41
     - _SupportDecals: 1
     - _SurfaceType: 0
+    - _TertiaryTexturesize: 1
+    - _Textureintensity: 1
     - _Textureintentity: 0.458
     - _Texturesize: 32.65
     - _Texturesmoothness: 0.3
@@ -159,6 +166,8 @@ Material:
     - _DoubleSidedConstants: {r: 1, g: 1, b: -1, a: 0}
     - _EmissionColor: {r: 1, g: 1, b: 1, a: 1}
     - _GrassColor: {r: 0.34741667, g: 0.46666667, b: 0.34066665, a: 1}
+    - _Secondarycolor: {r: 0.8, g: 0.7764706, b: 0.6627451, a: 1}
+    - _Tertiarycolor: {r: 0.42519578, g: 0.5557389, b: 0.6132076, a: 0}
     - _Tiling: {r: 1, g: 1, b: 0, a: 0}
     - _Tint: {r: 1, g: 1, b: 1, a: 1}
   m_BuildTextureStacks: []

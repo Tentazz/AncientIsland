@@ -17,6 +17,7 @@ Material:
   - _CONSERVATIVE_DEPTH_OFFSET
   - _DEPTHOFFSET_ON
   - _DISABLE_SSR_TRANSPARENT
+  - _INVERTTERTIARY_ON
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
@@ -37,7 +38,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MainTexture:
-        m_Texture: {fileID: 2800000, guid: 9aa431943de223d47b853a0935dcf5a3, type: 3}
+        m_Texture: {fileID: 2800000, guid: 0bcce4395864ec54eac86f2991e61448, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _Noiseoffset:
@@ -50,6 +51,10 @@ Material:
         m_Offset: {x: 0, y: 0}
     - _RawTexture:
         m_Texture: {fileID: 2800000, guid: b2db3f0cc22200945a9dd1f2d267975d, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _TertiaryTexture:
+        m_Texture: {fileID: 2800000, guid: ec24e9675b1d4bf4b9b06222fa749388, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _Texture1:
@@ -95,7 +100,7 @@ Material:
     - _CullMode: 2
     - _CullModeForward: 2
     - _Darkeninggradient: 0.5
-    - _DeformationIntensity: 0.03
+    - _DeformationIntensity: 0
     - _DepthOffsetEnable: 1
     - _DoubleSidedEnable: 0
     - _DoubleSidedGIMode: 0
@@ -107,8 +112,9 @@ Material:
     - _Float0: 15.33
     - _Float2: 0.7682
     - _Float3: 0.02
-    - _Gradientsize: 7.11
+    - _Gradientsize: 32.06
     - _Grassgradientsize: 4.8
+    - _InvertTertiary: 1
     - _Metalness: 0
     - _Noiseoffsetintensity: 2.08
     - _Noiseoffsetsize: 10
@@ -136,8 +142,10 @@ Material:
     - _StencilWriteMaskMV: 41
     - _SupportDecals: 1
     - _SurfaceType: 0
-    - _Textureintentity: 0.458
-    - _Texturesize: 32.65
+    - _TertiaryTexturesize: 36.2
+    - _Textureintensity: 0.5
+    - _Textureintentity: 1
+    - _Texturesize: 40
     - _Texturesmoothness: 0.3
     - _Tiling: 0.09
     - _TransparentBackfaceEnable: 0
@@ -154,11 +162,13 @@ Material:
     - _darkeninggradientsize: 17.63
     - _dfsgsdf: 0.6
     m_Colors:
-    - _Basecolor: {r: 0.7075472, g: 0.66415983, b: 0.66415983, a: 1}
+    - _Basecolor: {r: 0.8000001, g: 0.77647066, b: 0.6627451, a: 1}
     - _Color1: {r: 0.41489986, g: 0.509434, b: 0.40129942, a: 1}
     - _DoubleSidedConstants: {r: 1, g: 1, b: -1, a: 0}
     - _EmissionColor: {r: 1, g: 1, b: 1, a: 1}
     - _GrassColor: {r: 0.34741667, g: 0.46666667, b: 0.34066665, a: 1}
+    - _Secondarycolor: {r: 0.4392157, g: 0.54901963, b: 0.43137255, a: 1}
+    - _Tertiarycolor: {r: 0.54901963, g: 0.54901963, b: 0.54901963, a: 0}
     - _Tiling: {r: 1, g: 1, b: 0, a: 0}
     - _Tint: {r: 1, g: 1, b: 1, a: 1}
   m_BuildTextureStacks: []
