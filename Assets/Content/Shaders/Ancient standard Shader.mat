@@ -38,7 +38,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MainTexture:
-        m_Texture: {fileID: 2800000, guid: 0bcce4395864ec54eac86f2991e61448, type: 3}
+        m_Texture: {fileID: 2800000, guid: 9aa431943de223d47b853a0935dcf5a3, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _Noiseoffset:
@@ -54,7 +54,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _TertiaryTexture:
-        m_Texture: {fileID: 2800000, guid: ec24e9675b1d4bf4b9b06222fa749388, type: 3}
+        m_Texture: {fileID: 2800000, guid: 9aa431943de223d47b853a0935dcf5a3, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _Texture1:
@@ -100,8 +100,9 @@ Material:
     - _CullMode: 2
     - _CullModeForward: 2
     - _Darkeninggradient: 0.5
-    - _DeformationIntensity: 0
+    - _DeformationIntensity: 0.01
     - _DepthOffsetEnable: 1
+    - _DitherTextures: 0.5
     - _DoubleSidedEnable: 0
     - _DoubleSidedGIMode: 0
     - _DoubleSidedNormalMode: 2
@@ -113,7 +114,7 @@ Material:
     - _Float2: 0.7682
     - _Float3: 0.02
     - _Gradientsize: 32.06
-    - _Grassgradientsize: 4.8
+    - _Grassgradientsize: 25
     - _InvertTertiary: 1
     - _Metalness: 0
     - _Noiseoffsetintensity: 2.08
@@ -127,7 +128,7 @@ Material:
     - _ReceivesSSRTransparent: 0
     - _RenderQueueType: 1
     - _RequireSplitLighting: 0
-    - _SmallTexturesize: 16
+    - _SmallTexturesize: 5
     - _Smoothness: 0.5
     - _SrcBlend: 1
     - _StencilRef: 0
@@ -142,10 +143,11 @@ Material:
     - _StencilWriteMaskMV: 41
     - _SupportDecals: 1
     - _SurfaceType: 0
-    - _TertiaryTexturesize: 36.2
+    - _TertiaryTextureintensity: 1
+    - _TertiaryTexturesize: 84.2
     - _Textureintensity: 0.5
     - _Textureintentity: 1
-    - _Texturesize: 40
+    - _Texturesize: 30
     - _Texturesmoothness: 0.3
     - _Tiling: 0.09
     - _TransparentBackfaceEnable: 0
@@ -168,7 +170,7 @@ Material:
     - _EmissionColor: {r: 1, g: 1, b: 1, a: 1}
     - _GrassColor: {r: 0.34741667, g: 0.46666667, b: 0.34066665, a: 1}
     - _Secondarycolor: {r: 0.4392157, g: 0.54901963, b: 0.43137255, a: 1}
-    - _Tertiarycolor: {r: 0.54901963, g: 0.54901963, b: 0.54901963, a: 0}
+    - _Tertiarycolor: {r: 0.6981132, g: 0.6981132, b: 0.6981132, a: 0}
     - _Tiling: {r: 1, g: 1, b: 0, a: 0}
     - _Tint: {r: 1, g: 1, b: 1, a: 1}
   m_BuildTextureStacks: []

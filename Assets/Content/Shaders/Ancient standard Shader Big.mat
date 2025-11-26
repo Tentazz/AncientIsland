@@ -7,7 +7,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Ancient standard Shader Inside
+  m_Name: Ancient standard Shader Big
   m_Shader: {fileID: 4800000, guid: 85c75951e7fd0824c83fae3a0855dd13, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
@@ -17,6 +17,7 @@ Material:
   - _CONSERVATIVE_DEPTH_OFFSET
   - _DEPTHOFFSET_ON
   - _DISABLE_SSR_TRANSPARENT
+  - _INVERTTERTIARY_ON
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
@@ -37,7 +38,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MainTexture:
-        m_Texture: {fileID: 2800000, guid: 9aa431943de223d47b853a0935dcf5a3, type: 3}
+        m_Texture: {fileID: 2800000, guid: 793cdb2b54d2c8642a93a5293f426824, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _Noiseoffset:
@@ -53,7 +54,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _TertiaryTexture:
-        m_Texture: {fileID: 0}
+        m_Texture: {fileID: 2800000, guid: 9aa431943de223d47b853a0935dcf5a3, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _Texture1:
@@ -93,14 +94,15 @@ Material:
     - _AlphaSrcBlend: 1
     - _AlphaToMask: 0
     - _AlphaToMaskInspectorValue: 0
-    - _Basesmoothness: 0.35
+    - _Basesmoothness: 0.2
     - _BlendMode: 0
     - _ConservativeDepthOffsetEnable: 1
     - _CullMode: 2
     - _CullModeForward: 2
     - _Darkeninggradient: 0.5
-    - _DeformationIntensity: 0.03
+    - _DeformationIntensity: 0.01
     - _DepthOffsetEnable: 1
+    - _DitherTextures: 0.5
     - _DoubleSidedEnable: 0
     - _DoubleSidedGIMode: 0
     - _DoubleSidedNormalMode: 2
@@ -111,9 +113,9 @@ Material:
     - _Float0: 15.33
     - _Float2: 0.7682
     - _Float3: 0.02
-    - _Gradientsize: 7.11
-    - _Grassgradientsize: 4.8
-    - _InvertTertiary: 0
+    - _Gradientsize: 32.06
+    - _Grassgradientsize: 25
+    - _InvertTertiary: 1
     - _Metalness: 0
     - _Noiseoffsetintensity: 2.08
     - _Noiseoffsetsize: 10
@@ -126,7 +128,7 @@ Material:
     - _ReceivesSSRTransparent: 0
     - _RenderQueueType: 1
     - _RequireSplitLighting: 0
-    - _SmallTexturesize: 16
+    - _SmallTexturesize: 5
     - _Smoothness: 0.5
     - _SrcBlend: 1
     - _StencilRef: 0
@@ -142,11 +144,11 @@ Material:
     - _SupportDecals: 1
     - _SurfaceType: 0
     - _TertiaryTextureintensity: 1
-    - _TertiaryTexturesize: 1
-    - _Textureintensity: 1
-    - _Textureintentity: 0.458
-    - _Texturesize: 32.65
-    - _Texturesmoothness: 0.3
+    - _TertiaryTexturesize: 20
+    - _Textureintensity: 0.5
+    - _Textureintentity: 1
+    - _Texturesize: 130.5
+    - _Texturesmoothness: 0.35
     - _Tiling: 0.09
     - _TransparentBackfaceEnable: 0
     - _TransparentCullMode: 2
@@ -159,16 +161,16 @@ Material:
     - _ZTestGBuffer: 4
     - _ZTestTransparent: 4
     - _ZWrite: 1
-    - _darkeninggradientsize: 17.63
+    - _darkeninggradientsize: 17
     - _dfsgsdf: 0.6
     m_Colors:
-    - _Basecolor: {r: 0.7075472, g: 0.66415983, b: 0.66415983, a: 1}
-    - _Color1: {r: 0.8018868, g: 0.7749173, b: 0.66193485, a: 1}
+    - _Basecolor: {r: 0.8000001, g: 0.77647066, b: 0.6627451, a: 1}
+    - _Color1: {r: 0.41489986, g: 0.509434, b: 0.40129942, a: 1}
     - _DoubleSidedConstants: {r: 1, g: 1, b: -1, a: 0}
     - _EmissionColor: {r: 1, g: 1, b: 1, a: 1}
     - _GrassColor: {r: 0.34741667, g: 0.46666667, b: 0.34066665, a: 1}
-    - _Secondarycolor: {r: 0.8, g: 0.7764706, b: 0.6627451, a: 1}
-    - _Tertiarycolor: {r: 0.42519578, g: 0.5557389, b: 0.6132076, a: 0}
+    - _Secondarycolor: {r: 0.4392157, g: 0.54901963, b: 0.43137255, a: 1}
+    - _Tertiarycolor: {r: 0.6981132, g: 0.6981132, b: 0.6981132, a: 0}
     - _Tiling: {r: 1, g: 1, b: 0, a: 0}
     - _Tint: {r: 1, g: 1, b: 1, a: 1}
   m_BuildTextureStacks: []
