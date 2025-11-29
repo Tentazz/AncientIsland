@@ -55,7 +55,9 @@ public class TimeManager : MonoBehaviour
 
         if (NumpadMinusAction.IsPressed()) {
             GlobalVariables.globalTime += Time.deltaTime * -60f;
-            print("Rewind Time");
+            if (GlobalVariables.globalTime < 0f) {
+                GlobalVariables.globalTime = dayDuration + GlobalVariables.globalTime;
+            }
         }
 
         GlobalVariables.globalNormalizedTime = GlobalVariables.globalTime / dayDuration;

@@ -612,7 +612,7 @@ Shader "Star shader"
 
 				float3 temp_cast_0 = (_intensity).xxx;
 				
-				Gradient gradient11 = NewGradient( 0, 4, 2, float4( 1, 1, 1, 0.0864271 ), float4( 0, 0, 0, 0.2037079 ), float4( 0, 0, 0, 0.8395056 ), float4( 1, 1, 1, 0.9336385 ), 0, 0, 0, 0, float2( 1, 0 ), float2( 1, 1 ), 0, 0, 0, 0, 0, 0 );
+				Gradient gradient11 = NewGradient( 0, 4, 2, float4( 1, 1, 1, 0.1342641 ), float4( 0, 0, 0, 0.2299992 ), float4( 0, 0, 0, 0.8500038 ), float4( 1, 1, 1, 0.9583276 ), 0, 0, 0, 0, float2( 1, 0 ), float2( 1, 1 ), 0, 0, 0, 0, 0, 0 );
 				float lerpResult14 = lerp( _globalNormalizedTime , _Debugtimeofday , _Usedebugtime);
 				
 
@@ -1058,7 +1058,7 @@ Shader "Star shader"
 				float4 ClipPos = ComputeClipSpacePosition( ScreenPosNorm.xy, packedInput.positionCS.z ) * packedInput.positionCS.w;
 				float4 ScreenPos = ComputeScreenPos( ClipPos, _ProjectionParams.x );
 
-				Gradient gradient11 = NewGradient( 0, 4, 2, float4( 1, 1, 1, 0.0864271 ), float4( 0, 0, 0, 0.2037079 ), float4( 0, 0, 0, 0.8395056 ), float4( 1, 1, 1, 0.9336385 ), 0, 0, 0, 0, float2( 1, 0 ), float2( 1, 1 ), 0, 0, 0, 0, 0, 0 );
+				Gradient gradient11 = NewGradient( 0, 4, 2, float4( 1, 1, 1, 0.1342641 ), float4( 0, 0, 0, 0.2299992 ), float4( 0, 0, 0, 0.8500038 ), float4( 1, 1, 1, 0.9583276 ), 0, 0, 0, 0, float2( 1, 0 ), float2( 1, 1 ), 0, 0, 0, 0, 0, 0 );
 				float lerpResult14 = lerp( _globalNormalizedTime , _Debugtimeofday , _Usedebugtime);
 				
 
@@ -1483,7 +1483,7 @@ Shader "Star shader"
 
 				float3 temp_cast_0 = (_intensity).xxx;
 				
-				Gradient gradient11 = NewGradient( 0, 4, 2, float4( 1, 1, 1, 0.0864271 ), float4( 0, 0, 0, 0.2037079 ), float4( 0, 0, 0, 0.8395056 ), float4( 1, 1, 1, 0.9336385 ), 0, 0, 0, 0, float2( 1, 0 ), float2( 1, 1 ), 0, 0, 0, 0, 0, 0 );
+				Gradient gradient11 = NewGradient( 0, 4, 2, float4( 1, 1, 1, 0.1342641 ), float4( 0, 0, 0, 0.2299992 ), float4( 0, 0, 0, 0.8500038 ), float4( 1, 1, 1, 0.9583276 ), 0, 0, 0, 0, float2( 1, 0 ), float2( 1, 1 ), 0, 0, 0, 0, 0, 0 );
 				float lerpResult14 = lerp( _globalNormalizedTime , _Debugtimeofday , _Usedebugtime);
 				
 
@@ -1845,7 +1845,7 @@ Shader "Star shader"
 
 				float3 V = float3( 1.0, 1.0, 1.0 );
 
-				Gradient gradient11 = NewGradient( 0, 4, 2, float4( 1, 1, 1, 0.0864271 ), float4( 0, 0, 0, 0.2037079 ), float4( 0, 0, 0, 0.8395056 ), float4( 1, 1, 1, 0.9336385 ), 0, 0, 0, 0, float2( 1, 0 ), float2( 1, 1 ), 0, 0, 0, 0, 0, 0 );
+				Gradient gradient11 = NewGradient( 0, 4, 2, float4( 1, 1, 1, 0.1342641 ), float4( 0, 0, 0, 0.2299992 ), float4( 0, 0, 0, 0.8500038 ), float4( 1, 1, 1, 0.9583276 ), 0, 0, 0, 0, float2( 1, 0 ), float2( 1, 1 ), 0, 0, 0, 0, 0, 0 );
 				float lerpResult14 = lerp( _globalNormalizedTime , _Debugtimeofday , _Usedebugtime);
 				
 
@@ -2232,7 +2232,7 @@ Shader "Star shader"
 				float4 ClipPos = ComputeClipSpacePosition( ScreenPosNorm.xy, packedInput.positionCS.z ) * packedInput.positionCS.w;
 				float4 ScreenPos = ComputeScreenPos( ClipPos, _ProjectionParams.x );
 
-				Gradient gradient11 = NewGradient( 0, 4, 2, float4( 1, 1, 1, 0.0864271 ), float4( 0, 0, 0, 0.2037079 ), float4( 0, 0, 0, 0.8395056 ), float4( 1, 1, 1, 0.9336385 ), 0, 0, 0, 0, float2( 1, 0 ), float2( 1, 1 ), 0, 0, 0, 0, 0, 0 );
+				Gradient gradient11 = NewGradient( 0, 4, 2, float4( 1, 1, 1, 0.1342641 ), float4( 0, 0, 0, 0.2299992 ), float4( 0, 0, 0, 0.8500038 ), float4( 1, 1, 1, 0.9583276 ), 0, 0, 0, 0, float2( 1, 0 ), float2( 1, 1 ), 0, 0, 0, 0, 0, 0 );
 				float lerpResult14 = lerp( _globalNormalizedTime , _Debugtimeofday , _Usedebugtime);
 				
 
@@ -2718,7 +2718,7 @@ Shader "Star shader"
 
 				float3 V = GetWorldSpaceNormalizeViewDir(input.positionRWS);
 
-				Gradient gradient11 = NewGradient( 0, 4, 2, float4( 1, 1, 1, 0.0864271 ), float4( 0, 0, 0, 0.2037079 ), float4( 0, 0, 0, 0.8395056 ), float4( 1, 1, 1, 0.9336385 ), 0, 0, 0, 0, float2( 1, 0 ), float2( 1, 1 ), 0, 0, 0, 0, 0, 0 );
+				Gradient gradient11 = NewGradient( 0, 4, 2, float4( 1, 1, 1, 0.1342641 ), float4( 0, 0, 0, 0.2299992 ), float4( 0, 0, 0, 0.8500038 ), float4( 1, 1, 1, 0.9583276 ), 0, 0, 0, 0, float2( 1, 0 ), float2( 1, 1 ), 0, 0, 0, 0, 0, 0 );
 				float lerpResult14 = lerp( _globalNormalizedTime , _Debugtimeofday , _Usedebugtime);
 				
 
@@ -3138,7 +3138,7 @@ Shader "Star shader"
 
 				float3 V = float3(1.0, 1.0, 1.0);
 
-				Gradient gradient11 = NewGradient( 0, 4, 2, float4( 1, 1, 1, 0.0864271 ), float4( 0, 0, 0, 0.2037079 ), float4( 0, 0, 0, 0.8395056 ), float4( 1, 1, 1, 0.9336385 ), 0, 0, 0, 0, float2( 1, 0 ), float2( 1, 1 ), 0, 0, 0, 0, 0, 0 );
+				Gradient gradient11 = NewGradient( 0, 4, 2, float4( 1, 1, 1, 0.1342641 ), float4( 0, 0, 0, 0.2299992 ), float4( 0, 0, 0, 0.8500038 ), float4( 1, 1, 1, 0.9583276 ), 0, 0, 0, 0, float2( 1, 0 ), float2( 1, 1 ), 0, 0, 0, 0, 0, 0 );
 				float lerpResult14 = lerp( _globalNormalizedTime , _Debugtimeofday , _Usedebugtime);
 				
 
@@ -3288,11 +3288,11 @@ Shader "Star shader"
 }
 /*ASEBEGIN
 Version=19904
-Node;AmplifyShaderEditor.RangedFloatNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;18;-768,240;Inherit;False;Global;_globalNormalizedTime;_globalNormalizedTime;3;0;Create;True;0;0;0;False;0;False;0;0.2175055;0;0;0;1;FLOAT;0
+Node;AmplifyShaderEditor.RangedFloatNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;18;-768,240;Inherit;False;Global;_globalNormalizedTime;_globalNormalizedTime;3;0;Create;True;0;0;0;False;0;False;0;0.2432959;0;0;0;1;FLOAT;0
 Node;AmplifyShaderEditor.RangedFloatNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;15;-1056,368;Inherit;False;Property;_Debugtimeofday;Debug time of day;2;0;Create;True;0;0;0;False;0;False;0;0;0;1;0;1;FLOAT;0
 Node;AmplifyShaderEditor.RangedFloatNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;16;-928,464;Inherit;False;Property;_Usedebugtime;Use debug time;1;1;[Toggle];Create;True;0;0;0;False;0;False;0;0;0;0;0;1;FLOAT;0
 Node;AmplifyShaderEditor.LerpOp, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;14;-640,416;Inherit;False;3;0;FLOAT;0;False;1;FLOAT;0;False;2;FLOAT;0;False;1;FLOAT;0
-Node;AmplifyShaderEditor.GradientNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;11;-704,64;Inherit;False;0;4;2;1,1,1,0.0864271;0,0,0,0.2037079;0,0,0,0.8395056;1,1,1,0.9336385;1,0;1,1;0;1;OBJECT;0
+Node;AmplifyShaderEditor.GradientNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;11;-704,64;Inherit;False;0;4;2;1,1,1,0.1342641;0,0,0,0.2299992;0,0,0,0.8500038;1,1,1,0.9583276;1,0;1,1;0;1;OBJECT;0
 Node;AmplifyShaderEditor.RangedFloatNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;9;-480,-64;Inherit;False;Property;_intensity;intensity;0;0;Create;True;0;0;0;False;0;False;100;100;0;0;0;1;FLOAT;0
 Node;AmplifyShaderEditor.GradientSampleNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;12;-400,256;Inherit;True;2;0;OBJECT;;False;1;FLOAT;0;False;5;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
 Node;AmplifyShaderEditor.DitheringNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;19;32,416;Inherit;False;0;False;4;0;FLOAT;0;False;1;SAMPLER2D;;False;2;FLOAT4;0,0,0,0;False;3;SAMPLERSTATE;;False;1;FLOAT;0
@@ -3312,4 +3312,4 @@ WireConnection;12;1;14;0
 WireConnection;0;0;9;0
 WireConnection;0;2;12;1
 ASEEND*/
-//CHKSM=0D2B9038FC9ED7CC68F18B5949A59E0EFB895C9E
+//CHKSM=C4CE7B10AF16DC2877CA19E9D6812C24FBA051E3
