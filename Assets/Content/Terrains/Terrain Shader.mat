@@ -29,6 +29,14 @@ Material:
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
+    - _Control:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Control1:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _DistortionTexture:
         m_Texture: {fileID: 2800000, guid: 8cfaee07b8614c84d884dad6e07b8d7d, type: 3}
         m_Scale: {x: 1, y: 1}
@@ -37,12 +45,68 @@ Material:
         m_Texture: {fileID: 2800000, guid: 373ea9afea84dda41a9d55f805e07f35, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _HeightlerpTexture:
+        m_Texture: {fileID: 2800000, guid: 373ea9afea84dda41a9d55f805e07f35, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Mask0:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Mask1:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Mask2:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Mask3:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _Noisetexture:
         m_Texture: {fileID: 2800000, guid: 841ad33c2bd5af8448cf499ac7c0c073, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _Noisetexture1:
         m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Splat0:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Splat1:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Splat2:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Splat3:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _T_CellsBall_10:
+        m_Texture: {fileID: 2800000, guid: 55fd84ece77a80c4f9f1cb63f6bfacb5, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _T_Dirt_011:
+        m_Texture: {fileID: 8900000, guid: 74dde1771499e934bb4411608a1247b6, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _TerrainHolesTexture:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Texture0:
+        m_Texture: {fileID: 2800000, guid: 524a3ec7ff0014549a9a58d8c1f33023, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _TextureSample0:
+        m_Texture: {fileID: 2800000, guid: 9aa431943de223d47b853a0935dcf5a3, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _TextureSample1:
@@ -102,21 +166,28 @@ Material:
     - _DstBlend2: 0
     - _EnableBlendModePreserveSpecularLighting: 1
     - _EnableFogOnTransparent: 1
+    - _Float10: 15
     - _Gradientmaskforvertexoffsetinalebdo: 0
     - _GrasscolorDistortionsize: 107
     - _Grasscolordistortionintensity: 0.3
     - _Grasscolorsize: 150
+    - _Heightlerpintensity: 0.5
     - _OpaqueCullMode: 2
     - _PerPixelSorting: 0
     - _ReceivesSSR: 1
     - _ReceivesSSRTransparent: 0
     - _RenderQueueType: 1
     - _RequireSplitLighting: 0
+    - _SandWorldposition: 1.5
     - _Size: 50
     - _Sizefar: 448
     - _Sizemedium: 200
     - _Sizenear: 100
     - _Smoothness: 0
+    - _Smoothness0: 1
+    - _Smoothness1: 1
+    - _Smoothness2: 1
+    - _Smoothness3: 1
     - _SrcBlend: 1
     - _StencilRef: 0
     - _StencilRefDepth: 8
@@ -147,6 +218,11 @@ Material:
     m_Colors:
     - _BaseColor: {r: 0.25882354, g: 0.46666667, b: 0.24705882, a: 1}
     - _BaseColor2: {r: 0, g: 1, b: 0.5057471, a: 1}
+    - _Cliff: {r: 1, g: 1, b: 1, a: 1}
+    - _ColorSplat0: {r: 0.3030839, g: 1, b: 0, a: 0}
+    - _ColorSplat1: {r: 0.53773564, g: 0.40478036, b: 0.30691516, a: 0}
+    - _ColorSplat2: {r: 1, g: 0.77572614, b: 0.4009433, a: 0}
+    - _ColorSplat3: {r: 0, g: 0.83468914, b: 1, a: 0}
     - _DoubleSidedConstants: {r: 1, g: 1, b: -1, a: 0}
     - _EmissionColor: {r: 1, g: 1, b: 1, a: 1}
     - _VertexWindSpeednear: {r: 0, g: 0.1, b: 0, a: 0}
