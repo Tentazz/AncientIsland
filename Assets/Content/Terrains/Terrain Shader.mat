@@ -25,10 +25,15 @@ Material:
   stringTagMap: {}
   disabledShaderPasses:
   - TransparentBackface
+  - MOTIONVECTORS
   m_LockedProperties: 
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
+    - _BlurNoisetexture:
+        m_Texture: {fileID: 2800000, guid: 841ad33c2bd5af8448cf499ac7c0c073, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _Control:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
@@ -71,6 +76,10 @@ Material:
         m_Offset: {x: 0, y: 0}
     - _Noisetexture1:
         m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _SandNormal:
+        m_Texture: {fileID: 2800000, guid: 133c3b8cd8cd7754abe6a7cc5923b473, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _Splat0:
@@ -166,19 +175,22 @@ Material:
     - _DstBlend2: 0
     - _EnableBlendModePreserveSpecularLighting: 1
     - _EnableFogOnTransparent: 1
-    - _Float10: 15
+    - _Float10: 30
     - _Gradientmaskforvertexoffsetinalebdo: 0
+    - _Gradientsize: 0.5
     - _GrasscolorDistortionsize: 107
     - _Grasscolordistortionintensity: 0.3
     - _Grasscolorsize: 150
-    - _Heightlerpintensity: 0.5
+    - _Heightlerpintensity: 0
     - _OpaqueCullMode: 2
     - _PerPixelSorting: 0
     - _ReceivesSSR: 1
     - _ReceivesSSRTransparent: 0
     - _RenderQueueType: 1
     - _RequireSplitLighting: 0
-    - _SandWorldposition: 1.5
+    - _SandWorldposition: 1
+    - _Sandnormalintensity: 0.5
+    - _Sandnormalsize: 100
     - _Size: 50
     - _Sizefar: 448
     - _Sizemedium: 200
@@ -201,6 +213,7 @@ Material:
     - _StencilWriteMaskMV: 41
     - _SupportDecals: 1
     - _SurfaceType: 0
+    - _TessValue: 16
     - _TransparentBackfaceEnable: 0
     - _TransparentCullMode: 2
     - _TransparentSortPriority: 0
@@ -219,10 +232,13 @@ Material:
     - _BaseColor: {r: 0.25882354, g: 0.46666667, b: 0.24705882, a: 1}
     - _BaseColor2: {r: 0, g: 1, b: 0.5057471, a: 1}
     - _Cliff: {r: 1, g: 1, b: 1, a: 1}
+    - _ColorDirt: {r: 0.754717, g: 0.5968909, b: 0.33107865, a: 0}
+    - _ColorSand: {r: 1, g: 0.7764706, b: 0.4, a: 0}
     - _ColorSplat0: {r: 0.3030839, g: 1, b: 0, a: 0}
-    - _ColorSplat1: {r: 0.53773564, g: 0.40478036, b: 0.30691516, a: 0}
-    - _ColorSplat2: {r: 1, g: 0.77572614, b: 0.4009433, a: 0}
-    - _ColorSplat3: {r: 0, g: 0.83468914, b: 1, a: 0}
+    - _ColorSplat1: {r: 1, g: 0.77647066, b: 0.40000004, a: 0}
+    - _ColorSplat2: {r: 0.6509434, g: 0.5514235, b: 0.38381097, a: 0}
+    - _ColorSplat3: {r: 0, g: 0.8346891, b: 1, a: 0}
+    - _Colorsandspec: {r: 1, g: 1, b: 1, a: 1}
     - _DoubleSidedConstants: {r: 1, g: 1, b: -1, a: 0}
     - _EmissionColor: {r: 1, g: 1, b: 1, a: 1}
     - _VertexWindSpeednear: {r: 0, g: 0.1, b: 0, a: 0}
