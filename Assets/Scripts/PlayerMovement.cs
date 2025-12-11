@@ -34,7 +34,7 @@ public class PlayerMovement : MonoBehaviour
     float gravity = -9.81f;
     Vector3 airVelocity;
     public float aircontrol = 0.001f;
-    private float airSpeedLimit = 0f;
+    private float airSpeedLimit = 1f;
 
     // coyote time
     public float coyoteTime = 0.2f;
@@ -77,6 +77,11 @@ public class PlayerMovement : MonoBehaviour
         moveAction = InputSystem.actions.FindAction("Move"); 
         jumpAction = InputSystem.actions.FindAction("Jump");
         sprintAction = InputSystem.actions.FindAction("Sprint");
+    }
+
+    void Start()
+    {
+        
     }
 
     void Update()
