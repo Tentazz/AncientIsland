@@ -1,0 +1,53 @@
+OVDF v1.0
+PlayerMovement, Assembly-CSharp
+
+# $3ZgQKVSto1t5MU8fAZz1i2
+Position: $root:49
++ [Sirenix.OdinInspector.TitleGroupAttribute]
+	GroupName = "Jump"
+
+# $Mkth2gCFGKrRzGt2ZN4gbe
+Position: $root:47
++ [Sirenix.OdinInspector.TitleGroupAttribute]
+	GroupName = "Movement speed"
+
+# $Dtkt61k23hRPo4KYP4dQLR
+Position: $root:48
++ [Sirenix.OdinInspector.TitleGroupAttribute]
+	GroupName = "Ground Check"
+
+# sprintMultiplyier
+Position: $Mkth2gCFGKrRzGt2ZN4gbe:1
+
+# jumpHeight
+Position: $3ZgQKVSto1t5MU8fAZz1i2:0
+
+# gravityMultiplyier
+Position: $3ZgQKVSto1t5MU8fAZz1i2:1
+
+# coyoteTime
+Position: $3ZgQKVSto1t5MU8fAZz1i2:5
+
+# jumpBufferTime
+Position: $3ZgQKVSto1t5MU8fAZz1i2:4
+
+# jumpCharge
+Position: $3ZgQKVSto1t5MU8fAZz1i2:2
+
+# isChargingJump
+Position: $3ZgQKVSto1t5MU8fAZz1i2:3
+
+# aircontrol
+Position: $3ZgQKVSto1t5MU8fAZz1i2:6
+
+# groundcheck
+Position: $Dtkt61k23hRPo4KYP4dQLR:2
+
+# groundMask
+Position: $Dtkt61k23hRPo4KYP4dQLR:0
+
+# grounddistance
+Position: $Dtkt61k23hRPo4KYP4dQLR:1
+
+# speedmultiplyier
+Position: $Mkth2gCFGKrRzGt2ZN4gbe:0

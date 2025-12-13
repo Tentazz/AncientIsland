@@ -168,7 +168,7 @@ public class PlayerMovement : MonoBehaviour
         if (jumpBufferCounter > 0 && coyoteTimeCounter > 0f) { // jump
             jumping = true;
             verticalVelocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity * Mathf.Clamp((jumpChargeCounter / jumpCharge)*0.75f +0.25f, 0f, 1f)); //calculer le saut
-            airSpeedLimit = horizontalVelocity.magnitude;
+            //airSpeedLimit = horizontalVelocity.magnitude;
             airVelocity = horizontalVelocity;
             coyoteTimeCounter = 0f; //empêcher les sauts multiples pendant le coyote time
         }
