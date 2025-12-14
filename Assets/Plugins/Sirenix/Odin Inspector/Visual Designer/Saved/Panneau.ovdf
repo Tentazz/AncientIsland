@@ -1,0 +1,27 @@
+OVDF v1.0
+Panneau, Assembly-CSharp
+
+# wordScriptable
+Position: $root:7
+
+# Interact()
+Visibility: Hidden
++ [Sirenix.OdinInspector.ButtonAttribute]
+	Style = CompactBox
+	Name = "Button"
+	drawResult = False
+	drawResultIsSet = True
+	Expanded = False
+	stretch = True
+	HasDefinedStretch = True
+	Icon = CardText
+
+# UpdateText()
+Visibility: Shown
+
+# WordScriptableObjects
++ [Sirenix.OdinInspector.LabelTextAttribute]
+	Text = "Texte du Panneau (scriptableObjects)"
+	Icon = None
+	IconColor = ""
+	NicifyText = True

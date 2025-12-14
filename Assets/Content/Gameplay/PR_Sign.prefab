@@ -124,7 +124,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_SizeDelta: {x: -9.999996, y: -10}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &8538098418107080529
 CanvasRenderer:
@@ -154,10 +154,10 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: abc
+  m_text: 
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: c632a0c0d0a53a64d9ae768cc58c368a, type: 2}
-  m_sharedMaterial: {fileID: -915916314557013580, guid: c632a0c0d0a53a64d9ae768cc58c368a,
+  m_fontAsset: {fileID: 11400000, guid: fdbc9d1a5aa6a9446b2e6f68b6c178b4, type: 2}
+  m_sharedMaterial: {fileID: 3767432745354367075, guid: fdbc9d1a5aa6a9446b2e6f68b6c178b4,
     type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
@@ -185,7 +185,7 @@ MonoBehaviour:
   m_fontSize: 35.4
   m_fontSizeBase: 35.4
   m_fontWeight: 400
-  m_enableAutoSizing: 0
+  m_enableAutoSizing: 1
   m_fontSizeMin: 18
   m_fontSizeMax: 72
   m_fontStyle: 0
@@ -262,8 +262,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: -0, y: 1.348}
-  m_SizeDelta: {x: 259.3, y: 68.32}
+  m_AnchoredPosition: {x: -0, y: 1.399}
+  m_SizeDelta: {x: 125.02, y: 51.9}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!223 &966405983571618700
 Canvas:
@@ -522,10 +522,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2fd03d823d6620c458d17adbeee9eba5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Panneau
-  PanneauText: xyz
+  PanneauText: Dieu Etre Etre Dieu
+  PanneauCustomKeys: xyyx
   ReadingUI: {fileID: 0}
   textPhysical: {fileID: 6142035807327891934}
   textUI: {fileID: 0}
+  WordScriptableObjects:
+  - {fileID: 11400000, guid: f353f1f915f569e47b6502d76d568d0e, type: 2}
+  - {fileID: 11400000, guid: c0cd9c08e0510db46b0a0f82a6e1ceb8, type: 2}
+  - {fileID: 11400000, guid: c0cd9c08e0510db46b0a0f82a6e1ceb8, type: 2}
+  - {fileID: 11400000, guid: f353f1f915f569e47b6502d76d568d0e, type: 2}
 --- !u!1 &6919579329156901907
 GameObject:
   m_ObjectHideFlags: 0
