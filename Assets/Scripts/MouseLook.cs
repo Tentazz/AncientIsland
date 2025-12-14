@@ -36,9 +36,9 @@ public class MouseLook : MonoBehaviour
         InputActions.FindActionMap("Player").Enable();
     }
 
-    private void OnDisable() {
+    /*private void OnDisable() {
         InputActions.FindActionMap("Player").Disable();
-    }
+    }*/
 
     private void Awake() {
         lookAction = InputSystem.actions.FindAction("Look");

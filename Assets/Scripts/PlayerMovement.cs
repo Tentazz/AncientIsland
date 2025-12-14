@@ -67,10 +67,10 @@ public class PlayerMovement : MonoBehaviour
         InputActions.FindActionMap("Player").Enable(); //activer le systeme d'input du joueur
     }
 
-    private void OnDisable ()
+    /*private void OnDisable ()
     {
         InputActions.FindActionMap("Player").Disable();//desactiver le systeme d'input du joueur
-    }
+    }*/
 
     private void Awake ()
     {
