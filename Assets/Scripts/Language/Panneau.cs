@@ -11,7 +11,8 @@ public class Panneau : MonoBehaviour
 
 
     [SerializeField] private WordScriptableObject[] WordScriptableObjects;
-    
+    public GameObject[] wordUIObjects; // Assurez-vous que la taille de ce tableau correspond au nombre de WordScriptableObjects
+
 
     void Start()
     {
@@ -19,10 +20,20 @@ public class Panneau : MonoBehaviour
     }
 
 
-    public void Interact() {
+    public void Interact() { //Activer la UI du panneau et afficher les mots
         ReadingUI.SetActive(true);
-        textUI.text = PanneauCustomKeys;
+
         Debug.Log("Interacting with Panneau");
+
+        for (int i = 0; i < WordScriptableObjects.Length; i++) {
+            //var uiWord = WordScriptableObjects[i];
+            if (WordScriptableObjects[i] != null) {
+                wordUIObjects[i].SetActive(true);
+                wordUIObjects[i].GetComponent<UI_Word>().SetWord(WordScriptableObjects[i]);
+            }
+
+        }
+
     }
 
     public void onUse() { 

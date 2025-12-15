@@ -532,6 +532,15 @@ MonoBehaviour:
   - {fileID: 11400000, guid: c0cd9c08e0510db46b0a0f82a6e1ceb8, type: 2}
   - {fileID: 11400000, guid: c0cd9c08e0510db46b0a0f82a6e1ceb8, type: 2}
   - {fileID: 11400000, guid: f353f1f915f569e47b6502d76d568d0e, type: 2}
+  - {fileID: 11400000, guid: 75433134b04d6bf43834b50365c35a2f, type: 2}
+  wordUIObjects:
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
 --- !u!1 &6919579329156901907
 GameObject:
   m_ObjectHideFlags: 0

@@ -20,6 +20,7 @@ Visibility: Hidden
 Visibility: Shown
 
 # WordScriptableObjects
+Visibility: Shown
 + [Sirenix.OdinInspector.LabelTextAttribute]
 	Text = "Texte du Panneau (scriptableObjects)"
 	Icon = None
