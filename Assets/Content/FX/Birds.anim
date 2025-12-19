@@ -1,0 +1,974 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!74 &7400000
+AnimationClip:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: Birds
+  serializedVersion: 7
+  m_Legacy: 1
+  m_Compressed: 0
+  m_UseHighQualityCurve: 1
+  m_RotationCurves: []
+  m_CompressedRotationCurves: []
+  m_EulerCurves: []
+  m_PositionCurves:
+  - curve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: {x: 366, y: 304.7, z: -204}
+        inSlope: {x: 0, y: 0, z: -31.410347}
+        outSlope: {x: 0, y: 0, z: -31.410347}
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: {x: 0.33333334, y: 0.33333334, z: 0.33333334}
+        outWeight: {x: 0.33333334, y: 0.33333334, z: 0.31732187}
+      - serializedVersion: 3
+        time: 15.6
+        value: {x: -129, y: 304.7, z: -464}
+        inSlope: {x: -29.77401, y: 0, z: 0}
+        outSlope: {x: -29.77401, y: 0, z: 0}
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: {x: 0.33333334, y: 0.33333334, z: 0.33333334}
+        outWeight: {x: 0.33333334, y: 0.33333334, z: 0.33333334}
+      - serializedVersion: 3
+        time: 35.4
+        value: {x: -688, y: 304.7, z: -191}
+        inSlope: {x: -17.9571, y: 0, z: 18.71006}
+        outSlope: {x: -17.9571, y: 0, z: 18.71006}
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: {x: 0.33333334, y: 0.33333334, z: 0.33333334}
+        outWeight: {x: 0.33333334, y: 0.33333334, z: 0.33333334}
+      - serializedVersion: 3
+        time: 57.616665
+        value: {x: -883.4974, y: 304.7, z: 315.69223}
+        inSlope: {x: 0, y: 0, z: 22.645924}
+        outSlope: {x: 0, y: 0, z: 22.645924}
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: {x: 0.33333334, y: 0.33333334, z: 0.33333334}
+        outWeight: {x: 0.33333334, y: 0.33333334, z: 0.33333334}
+      - serializedVersion: 3
+        time: 59.433334
+        value: {x: -876.95483, y: 304.7, z: 356.12433}
+        inSlope: {x: 7.063212, y: 0, z: 21.83788}
+        outSlope: {x: 7.063212, y: 0, z: 21.83788}
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: {x: 0.33333334, y: 0.33333334, z: 0.33333334}
+        outWeight: {x: 0.33333334, y: 0.33333334, z: 0.16668649}
+      - serializedVersion: 3
+        time: 60.45
+        value: {x: -867.92816, y: 304.7, z: 378.13245}
+        inSlope: {x: 10.6503725, y: 0, z: 21.45079}
+        outSlope: {x: 10.6503725, y: 0, z: 21.45079}
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: {x: 0.33333334, y: 0.33333334, z: 0.33333334}
+        outWeight: {x: 0.33333334, y: 0.33333334, z: 0.33333334}
+      - serializedVersion: 3
+        time: 82.683334
+        value: {x: -256, y: 304.7, z: 692.72205}
+        inSlope: {x: 23.47947, y: 0, z: 3.9763563}
+        outSlope: {x: 23.47947, y: 0, z: 3.9763563}
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: {x: 0.33333334, y: 0.33333334, z: 0.33333334}
+        outWeight: {x: 0.33333334, y: 0.33333334, z: 0.33333334}
+      - serializedVersion: 3
+        time: 85.916664
+        value: {x: -174.6207, y: 304.70004, z: 699.24866}
+        inSlope: {x: 26.60012, y: 0, z: 0}
+        outSlope: {x: 26.60012, y: 0, z: 0}
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: {x: 0.33333334, y: 0.33333334, z: 0.33333334}
+        outWeight: {x: 0.33333334, y: 0.33333334, z: 0.33333334}
+      - serializedVersion: 3
+        time: 106.28333
+        value: {x: 308.99115, y: 304.7, z: 533.0124}
+        inSlope: {x: 10.64648, y: -0.0000013050992, z: -15.1583185}
+        outSlope: {x: 10.64648, y: -0.0000013050992, z: -15.1583185}
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: {x: 0.33333334, y: 0.33333334, z: 0.33333334}
+        outWeight: {x: 0.33333334, y: 0.33333334, z: 0.33333334}
+      - serializedVersion: 3
+        time: 109.3
+        value: {x: 330, y: 304.7, z: 476.74936}
+        inSlope: {x: 3.0573242, y: 0, z: -21.9351}
+        outSlope: {x: 3.0573242, y: 0, z: -21.9351}
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: {x: 0.33333334, y: 0.33333334, z: 0.33333334}
+        outWeight: {x: 0.33333334, y: 0.33333334, z: 0.33333334}
+      - serializedVersion: 3
+        time: 129.78334
+        value: {x: 366, y: 304.7, z: -204}
+        inSlope: {x: 0, y: 0, z: -34.943817}
+        outSlope: {x: 0, y: 0, z: -34.943817}
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: {x: 0.33333334, y: 0.33333334, z: 0.24495864}
+        outWeight: {x: 0.33333334, y: 0.33333334, z: 0.33333334}
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    path: PR_VFX_Birds
+  - curve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: {x: -908, y: 173, z: 25}
+        inSlope: {x: 0, y: 0, z: 19.942957}
+        outSlope: {x: 0, y: 0, z: 19.942957}
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: {x: 0.33333334, y: 0.33333334, z: 0.33333334}
+        outWeight: {x: 0.33333334, y: 0.33333334, z: 0.21732207}
+      - serializedVersion: 3
+        time: 24.75
+        value: {x: -493, y: 173, z: 630}
+        inSlope: {x: 21.842913, y: 0, z: 10.220094}
+        outSlope: {x: 21.842913, y: 0, z: 10.220094}
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: {x: 0.33333334, y: 0.33333334, z: 0.33333334}
+        outWeight: {x: 0.33333334, y: 0.33333334, z: 0.15193586}
+      - serializedVersion: 3
+        time: 53.133335
+        value: {x: 252.58682, y: 173, z: 712}
+        inSlope: {x: 17.410175, y: 0, z: -9.161214}
+        outSlope: {x: 17.410175, y: 0, z: -9.161214}
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: {x: 0.22009777, y: 0.33333334, z: 0.33333334}
+        outWeight: {x: 0.176908, y: 0.33333334, z: 0.16258754}
+      - serializedVersion: 3
+        time: 82.23333
+        value: {x: 115.37135, y: 85.884964, z: 74.6768}
+        inSlope: {x: -24.006413, y: 0, z: -20.78981}
+        outSlope: {x: -24.006413, y: 0, z: -20.78981}
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: {x: 0.18676578, y: 0.33333334, z: 0.33333334}
+        outWeight: {x: 0.33333334, y: 0.33333334, z: 0.33333334}
+      - serializedVersion: 3
+        time: 105.46667
+        value: {x: -505, y: 173, z: -376}
+        inSlope: {x: -21.522, y: 0, z: 0}
+        outSlope: {x: -21.522, y: 0, z: 0}
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: {x: 0.33333334, y: 0.33333334, z: 0.33333334}
+        outWeight: {x: 0.33333334, y: 0.33333334, z: 0.33333334}
+      - serializedVersion: 3
+        time: 129.78334
+        value: {x: -908, y: 173, z: 25}
+        inSlope: {x: 0, y: 0, z: 24.778498}
+        outSlope: {x: 0, y: 0, z: 24.778498}
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: {x: 0.33333334, y: 0.33333334, z: 0.2176272}
+        outWeight: {x: 0.33333334, y: 0.33333334, z: 0.33333334}
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    path: PR_VFX_Birds 2
+  - curve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: {x: 110, y: 252, z: 674}
+        inSlope: {x: 9.399159, y: 0, z: -7.726645}
+        outSlope: {x: 9.399159, y: 0, z: -7.726645}
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: {x: 0.33333334, y: 0.33333334, z: 0.33333334}
+        outWeight: {x: 0.18178047, y: 0.33333334, z: 0.13983114}
+      - serializedVersion: 3
+        time: 16.133333
+        value: {x: 157.25484, y: 155.68309, z: 216.9809}
+        inSlope: {x: -16.725328, y: -7.373526, z: -38.018272}
+        outSlope: {x: -16.725328, y: -7.373526, z: -38.018272}
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: {x: 0.33333334, y: 0.33333334, z: 0.33333334}
+        outWeight: {x: 0.2646643, y: 0.33333334, z: 0.33333334}
+      - serializedVersion: 3
+        time: 24.816668
+        value: {x: -43.485954, y: 117.92624, z: -80}
+        inSlope: {x: -24.994537, y: 0, z: -27.223684}
+        outSlope: {x: -24.994537, y: 0, z: -27.223684}
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: {x: 0.33333334, y: 0.33333334, z: 0.33333334}
+        outWeight: {x: 0.33333334, y: 0.33333334, z: 0.12162131}
+      - serializedVersion: 3
+        time: 30.566668
+        value: {x: -165.76834, y: 172.78494, z: -229.13315}
+        inSlope: {x: -15.558225, y: 16.459604, z: -24.301691}
+        outSlope: {x: -15.558225, y: 16.459604, z: -24.301691}
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: {x: 0.33333334, y: 0.33333334, z: 0.33333334}
+        outWeight: {x: 0.33333334, y: 0.33333334, z: 0.33333334}
+      - serializedVersion: 3
+        time: 42.6
+        value: {x: -242.49533, y: 340.9, z: -453.3745}
+        inSlope: {x: -6.671655, y: 0, z: -11.448534}
+        outSlope: {x: -6.671655, y: 0, z: -11.448534}
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: {x: 0.33333334, y: 0.33333334, z: 0.33333334}
+        outWeight: {x: 0.33333334, y: 0.33333334, z: 0.33333334}
+      - serializedVersion: 3
+        time: 54.733334
+        value: {x: -327, y: 252, z: -539}
+        inSlope: {x: -16.813898, y: -4.956088, z: 0}
+        outSlope: {x: -16.813898, y: -4.956088, z: 0}
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: {x: 0.16838269, y: 0.33333334, z: 0.33333334}
+        outWeight: {x: 0.11495753, y: 0.33333334, z: 0.33333334}
+      - serializedVersion: 3
+        time: 86.5
+        value: {x: -868, y: 123.32771, z: -48}
+        inSlope: {x: 0, y: 0, z: 26.084793}
+        outSlope: {x: 0, y: 0, z: 26.084793}
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: {x: 0.33333334, y: 0.33333334, z: 0.33333334}
+        outWeight: {x: 0.33333334, y: 0.33333334, z: 0.19633722}
+      - serializedVersion: 3
+        time: 104.45
+        value: {x: -552, y: 252, z: 564.42755}
+        inSlope: {x: 22.595299, y: 0, z: 26.403292}
+        outSlope: {x: 22.595299, y: 0, z: 26.403292}
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: {x: 0.33333334, y: 0.33333334, z: 0.33333334}
+        outWeight: {x: 0.33333334, y: 0.33333334, z: 0.33333334}
+      - serializedVersion: 3
+        time: 107.23333
+        value: {x: -484.23538, y: 252.00002, z: 626.73584}
+        inSlope: {x: 25.929634, y: 0, z: 17.990566}
+        outSlope: {x: 25.929634, y: 0, z: 17.990566}
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: {x: 0.33333334, y: 0.33333334, z: 0.33333334}
+        outWeight: {x: 0.33333334, y: 0.33333334, z: 0.16131848}
+      - serializedVersion: 3
+        time: 129.78334
+        value: {x: 110, y: 252, z: 674}
+        inSlope: {x: 15.733471, y: 0, z: -9.466783}
+        outSlope: {x: 15.733471, y: 0, z: -9.466783}
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: {x: 0.178073, y: 0.33333334, z: 0.21928832}
+        outWeight: {x: 0.33333334, y: 0.33333334, z: 0.33333334}
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    path: PR_VFX_Birds 3
+  m_ScaleCurves: []
+  m_FloatCurves: []
+  m_PPtrCurves: []
+  m_SampleRate: 60
+  m_WrapMode: 0
+  m_Bounds:
+    m_Center: {x: 0, y: 0, z: 0}
+    m_Extent: {x: 0, y: 0, z: 0}
+  m_ClipBindingConstant:
+    genericBindings: []
+    pptrCurveMapping: []
+  m_AnimationClipSettings:
+    serializedVersion: 2
+    m_AdditiveReferencePoseClip: {fileID: 0}
+    m_AdditiveReferencePoseTime: 0
+    m_StartTime: 0
+    m_StopTime: 129.78334
+    m_OrientationOffsetY: 0
+    m_Level: 0
+    m_CycleOffset: 0
+    m_HasAdditiveReferencePose: 0
+    m_LoopTime: 1
+    m_LoopBlend: 0
+    m_LoopBlendOrientation: 0
+    m_LoopBlendPositionY: 0
+    m_LoopBlendPositionXZ: 0
+    m_KeepOriginalOrientation: 0
+    m_KeepOriginalPositionY: 1
+    m_KeepOriginalPositionXZ: 0
+    m_HeightFromFeet: 0
+    m_Mirror: 0
+  m_EditorCurves:
+  - serializedVersion: 2
+    curve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 366
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 136
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0.33333334
+      - serializedVersion: 3
+        time: 15.6
+        value: -129
+        inSlope: -29.77401
+        outSlope: -29.77401
+        tangentMode: 136
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0.33333334
+      - serializedVersion: 3
+        time: 35.4
+        value: -688
+        inSlope: -17.9571
+        outSlope: -17.9571
+        tangentMode: 136
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0.33333334
+      - serializedVersion: 3
+        time: 57.616665
+        value: -883.4974
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 136
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0.33333334
+      - serializedVersion: 3
+        time: 82.683334
+        value: -256
+        inSlope: 23.47947
+        outSlope: 23.47947
+        tangentMode: 136
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0.33333334
+      - serializedVersion: 3
+        time: 109.3
+        value: 330
+        inSlope: 3.0573242
+        outSlope: 3.0573242
+        tangentMode: 136
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0.33333334
+      - serializedVersion: 3
+        time: 129.78334
+        value: 366
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 136
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0.33333334
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    attribute: m_LocalPosition.x
+    path: PR_VFX_Birds
+    classID: 4
+    script: {fileID: 0}
+    flags: 0
+  - serializedVersion: 2
+    curve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 304.7
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 136
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0.33333334
+      - serializedVersion: 3
+        time: 15.6
+        value: 304.7
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 136
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0.33333334
+      - serializedVersion: 3
+        time: 35.4
+        value: 304.7
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 136
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0.33333334
+      - serializedVersion: 3
+        time: 60.45
+        value: 304.7
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 136
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0.33333334
+      - serializedVersion: 3
+        time: 82.683334
+        value: 304.7
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 136
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0.33333334
+      - serializedVersion: 3
+        time: 109.3
+        value: 304.7
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 136
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0.33333334
+      - serializedVersion: 3
+        time: 129.78334
+        value: 304.7
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 136
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0.33333334
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    attribute: m_LocalPosition.y
+    path: PR_VFX_Birds
+    classID: 4
+    script: {fileID: 0}
+    flags: 0
+  - serializedVersion: 2
+    curve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: -204
+        inSlope: -31.410347
+        outSlope: -31.410347
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0.31732187
+      - serializedVersion: 3
+        time: 15.6
+        value: -464
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 136
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0.33333334
+      - serializedVersion: 3
+        time: 35.4
+        value: -191
+        inSlope: 18.71006
+        outSlope: 18.71006
+        tangentMode: 136
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0.33333334
+      - serializedVersion: 3
+        time: 59.433334
+        value: 356.12433
+        inSlope: 21.83788
+        outSlope: 21.83788
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0.16668649
+      - serializedVersion: 3
+        time: 85.916664
+        value: 699.24866
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 136
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0.33333334
+      - serializedVersion: 3
+        time: 106.28333
+        value: 533.0124
+        inSlope: -15.1583185
+        outSlope: -15.1583185
+        tangentMode: 136
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0.33333334
+      - serializedVersion: 3
+        time: 129.78334
+        value: -204
+        inSlope: -34.943817
+        outSlope: -34.943817
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0.24495864
+        outWeight: 0.33333334
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    attribute: m_LocalPosition.z
+    path: PR_VFX_Birds
+    classID: 4
+    script: {fileID: 0}
+    flags: 0
+  - serializedVersion: 2
+    curve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: -908
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 136
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0.33333334
+      - serializedVersion: 3
+        time: 24.75
+        value: -493
+        inSlope: 21.842913
+        outSlope: 21.842913
+        tangentMode: 136
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0.33333334
+      - serializedVersion: 3
+        time: 53.133335
+        value: 252.58682
+        inSlope: 17.410175
+        outSlope: 17.410175
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0.22009777
+        outWeight: 0.176908
+      - serializedVersion: 3
+        time: 82.23333
+        value: 115.37135
+        inSlope: -24.006413
+        outSlope: -24.006413
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0.18676578
+        outWeight: 0.33333334
+      - serializedVersion: 3
+        time: 105.46667
+        value: -505
+        inSlope: -21.522
+        outSlope: -21.522
+        tangentMode: 136
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0.33333334
+      - serializedVersion: 3
+        time: 129.78334
+        value: -908
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 136
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0.33333334
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    attribute: m_LocalPosition.x
+    path: PR_VFX_Birds 2
+    classID: 4
+    script: {fileID: 0}
+    flags: 0
+  - serializedVersion: 2
+    curve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 173
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 136
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0.33333334
+      - serializedVersion: 3
+        time: 24.75
+        value: 173
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 136
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0.33333334
+      - serializedVersion: 3
+        time: 53.133335
+        value: 173
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 136
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0.33333334
+      - serializedVersion: 3
+        time: 82.23333
+        value: 85.884964
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 136
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0.33333334
+      - serializedVersion: 3
+        time: 105.46667
+        value: 173
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 136
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0.33333334
+      - serializedVersion: 3
+        time: 129.78334
+        value: 173
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 136
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0.33333334
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    attribute: m_LocalPosition.y
+    path: PR_VFX_Birds 2
+    classID: 4
+    script: {fileID: 0}
+    flags: 0
+  - serializedVersion: 2
+    curve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 25
+        inSlope: 19.942957
+        outSlope: 19.942957
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0.21732207
+      - serializedVersion: 3
+        time: 24.75
+        value: 630
+        inSlope: 10.220094
+        outSlope: 10.220094
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0.15193586
+      - serializedVersion: 3
+        time: 53.133335
+        value: 712
+        inSlope: -9.161214
+        outSlope: -9.161214
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0.16258754
+      - serializedVersion: 3
+        time: 82.23333
+        value: 74.6768
+        inSlope: -20.78981
+        outSlope: -20.78981
+        tangentMode: 136
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0.33333334
+      - serializedVersion: 3
+        time: 105.46667
+        value: -376
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 136
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0.33333334
+      - serializedVersion: 3
+        time: 129.78334
+        value: 25
+        inSlope: 24.778498
+        outSlope: 24.778498
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0.2176272
+        outWeight: 0.33333334
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    attribute: m_LocalPosition.z
+    path: PR_VFX_Birds 2
+    classID: 4
+    script: {fileID: 0}
+    flags: 0
+  - serializedVersion: 2
+    curve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 110
+        inSlope: 9.399159
+        outSlope: 9.399159
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0.18178047
+      - serializedVersion: 3
+        time: 16.133333
+        value: 157.25484
+        inSlope: -16.725328
+        outSlope: -16.725328
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0.2646643
+      - serializedVersion: 3
+        time: 30.566668
+        value: -165.76834
+        inSlope: -15.558225
+        outSlope: -15.558225
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0.33333334
+      - serializedVersion: 3
+        time: 42.6
+        value: -242.49533
+        inSlope: -6.671655
+        outSlope: -6.671655
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0.33333334
+      - serializedVersion: 3
+        time: 54.733334
+        value: -327
+        inSlope: -16.813898
+        outSlope: -16.813898
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0.16838269
+        outWeight: 0.11495753
+      - serializedVersion: 3
+        time: 86.5
+        value: -868
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 136
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0.33333334
+      - serializedVersion: 3
+        time: 104.45
+        value: -552
+        inSlope: 22.595299
+        outSlope: 22.595299
+        tangentMode: 136
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0.33333334
+      - serializedVersion: 3
+        time: 129.78334
+        value: 110
+        inSlope: 15.733471
+        outSlope: 15.733471
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0.178073
+        outWeight: 0.33333334
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    attribute: m_LocalPosition.x
+    path: PR_VFX_Birds 3
+    classID: 4
+    script: {fileID: 0}
+    flags: 0
+  - serializedVersion: 2
+    curve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 252
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 136
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0.33333334
+      - serializedVersion: 3
+        time: 24.816668
+        value: 117.92624
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 136
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0.33333334
+      - serializedVersion: 3
+        time: 42.6
+        value: 340.9
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 136
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0.33333334
+      - serializedVersion: 3
+        time: 54.733334
+        value: 252
+        inSlope: -4.956088
+        outSlope: -4.956088
+        tangentMode: 136
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0.33333334
+      - serializedVersion: 3
+        time: 86.5
+        value: 123.32771
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 136
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0.33333334
+      - serializedVersion: 3
+        time: 104.45
+        value: 252
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 136
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0.33333334
+      - serializedVersion: 3
+        time: 129.78334
+        value: 252
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 136
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0.33333334
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    attribute: m_LocalPosition.y
+    path: PR_VFX_Birds 3
+    classID: 4
+    script: {fileID: 0}
+    flags: 0
+  - serializedVersion: 2
+    curve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 674
+        inSlope: -7.726645
+        outSlope: -7.726645
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0.13983114
+      - serializedVersion: 3
+        time: 24.816668
+        value: -80
+        inSlope: -27.223684
+        outSlope: -27.223684
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0.12162131
+      - serializedVersion: 3
+        time: 42.6
+        value: -453.3745
+        inSlope: -11.448534
+        outSlope: -11.448534
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0.33333334
+      - serializedVersion: 3
+        time: 54.733334
+        value: -539
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 136
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0.33333334
+      - serializedVersion: 3
+        time: 86.5
+        value: -48
+        inSlope: 26.084793
+        outSlope: 26.084793
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0.19633722
+      - serializedVersion: 3
+        time: 107.23333
+        value: 626.73584
+        inSlope: 17.990566
+        outSlope: 17.990566
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0.33333334
+        outWeight: 0.16131848
+      - serializedVersion: 3
+        time: 129.78334
+        value: 674
+        inSlope: -9.466783
+        outSlope: -9.466783
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0.21928832
+        outWeight: 0.33333334
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    attribute: m_LocalPosition.z
+    path: PR_VFX_Birds 3
+    classID: 4
+    script: {fileID: 0}
+    flags: 0
+  m_EulerEditorCurves: []
+  m_HasGenericRootTransform: 0
+  m_HasMotionFloatCurves: 0
+  m_Events: []
