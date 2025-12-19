@@ -1,6 +1,10 @@
 OVDF v1.0
 Panneau, Assembly-CSharp
 
+# $TqYpAX7HQqom7VNPPcAKCN
+Position: $root
++ [Sirenix.OdinInspector.TitleGroupAttribute]
+
 # wordScriptable
 Position: $root:7
 
@@ -26,3 +30,9 @@ Visibility: Shown
 	Icon = None
 	IconColor = ""
 	NicifyText = True
+
+# FindReferencesAuto()
+Visibility: Shown
+
+# AutoFindReferences()
+Visibility: Shown

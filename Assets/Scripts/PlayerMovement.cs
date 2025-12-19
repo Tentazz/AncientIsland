@@ -52,7 +52,7 @@ public class PlayerMovement : MonoBehaviour
 
     public Transform groundcheck;
     public float grounddistance = 0.04f;
-    public LayerMask groundMask;
+    //public LayerMask groundMask;
 
     public float gravityMultiplyier = 1f;
     public float jumpHeight = 3f;

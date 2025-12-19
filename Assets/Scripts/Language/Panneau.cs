@@ -8,7 +8,6 @@ public class Panneau : MonoBehaviour
     public GameObject readingUI;
     public bool verticalText = false;
     [SerializeField] TextMeshProUGUI textPhysical;
-    [SerializeField] TextMeshProUGUI textUI;
 
 
     [SerializeField] private WordScriptableObject[] WordScriptableObjects;
@@ -62,7 +61,17 @@ public class Panneau : MonoBehaviour
 
 
         textPhysical.text = PanneauCustomKeys;// Met à jour le texte physique avec les CustomFontAssociatedKey
+        }
+
+    void AutoFindReferences() { // Les objets doivent êtres allumés pour que ça marche !!
+
+        readingUI = GameObject.Find("PR_UI_Reading"); // Trouve la UI de lecture dans la scène
+
+        for (int i = 0; i < wordUIObjects.Length; i++) { // Trouve chaque UI_Word dans la scène
+            wordUIObjects[i] = GameObject.Find("PR_UI_Word " + (i + 1));
+        }
+
     }
 
-
 }
+
