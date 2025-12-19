@@ -5,7 +5,8 @@ public class Panneau : MonoBehaviour
 {
     public string PanneauText;
     public string PanneauCustomKeys;
-    public GameObject ReadingUI;
+    public GameObject readingUI;
+    public bool verticalText = false;
     [SerializeField] TextMeshProUGUI textPhysical;
     [SerializeField] TextMeshProUGUI textUI;
 
@@ -21,7 +22,7 @@ public class Panneau : MonoBehaviour
 
 
     public void Interact() { //Activer la UI du panneau et afficher les mots
-        ReadingUI.SetActive(true);
+        readingUI.SetActive(true);
 
         Debug.Log("Interacting with Panneau");
 
@@ -54,7 +55,10 @@ public class Panneau : MonoBehaviour
             keys[i] = WordScriptableObjects[i].CustomFontAssociatedKey;
         }
 
-        PanneauCustomKeys = string.Join("", keys);
+        if (verticalText) {
+            PanneauCustomKeys = string.Join("\n", keys);
+        }
+        else PanneauCustomKeys = string.Join("", keys);
 
 
         textPhysical.text = PanneauCustomKeys;// Met à jour le texte physique avec les CustomFontAssociatedKey

@@ -66,7 +66,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: player guess
+  m_text: 
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 800a898223d117d488bc54f9398a2de4, type: 2}
   m_sharedMaterial: {fileID: -1369270838459511856, guid: 800a898223d117d488bc54f9398a2de4,
@@ -94,7 +94,7 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 18
+  m_fontSize: 16
   m_fontSizeBase: 16
   m_fontWeight: 400
   m_enableAutoSizing: 1
@@ -176,7 +176,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &6186639674662187536
 RectTransform:
   m_ObjectHideFlags: 0
@@ -241,6 +241,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 40cb504963ad710458a5801695bdc02f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: '::'
+  readingUI: {fileID: 0}
   wordScriptableObject: {fileID: 0}
   textUI: {fileID: 7568064681141285741}
   aboveTextUI: {fileID: 4220920285900406403}
@@ -467,7 +468,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "player guess\u200B"
+  m_text: 
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 800a898223d117d488bc54f9398a2de4, type: 2}
   m_sharedMaterial: {fileID: -1369270838459511856, guid: 800a898223d117d488bc54f9398a2de4,
@@ -1132,7 +1133,7 @@ MonoBehaviour:
   m_CaretColor: {r: 0.19607843, g: 0.19607843, b: 0.19607843, a: 1}
   m_CustomCaretColor: 0
   m_SelectionColor: {r: 0.65882355, g: 0.80784315, b: 1, a: 0.7529412}
-  m_Text: player guess
+  m_Text: 
   m_CaretBlinkRate: 0.85
   m_CaretWidth: 1
   m_ReadOnly: 0
@@ -1159,5 +1160,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 912f6d35e5fa49d40aece8d25d1316d9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: '::'
+  InputActions: {fileID: -944628639613478452, guid: 57ee71ee826d017449e054ba027627b3,
+    type: 3}
   inputText: 
   UIWord: {fileID: 4202597044823980911}

@@ -1,3 +1,4 @@
+using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -13,8 +14,7 @@ public class ReadingUI : MonoBehaviour
     public GameObject[] wordUIObjects;
 
     private void Awake() {
-        CancelAction = InputSystem.actions.FindAction("Cancel");
-
+        CancelAction = InputSystem.actions.FindAction("UICancel");
     }
 
 
@@ -22,8 +22,16 @@ public class ReadingUI : MonoBehaviour
         playerMovementScript.GetComponent<PlayerMovement>().enabled = false;
         mainCamera.GetComponent<MouseLook>().enabled = false;
         virtualCursor.SetActive(true);
+        InputActions.FindActionMap("Player").Disable(); //activer le systeme d'input du joueur
+        InputActions.FindActionMap("Interface").Enable(); //activer le systeme d'input du joueur
         Time.timeScale = 0f;
     }
+
+    private void OnDisable() {
+        InputActions.FindActionMap("Player").Enable();//desactiver le systeme d'input du joueur
+        InputActions.FindActionMap("Interface").Disable(); //activer le systeme d'input du joueur
+    }
+
 
     void Update()
     {

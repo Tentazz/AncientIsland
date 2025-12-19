@@ -154,10 +154,10 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 
+  m_text: abc
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: fdbc9d1a5aa6a9446b2e6f68b6c178b4, type: 2}
-  m_sharedMaterial: {fileID: 3767432745354367075, guid: fdbc9d1a5aa6a9446b2e6f68b6c178b4,
+  m_fontAsset: {fileID: 11400000, guid: 981865c99de681e4eab91500d1503870, type: 2}
+  m_sharedMaterial: {fileID: 3767432745354367075, guid: 981865c99de681e4eab91500d1503870,
     type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
@@ -182,7 +182,7 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 35.4
+  m_fontSize: 41.05
   m_fontSizeBase: 35.4
   m_fontWeight: 400
   m_enableAutoSizing: 1
@@ -262,7 +262,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: -0, y: 1.399}
+  m_AnchoredPosition: {x: -0, y: 0.017}
   m_SizeDelta: {x: 125.02, y: 51.9}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!223 &966405983571618700
@@ -340,7 +340,7 @@ GameObject:
   - component: {fileID: 4519137654024293407}
   - component: {fileID: 4204462585315542897}
   m_Layer: 0
-  m_Name: Art
+  m_Name: Panneau
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -355,7 +355,7 @@ Transform:
   m_GameObject: {fileID: 4663554877137910626}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.821, z: 0}
+  m_LocalPosition: {x: 0, y: -0.561, z: 0}
   m_LocalScale: {x: 0.10728, y: 1.76689, z: 0.10728}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -446,7 +446,7 @@ Transform:
   m_GameObject: {fileID: 5100586495025627622}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1.365, z: -0.069}
+  m_LocalPosition: {x: 0, y: 0, z: -0.069}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -487,7 +487,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp-firstpass::PixelCrushers.DialogueSystem.Wrappers.Usable
   m_overrideName: 
   m_overrideUseMessage: 
-  maxUseDistance: 10
+  maxUseDistance: 5
   events:
     onSelect:
       m_PersistentCalls:
@@ -522,17 +522,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2fd03d823d6620c458d17adbeee9eba5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Panneau
-  PanneauText: Dieu Etre Etre Dieu
-  PanneauCustomKeys: xyyx
-  ReadingUI: {fileID: 0}
+  PanneauText: Dieu Etre Etre Dieu Mort
+  PanneauCustomKeys: xyyxz
+  readingUI: {fileID: 0}
+  verticalText: 0
   textPhysical: {fileID: 6142035807327891934}
   textUI: {fileID: 0}
   WordScriptableObjects:
   - {fileID: 11400000, guid: f353f1f915f569e47b6502d76d568d0e, type: 2}
-  - {fileID: 11400000, guid: c0cd9c08e0510db46b0a0f82a6e1ceb8, type: 2}
-  - {fileID: 11400000, guid: c0cd9c08e0510db46b0a0f82a6e1ceb8, type: 2}
-  - {fileID: 11400000, guid: f353f1f915f569e47b6502d76d568d0e, type: 2}
-  - {fileID: 11400000, guid: 75433134b04d6bf43834b50365c35a2f, type: 2}
+  - {fileID: 11400000, guid: 1f250058d37ea7e4eb51ec7f3b83c610, type: 2}
+  - {fileID: 11400000, guid: f9f90c6f13058434c891a5c0a7ec949d, type: 2}
   wordUIObjects:
   - {fileID: 0}
   - {fileID: 0}

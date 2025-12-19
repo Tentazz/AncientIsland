@@ -13,4 +13,4 @@ MonoBehaviour:
   m_Name: w_Mort
   m_EditorClassIdentifier: Assembly-CSharp::WordScriptablObject
   word: Mort
-  CustomFontAssociatedKey: z
+  CustomFontAssociatedKey: m

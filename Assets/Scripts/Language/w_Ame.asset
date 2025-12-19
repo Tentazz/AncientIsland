@@ -13,4 +13,4 @@ MonoBehaviour:
   m_Name: w_Ame
   m_EditorClassIdentifier: Assembly-CSharp::WordScriptablObject
   word: Ame
-  CustomFontAssociatedKey: c
+  CustomFontAssociatedKey: a

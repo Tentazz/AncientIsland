@@ -1,9 +1,12 @@
 using TMPro;
 using UnityEngine;
-using UnityEngine.LightTransport;
+using UnityEngine.InputSystem;
 
 public class InputFieldGrabber : MonoBehaviour
 {
+
+    //public InputActionAsset InputActions;
+
 
     [Header("The value grabbed from the input field")]
     [SerializeField] private string inputText;
@@ -12,6 +15,13 @@ public class InputFieldGrabber : MonoBehaviour
 
     private void OnEnable() {
         this.GetComponent<TMP_InputField>().Select();
+
+        //InputActions.FindActionMap("Player").Disable(); //activer le systeme d'input du joueur
+    }
+
+    private void OnDisable ()
+    {
+        //InputActions.FindActionMap("Player").Enable();//desactiver le systeme d'input du joueur
     }
 
     public void GrabFromInputField(string input)

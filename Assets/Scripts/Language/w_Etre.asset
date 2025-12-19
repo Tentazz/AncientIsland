@@ -13,4 +13,4 @@ MonoBehaviour:
   m_Name: w_Etre
   m_EditorClassIdentifier: Assembly-CSharp::WordScriptablObject
   word: Etre
-  CustomFontAssociatedKey: y
+  CustomFontAssociatedKey: j

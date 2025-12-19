@@ -13,4 +13,4 @@ MonoBehaviour:
   m_Name: w_Dieu
   m_EditorClassIdentifier: Assembly-CSharp::WordScriptablObject
   word: Dieu
-  CustomFontAssociatedKey: x
+  CustomFontAssociatedKey: d
