@@ -4,6 +4,7 @@ using UnityEngine;
 public class Panneau : MonoBehaviour
 {
     public string PanneauText;
+    public string PanneauGuess;
     public string PanneauCustomKeys;
     public GameObject readingUI;
     public bool verticalText = false;
@@ -42,6 +43,9 @@ public class Panneau : MonoBehaviour
     public void UpdateText() {
         // Crée un tableau de tous les mots
         string[] words = new string[WordScriptableObjects.Length];// Crée un tableau de tous les mots
+        string[] guess = new string[WordScriptableObjects.Length];// Crée un tableau de tous les guess
+        //WordData[] wordDatas = new WordData[WordScriptableObjects.Length];
+
         for (int i = 0; i < WordScriptableObjects.Length; i++) {// Itère à travers chaque WordScriptableObject
             words[i] = WordScriptableObjects[i].word;// Récupère le mot et le stocke dans le tableau
         }
@@ -61,7 +65,8 @@ public class Panneau : MonoBehaviour
 
 
         textPhysical.text = PanneauCustomKeys;// Met à jour le texte physique avec les CustomFontAssociatedKey
-        }
+
+    }
 
     void AutoFindReferences() { // Les objets doivent êtres allumés pour que ça marche !!
 

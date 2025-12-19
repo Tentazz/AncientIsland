@@ -44,6 +44,12 @@ public class WordLibrary : MonoBehaviour {
         return null;
     }
 
+    /*public void ReturnGuess(string word) {
+        if (wordDictionary.TryGetValue(word, out WordData data))
+
+            return data.playerGuess;
+    }*/
+
     public void UpdateGuessForWord (string wordName, string newGuess){
         print ("wordLibrary - Update guess for " + GetWord(wordName));
         if (wordDictionary.TryGetValue(wordName, out WordData data))

@@ -1,10 +1,6 @@
 OVDF v1.0
 Panneau, Assembly-CSharp
 
-# $TqYpAX7HQqom7VNPPcAKCN
-Position: $root
-+ [Sirenix.OdinInspector.TitleGroupAttribute]
-
 # wordScriptable
 Position: $root:7
 
@@ -22,6 +18,10 @@ Visibility: Hidden
 
 # UpdateText()
 Visibility: Shown
++ [Sirenix.OdinInspector.ButtonAttribute]
+	buttonHeight = 22
+	HasDefinedButtonHeight = True
+	Icon = ArrowClockwise
 
 # WordScriptableObjects
 Visibility: Shown
@@ -36,3 +36,19 @@ Visibility: Shown
 
 # AutoFindReferences()
 Visibility: Shown
++ [Sirenix.OdinInspector.ButtonAttribute]
+	Name = "Auto Find References (marche seulement si les objets sont allumés)"
+	buttonHeight = 38
+	HasDefinedButtonHeight = True
+	Icon = Search
+	stretch = True
+	HasDefinedStretch = True
+	Expanded = False
+	DisplayParameters = True
+	drawResult = False
+	drawResultIsSet = True
+	buttonAlignment = 0
+	HasDefinedButtonAlignment = True
+	buttonIconAlignment = LeftEdge
+	HasDefinedButtonIconAlignment = True
+	Style = CompactBox
