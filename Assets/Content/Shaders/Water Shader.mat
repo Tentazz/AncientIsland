@@ -1,0 +1,203 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: Water Shader
+  m_Shader: {fileID: 4800000, guid: 15bbb16433968384195fff35c8404572, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords:
+  - _DEBUG_BASE
+  - _DOUBLESIDED_ON
+  - _ENABLE_FOG_ON_TRANSPARENT
+  - _SURFACE_TYPE_TRANSPARENT
+  - _TRANSPARENT_WRITES_MOTION_VEC
+  m_InvalidKeywords:
+  - _ADD_PRECOMPUTED_VELOCITY
+  - _CONSERVATIVE_DEPTH_OFFSET
+  - _DEPTHOFFSET_ON
+  - _REFRACTION_PLANE
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 1
+  m_CustomRenderQueue: 3022
+  stringTagMap:
+    RenderType: Transparent
+  disabledShaderPasses:
+  - TransparentBackface
+  - MOTIONVECTORS
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _DisplacementMask:
+        m_Texture: {fileID: 2800000, guid: ad40a65ae826fe24a9fe98481f4b3534, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _FoamTexture:
+        m_Texture: {fileID: 2800000, guid: 4aae1642eb09d204f8e1d9499f9d5ae2, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _FoamTexture1:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _GlobalWavedeformation:
+        m_Texture: {fileID: 2800000, guid: 841ad33c2bd5af8448cf499ac7c0c073, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _SDFMask:
+        m_Texture: {fileID: 2800000, guid: ad40a65ae826fe24a9fe98481f4b3534, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _TextureSample0:
+        m_Texture: {fileID: 2800000, guid: 841ad33c2bd5af8448cf499ac7c0c073, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _TextureSample1:
+        m_Texture: {fileID: 2800000, guid: 0ceb8e9af8bf4da41bc7749be5da3226, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _TextureSample4:
+        m_Texture: {fileID: 2800000, guid: 301c524c0e090ea428243829785ad56b, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _WaveNormalMap:
+        m_Texture: {fileID: 2800000, guid: 2e764f1b5c80e5042824439c9102c841, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _WaveTexture:
+        m_Texture: {fileID: 2800000, guid: c50aa8a3b23e6e94eb41b4607398e4af, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _texcoord:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_Lightmaps:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_LightmapsInd:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_ShadowMasks:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _AddPrecomputedVelocity: 1
+    - _Alpha: 0.8
+    - _AlphaCutoff: 0.5
+    - _AlphaCutoffEnable: 0
+    - _AlphaDstBlend: 10
+    - _AlphaSrcBlend: 1
+    - _AlphaToMask: 0
+    - _AlphaToMaskInspectorValue: 0
+    - _Alphadepthfade: 2.1
+    - _BlendMode: 0
+    - _Colordepthfade: 4.09
+    - _ConservativeDepthOffsetEnable: 1
+    - _CullMode: 0
+    - _CullModeForward: 0
+    - _DSFinfluenceFoam: 0.69
+    - _Debug: 0
+    - _DepthOffsetEnable: 1
+    - _DisplacementfadeOffset: 200
+    - _Displacementfadedistance: 200
+    - _Displacementintensity: 0.181
+    - _DistortionEnable: 0
+    - _DistortionOnly: 0
+    - _DoubleSidedEnable: 1
+    - _DoubleSidedGIMode: 0
+    - _DoubleSidedNormalMode: 2
+    - _DstBlend: 10
+    - _DstBlend2: 10
+    - _EnableBlendModePreserveSpecularLighting: 0
+    - _EnableFogOnTransparent: 1
+    - _FoamTextureSize: 43.1
+    - _FoamTextureSize1: 4
+    - _FoamTextureSize2: 17.6
+    - _Keyword0: 0
+    - _MaxAlpha: 0.6
+    - _Metallic: 0
+    - _MinAlpha: 0
+    - _OpaqueCullMode: 2
+    - _PerPixelSorting: 0
+    - _PolarpowerV: 1
+    - _PolartilingU: 5
+    - _PolartilingV: 0.5
+    - _ReceivesSSR: 1
+    - _ReceivesSSRTransparent: 1
+    - _RefractionModel: 1
+    - _RenderQueueType: 4
+    - _RequireSplitLighting: 0
+    - _SDFInfluenceWaves: 1
+    - _SDFInfluenceWavesX: 0
+    - _SDFInfluenceWavesY: 1
+    - _SDFinfluenceFoam: 0.491
+    - _SDFwavemultipliyer: 0.5
+    - _Smoothness: 0.6
+    - _Smoothness1: 0.777
+    - _Smoothnessmin: 1
+    - _SrcBlend: 1
+    - _StencilRef: 0
+    - _StencilRefDepth: 8
+    - _StencilRefDistortionVec: 4
+    - _StencilRefGBuffer: 10
+    - _StencilRefMV: 40
+    - _StencilWriteMask: 6
+    - _StencilWriteMaskDepth: 9
+    - _StencilWriteMaskDistortionVec: 4
+    - _StencilWriteMaskGBuffer: 15
+    - _StencilWriteMaskMV: 41
+    - _SupportDecals: 1
+    - _SurfaceType: 1
+    - _TessEdgeLength: 16
+    - _TessMax: 1500
+    - _TessMaxDisp: 25
+    - _TessMin: 0
+    - _TessPhongStrength: 0.5
+    - _TessValue: 32
+    - _TransparentBackfaceEnable: 0
+    - _TransparentCullMode: 2
+    - _TransparentSortPriority: 22
+    - _TransparentWritingMotionVec: 1
+    - _TransparentZWrite: 0
+    - _TwistEdges: 0
+    - _Twistcenter: 0
+    - _UseShadowThreshold: 0
+    - _WaveDeformation: 1
+    - _WaveDeformationIntensity: 1
+    - _WaveDeformationScale: 10000
+    - _Wavesize: 200
+    - _Wavesize2: 500
+    - _ZTestDepthEqualForOpaque: 4
+    - _ZTestGBuffer: 4
+    - _ZTestTransparent: 4
+    - _ZWrite: 0
+    - _ZoomSDFMask: 0.153
+    m_Colors:
+    - _Color: {r: 0.5058824, g: 0.86666673, b: 1, a: 1}
+    - _Color2: {r: 0.2392157, g: 0.6901961, b: 1, a: 1}
+    - _Color3: {r: 0.2392157, g: 0.6901961, b: 1, a: 1}
+    - _DoubleSidedConstants: {r: 1, g: 1, b: 1, a: 0}
+    - _EmissionColor: {r: 1, g: 1, b: 1, a: 1}
+    - _MainColor: {r: 0.23921567, g: 0.6901961, b: 1, a: 1}
+    - _PolarUVCenter: {r: 0, g: 0, b: 0, a: 0}
+    - _SDFColor: {r: 0.3186632, g: 0.8773585, b: 0.80845654, a: 1}
+    - _Tidecolor: {r: 0.5707547, g: 1, b: 0.94596905, a: 1}
+    - _UnlitColorMap_MipInfo: {r: 0, g: 0, b: 0, a: 0}
+    - _WaveColor: {r: 1, g: 1, b: 1, a: 1}
+    - _WaveColor2: {r: 0.3820755, g: 0.586021, b: 1, a: 1}
+    - _WaveSpeed: {r: 0.01, g: 0.04, b: 0, a: 0}
+    - _WaveSpeed2: {r: -0.005, g: 0.02, b: 0, a: 0}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1

@@ -5,6 +5,7 @@ using UnityEngine.InputSystem;
 
 public class MouseLook : MonoBehaviour
 {
+    public Vector3 initialRotation = new Vector3(0f,0f,0f);
     //setup input Action
     public InputActionAsset InputActions;
     public InputAction lookAction;
@@ -25,7 +26,7 @@ public class MouseLook : MonoBehaviour
 
     public Transform playerBody;
 
-    float xRotation = 0f;
+    float xRotation;
 
     public float jumellesMultiplyier = 1f;
 
@@ -47,6 +48,9 @@ public class MouseLook : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        xRotation = initialRotation.x;
+        playerBody.localRotation = Quaternion.Euler(0f, initialRotation.y, 0f);
+        //transform.localRotation = Quaternion.Euler(initialRotation.x, initialRotation.y, initialRotation.z);
         //Cursor.lockState = CursorLockMode.Locked;
     }
 
@@ -83,7 +87,15 @@ public class MouseLook : MonoBehaviour
         xRotation -= mouseY;
         xRotation = Mathf.Clamp(xRotation, -90f, 90f);
 
-        transform.localRotation = Quaternion.Euler(xRotation, 0f, 0f);
+        
         playerBody.Rotate(Vector3.up * mouseX);
+        transform.localRotation = Quaternion.Euler(xRotation, 0f, 0f);
+    }
+
+    public void ChangeInitialRotation(Quaternion newRotation)
+    {
+        Vector3 eulerRotation = newRotation.eulerAngles;
+        initialRotation = eulerRotation;
+        xRotation = eulerRotation.x;
     }
 }

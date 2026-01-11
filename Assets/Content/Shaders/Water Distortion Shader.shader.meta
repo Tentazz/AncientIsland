@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 3fa6b142e8f35484a884cde51f07ce55
+ShaderImporter:
+  externalObjects: {}
+  defaultTextures:
+  - _WaveTexture: {fileID: 2800000, guid: 841ad33c2bd5af8448cf499ac7c0c073, type: 3}
+  - _SDFMask: {fileID: 2800000, guid: ad40a65ae826fe24a9fe98481f4b3534, type: 3}
+  - _Caustics: {fileID: 2800000, guid: 6f241c741dc9d754c8330eba2580f5d3, type: 3}
+  - _Causticsdistortion: {fileID: 2800000, guid: 841ad33c2bd5af8448cf499ac7c0c073,
+      type: 3}
+  nonModifiableTextures: []
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
