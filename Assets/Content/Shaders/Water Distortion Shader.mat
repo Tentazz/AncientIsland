@@ -82,6 +82,7 @@ Material:
     - _CausticsDistortionIntensity: 0.4
     - _CausticsDistortionSize: 66.1
     - _CausticsSize: 30
+    - _ColorDepthFade: 37
     - _Colordepthfade: 4.09
     - _ConservativeDepthOffsetEnable: 1
     - _CullMode: 0
@@ -90,11 +91,12 @@ Material:
     - _DisplacementfadeOffset: 200
     - _Displacementfadedistance: 200
     - _Displacementintensity: 0.181
-    - _DistortionDepthFade: 37.9
+    - _DistortionDepthFade: 25
     - _DistortionEnable: 0
-    - _DistortionIntensity: 0.01
+    - _DistortionIntensity: 0.03
     - _DistortionOnly: 0
     - _Distortionintensity: 0.05
+    - _DistortionwavePower: 3
     - _DoubleSidedEnable: 1
     - _DoubleSidedGIMode: 0
     - _DoubleSidedNormalMode: 2
@@ -113,6 +115,7 @@ Material:
     - _PolarpowerV: 1
     - _PolartilingU: 5
     - _PolartilingV: 0.5
+    - _Power: 1
     - _ReceivesSSR: 1
     - _ReceivesSSRTransparent: 1
     - _RenderQueueType: 4

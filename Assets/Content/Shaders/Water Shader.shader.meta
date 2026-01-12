@@ -3,8 +3,9 @@ guid: 15bbb16433968384195fff35c8404572
 ShaderImporter:
   externalObjects: {}
   defaultTextures:
-  - _WaveTexture: {fileID: 2800000, guid: 841ad33c2bd5af8448cf499ac7c0c073, type: 3}
+  - _WaveTexture: {fileID: 2800000, guid: c50aa8a3b23e6e94eb41b4607398e4af, type: 3}
   - _SDFMask: {fileID: 2800000, guid: ad40a65ae826fe24a9fe98481f4b3534, type: 3}
+  - _GlimmerTexture: {fileID: 2800000, guid: c50aa8a3b23e6e94eb41b4607398e4af, type: 3}
   - _FoamTexture: {fileID: 2800000, guid: 4aae1642eb09d204f8e1d9499f9d5ae2, type: 3}
   nonModifiableTextures: []
   userData: 

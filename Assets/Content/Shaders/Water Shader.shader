@@ -29,6 +29,13 @@ Shader "Water Shader"
 		[Header(WAVE DEFORMATION)] _WaveDeformationIntensity( "Wave Deformation Intensity", Range( 0, 1 ) ) = 1
 		_GlobalWavedeformation( "Global Wave deformation", 2D ) = "white" {}
 		_WaveDeformationScale( "Wave Deformation Scale", Float ) = 1
+		[Header(GLIMMER)] _GlimmerTexture( "Glimmer Texture", 2D ) = "white" {}
+		_GlimmerColor( "Glimmer Color", Color ) = ( 1, 1, 1, 1 )
+		_Glimmerstep( "Glimmer step", Range( 0, 1 ) ) = 0.7
+		_Glimmersize1( "Glimmer size 1", Float ) = 1
+		_Glimmersize2( "Glimmer size 2", Float ) = 1
+		_GlimmerSpeed( "Glimmer Speed", Vector ) = ( 1, 1, 0, 0 )
+		_GlimmerSpeed2( "Glimmer Speed2", Vector ) = ( 1, 1, 0, 0 )
 		[Header(POLAR UV)] _PolartilingU( "Polar tiling U", Float ) = 1
 		_PolartilingV( "Polar tiling V", Float ) = 1
 		_PolarUVCenter( "Polar UV Center", Vector ) = ( 0.5, 0.5, 0, 0 )
@@ -490,14 +497,18 @@ Shader "Water Shader"
             #endif
 
 			CBUFFER_START( UnityPerMaterial )
+			float4 _SDFColor;
 			float4 _WaveColor;
 			float4 _WaveColor2;
 			float4 _MainColor;
-			float4 _SDFColor;
+			float4 _GlimmerColor;
 			float4 _Tidecolor;
+			float2 _GlimmerSpeed2;
+			float2 _GlimmerSpeed;
+			float2 _WaveSpeed2;
 			float2 _WaveSpeed;
 			float2 _PolarUVCenter;
-			float2 _WaveSpeed2;
+			float _WaveDeformationIntensity;
 			float _MinAlpha;
 			float _Smoothness1;
 			float _Smoothnessmin;
@@ -505,21 +516,23 @@ Shader "Water Shader"
 			float _Colordepthfade;
 			float _FoamTextureSize;
 			float _SDFinfluenceFoam;
+			float _Wavesize;
+			float _Glimmerstep;
+			float _Glimmersize2;
+			float _WaveDeformationScale;
+			float _PolarpowerV;
+			float _PolartilingU;
+			float _PolartilingV;
+			float _ZoomSDFMask;
+			float _MaxAlpha;
+			float _SDFInfluenceWavesX;
 			float _DisplacementfadeOffset;
 			float _Displacementfadedistance;
 			float _SDFwavemultipliyer;
 			float _Displacementintensity;
 			float _Wavesize2;
-			float _WaveDeformationIntensity;
-			float _WaveDeformationScale;
 			float _SDFInfluenceWavesY;
-			float _SDFInfluenceWavesX;
-			float _ZoomSDFMask;
-			float _PolartilingV;
-			float _PolartilingU;
-			float _PolarpowerV;
-			float _Wavesize;
-			float _MaxAlpha;
+			float _Glimmersize1;
 			float _Alphadepthfade;
 			float4 _EmissionColor;
 			float _AlphaCutoff;
@@ -588,6 +601,7 @@ Shader "Water Shader"
 			sampler2D _WaveTexture;
 			sampler2D _SDFMask;
 			sampler2D _GlobalWavedeformation;
+			sampler2D _GlimmerTexture;
 			sampler2D _FoamTexture;
 
 
@@ -612,8 +626,8 @@ Shader "Water Shader"
 			#define ASE_NEEDS_VERT_POSITION
 			#define ASE_NEEDS_TEXTURE_COORDINATES0
 			#define ASE_NEEDS_VERT_TEXTURE_COORDINATES0
-			#define ASE_NEEDS_FRAG_SCREEN_POSITION_NORMALIZED
 			#define ASE_NEEDS_FRAG_WORLD_POSITION
+			#define ASE_NEEDS_FRAG_SCREEN_POSITION_NORMALIZED
 			#pragma shader_feature_local _DEBUG_BASE _DEBUG_DEBUGSDFMASK
 
 
@@ -946,13 +960,14 @@ Shader "Water Shader"
 
 				float3 ase_positionWS = GetAbsolutePositionWS( TransformObjectToWorld( ( inputMesh.positionOS ).xyz ) );
 				float2 appendResult97 = (float2(ase_positionWS.x , ase_positionWS.z));
-				float2 break4_g34 = ( ( ( appendResult97 / _Wavesize ) - _PolarUVCenter ) * float2( 2,2 ) );
-				float temp_output_29_11_g33 = ( ( atan2( break4_g34.y , break4_g34.x ) / TWO_PI ) + 0.5 );
-				float temp_output_29_0_g33 = sqrt( ( ( break4_g34.x * break4_g34.x ) + ( break4_g34.y * break4_g34.y ) ) );
-				float2 appendResult10_g33 = (float2(temp_output_29_11_g33 , pow( temp_output_29_0_g33 , _PolarpowerV )));
-				float2 break17_g33 = appendResult10_g33;
-				float2 appendResult22_g33 = (float2(( break17_g33.x * floor( _PolartilingU ) ) , ( _PolartilingV * break17_g33.y )));
-				float2 panner95 = ( 1.0 * _Time.y * _WaveSpeed + appendResult22_g33);
+				float2 temp_output_98_0 = ( appendResult97 / _Wavesize );
+				float2 break4_g39 = ( ( temp_output_98_0 - _PolarUVCenter ) * float2( 2,2 ) );
+				float temp_output_29_11_g38 = ( ( atan2( break4_g39.y , break4_g39.x ) / TWO_PI ) + 0.5 );
+				float temp_output_29_0_g38 = sqrt( ( ( break4_g39.x * break4_g39.x ) + ( break4_g39.y * break4_g39.y ) ) );
+				float2 appendResult10_g38 = (float2(temp_output_29_11_g38 , pow( temp_output_29_0_g38 , _PolarpowerV )));
+				float2 break17_g38 = appendResult10_g38;
+				float2 appendResult22_g38 = (float2(( break17_g38.x * floor( _PolartilingU ) ) , ( _PolartilingV * break17_g38.y )));
+				float2 panner95 = ( 1.0 * _Time.y * _WaveSpeed + appendResult22_g38);
 				float2 temp_cast_0 = (( 1.0 + ( _ZoomSDFMask * 2.0 ) )).xx;
 				float2 temp_cast_1 = (-_ZoomSDFMask).xx;
 				float2 texCoord144 = inputMesh.uv0.xy * temp_cast_0 + temp_cast_1;
@@ -963,13 +978,13 @@ Shader "Water Shader"
 				float temp_output_231_0 = ( tex2Dlod( _GlobalWavedeformation, float4( ( appendResult225 / _WaveDeformationScale ), 0, 0.0) ).r * _WaveDeformationIntensity );
 				float4 tex2DNode27 = tex2Dlod( _WaveTexture, float4( ( panner95 + appendResult233 + temp_output_231_0 ), 0, 0.0) );
 				float2 appendResult118 = (float2(ase_positionWS.x , ase_positionWS.z));
-				float2 break4_g39 = ( ( ( appendResult118 / _Wavesize2 ) - _PolarUVCenter ) * float2( 2,2 ) );
-				float temp_output_29_11_g38 = ( ( atan2( break4_g39.y , break4_g39.x ) / TWO_PI ) + 0.5 );
-				float temp_output_29_0_g38 = sqrt( ( ( break4_g39.x * break4_g39.x ) + ( break4_g39.y * break4_g39.y ) ) );
-				float2 appendResult10_g38 = (float2(temp_output_29_11_g38 , pow( temp_output_29_0_g38 , _PolarpowerV )));
-				float2 break17_g38 = appendResult10_g38;
-				float2 appendResult22_g38 = (float2(( break17_g38.x * floor( _PolartilingU ) ) , ( _PolartilingV * break17_g38.y )));
-				float2 panner121 = ( 1.0 * _Time.y * _WaveSpeed2 + appendResult22_g38);
+				float2 break4_g55 = ( ( ( appendResult118 / _Wavesize2 ) - _PolarUVCenter ) * float2( 2,2 ) );
+				float temp_output_29_11_g54 = ( ( atan2( break4_g55.y , break4_g55.x ) / TWO_PI ) + 0.5 );
+				float temp_output_29_0_g54 = sqrt( ( ( break4_g55.x * break4_g55.x ) + ( break4_g55.y * break4_g55.y ) ) );
+				float2 appendResult10_g54 = (float2(temp_output_29_11_g54 , pow( temp_output_29_0_g54 , _PolarpowerV )));
+				float2 break17_g54 = appendResult10_g54;
+				float2 appendResult22_g54 = (float2(( break17_g54.x * floor( _PolartilingU ) ) , ( _PolartilingV * break17_g54.y )));
+				float2 panner121 = ( 1.0 * _Time.y * _WaveSpeed2 + appendResult22_g54);
 				float4 tex2DNode116 = tex2Dlod( _WaveTexture, float4( ( panner121 + appendResult233 + temp_output_231_0 ), 0, 0.0) );
 				float Water_diplacement92 = ( tex2DNode27.r + tex2DNode116.g );
 				float lerpResult171 = lerp( _SDFwavemultipliyer , 1.0 , SDF_Mask153);
@@ -1159,16 +1174,8 @@ Shader "Water Shader"
 					BitangentWS = input.tangentToWorld[ 1 ];
 				#endif
 
-				float4 ase_positionSS_Pixel = ASEScreenPositionNormalizedToPixel( ScreenPosNorm, _ScreenParams );
-				float dither208 = Dither4x4Bayer( fmod( ase_positionSS_Pixel.x, 4 ), fmod( ase_positionSS_Pixel.y, 4 ) );
-				float2 appendResult97 = (float2(PositionWS.x , PositionWS.z));
-				float2 break4_g34 = ( ( ( appendResult97 / _Wavesize ) - _PolarUVCenter ) * float2( 2,2 ) );
-				float temp_output_29_11_g33 = ( ( atan2( break4_g34.y , break4_g34.x ) / TWO_PI ) + 0.5 );
-				float temp_output_29_0_g33 = sqrt( ( ( break4_g34.x * break4_g34.x ) + ( break4_g34.y * break4_g34.y ) ) );
-				float2 appendResult10_g33 = (float2(temp_output_29_11_g33 , pow( temp_output_29_0_g33 , _PolarpowerV )));
-				float2 break17_g33 = appendResult10_g33;
-				float2 appendResult22_g33 = (float2(( break17_g33.x * floor( _PolartilingU ) ) , ( _PolartilingV * break17_g33.y )));
-				float2 panner95 = ( 1.0 * _Time.y * _WaveSpeed + appendResult22_g33);
+				float2 appendResult241 = (float2(PositionWS.x , PositionWS.z));
+				float2 panner244 = ( 1.0 * _Time.y * _GlimmerSpeed + ( appendResult241 / _Glimmersize1 ));
 				float2 temp_cast_0 = (( 1.0 + ( _ZoomSDFMask * 2.0 ) )).xx;
 				float2 temp_cast_1 = (-_ZoomSDFMask).xx;
 				float2 texCoord144 = packedInput.ase_texcoord5.xy * temp_cast_0 + temp_cast_1;
@@ -1177,20 +1184,38 @@ Shader "Water Shader"
 				float2 appendResult233 = (float2(( SDF_Mask153 * _SDFInfluenceWavesX ) , ( SDF_Mask153 * _SDFInfluenceWavesY )));
 				float2 appendResult225 = (float2(PositionWS.x , PositionWS.z));
 				float temp_output_231_0 = ( tex2D( _GlobalWavedeformation, ( appendResult225 / _WaveDeformationScale ) ).r * _WaveDeformationIntensity );
-				float4 tex2DNode27 = tex2D( _WaveTexture, ( panner95 + appendResult233 + temp_output_231_0 ) );
-				float2 appendResult118 = (float2(PositionWS.x , PositionWS.z));
-				float2 break4_g39 = ( ( ( appendResult118 / _Wavesize2 ) - _PolarUVCenter ) * float2( 2,2 ) );
+				float2 appendResult250 = (float2(PositionWS.x , PositionWS.z));
+				float2 panner253 = ( 1.0 * _Time.y * _GlimmerSpeed2 + ( appendResult250 / _Glimmersize2 ));
+				float cos269 = cos( 15.2 );
+				float sin269 = sin( 15.2 );
+				float2 rotator269 = mul( panner253 - float2( 0,0 ) , float2x2( cos269 , -sin269 , sin269 , cos269 )) + float2( 0,0 );
+				float Glimmer257 = ( tex2D( _GlimmerTexture, ( panner244 + appendResult233 + temp_output_231_0 ) ).r * tex2D( _GlimmerTexture, ( rotator269 + appendResult233 + temp_output_231_0 ) ).g );
+				float3 lerpResult262 = lerp( _GlimmerColor.rgb , _MainColor.rgb , step( Glimmer257 , _Glimmerstep ));
+				float4 ase_positionSS_Pixel = ASEScreenPositionNormalizedToPixel( ScreenPosNorm, _ScreenParams );
+				float dither208 = Dither4x4Bayer( fmod( ase_positionSS_Pixel.x, 4 ), fmod( ase_positionSS_Pixel.y, 4 ) );
+				float2 appendResult97 = (float2(PositionWS.x , PositionWS.z));
+				float2 temp_output_98_0 = ( appendResult97 / _Wavesize );
+				float2 break4_g39 = ( ( temp_output_98_0 - _PolarUVCenter ) * float2( 2,2 ) );
 				float temp_output_29_11_g38 = ( ( atan2( break4_g39.y , break4_g39.x ) / TWO_PI ) + 0.5 );
 				float temp_output_29_0_g38 = sqrt( ( ( break4_g39.x * break4_g39.x ) + ( break4_g39.y * break4_g39.y ) ) );
 				float2 appendResult10_g38 = (float2(temp_output_29_11_g38 , pow( temp_output_29_0_g38 , _PolarpowerV )));
 				float2 break17_g38 = appendResult10_g38;
 				float2 appendResult22_g38 = (float2(( break17_g38.x * floor( _PolartilingU ) ) , ( _PolartilingV * break17_g38.y )));
-				float2 panner121 = ( 1.0 * _Time.y * _WaveSpeed2 + appendResult22_g38);
+				float2 panner95 = ( 1.0 * _Time.y * _WaveSpeed + appendResult22_g38);
+				float4 tex2DNode27 = tex2D( _WaveTexture, ( panner95 + appendResult233 + temp_output_231_0 ) );
+				float2 appendResult118 = (float2(PositionWS.x , PositionWS.z));
+				float2 break4_g55 = ( ( ( appendResult118 / _Wavesize2 ) - _PolarUVCenter ) * float2( 2,2 ) );
+				float temp_output_29_11_g54 = ( ( atan2( break4_g55.y , break4_g55.x ) / TWO_PI ) + 0.5 );
+				float temp_output_29_0_g54 = sqrt( ( ( break4_g55.x * break4_g55.x ) + ( break4_g55.y * break4_g55.y ) ) );
+				float2 appendResult10_g54 = (float2(temp_output_29_11_g54 , pow( temp_output_29_0_g54 , _PolarpowerV )));
+				float2 break17_g54 = appendResult10_g54;
+				float2 appendResult22_g54 = (float2(( break17_g54.x * floor( _PolartilingU ) ) , ( _PolartilingV * break17_g54.y )));
+				float2 panner121 = ( 1.0 * _Time.y * _WaveSpeed2 + appendResult22_g54);
 				float4 tex2DNode116 = tex2D( _WaveTexture, ( panner121 + appendResult233 + temp_output_231_0 ) );
 				float Water_diplacement92 = ( tex2DNode27.r + tex2DNode116.g );
 				float smoothstepResult203 = smoothstep( 0.5 , 1.5 , Water_diplacement92);
 				dither208 = step( dither208, saturate( smoothstepResult203 * 1.00001 ) );
-				float3 lerpResult69 = lerp( _MainColor.rgb , _WaveColor2.rgb , dither208);
+				float3 lerpResult69 = lerp( lerpResult262 , _WaveColor2.rgb , dither208);
 				float dither209 = Dither4x4Bayer( fmod( ase_positionSS_Pixel.x, 4 ), fmod( ase_positionSS_Pixel.y, 4 ) );
 				float smoothstepResult180 = smoothstep( 1.3 , 1.5 , ( Water_diplacement92 + ( ( 1.0 - SDF_Mask153 ) * _SDFinfluenceFoam ) ));
 				float temp_output_1_0_g42 = ( smoothstepResult180 + 0.0 );
@@ -1216,10 +1241,10 @@ Shader "Water Shader"
 				dither167 = step( dither167, saturate( Water_diplacement92 * 1.00001 ) );
 				float lerpResult138 = lerp( _Smoothnessmin , _Smoothness1 , dither167);
 				
+				float lerpResult192 = lerp( _MaxAlpha , 1.0 , Foam_Mask191);
 				float screenDepth22 = LinearEyeDepth(SampleCameraDepth( ScreenPosNorm.xy ),_ZBufferParams);
 				float distanceDepth22 = ( screenDepth22 - LinearEyeDepth( ScreenPosNorm.z,_ZBufferParams ) ) / ( _Alphadepthfade );
-				float lerpResult24 = lerp( _MinAlpha , _MaxAlpha , saturate( distanceDepth22 ));
-				float lerpResult192 = lerp( lerpResult24 , 1.0 , Foam_Mask191);
+				float lerpResult24 = lerp( _MinAlpha , lerpResult192 , saturate( distanceDepth22 ));
 				
 
 				GlobalSurfaceDescription surfaceDescription = (GlobalSurfaceDescription)0;
@@ -1237,7 +1262,7 @@ Shader "Water Shader"
 				surfaceDescription.Smoothness = lerpResult138;
 				surfaceDescription.Occlusion = 1;
 				surfaceDescription.Emission = 0;
-				surfaceDescription.Alpha = lerpResult192;
+				surfaceDescription.Alpha = lerpResult24;
 
 				#ifdef _ALPHATEST_ON
 				surfaceDescription.AlphaClipThreshold = _AlphaCutoff;
@@ -1442,14 +1467,18 @@ Shader "Water Shader"
             #endif
 
 			CBUFFER_START( UnityPerMaterial )
+			float4 _SDFColor;
 			float4 _WaveColor;
 			float4 _WaveColor2;
 			float4 _MainColor;
-			float4 _SDFColor;
+			float4 _GlimmerColor;
 			float4 _Tidecolor;
+			float2 _GlimmerSpeed2;
+			float2 _GlimmerSpeed;
+			float2 _WaveSpeed2;
 			float2 _WaveSpeed;
 			float2 _PolarUVCenter;
-			float2 _WaveSpeed2;
+			float _WaveDeformationIntensity;
 			float _MinAlpha;
 			float _Smoothness1;
 			float _Smoothnessmin;
@@ -1457,21 +1486,23 @@ Shader "Water Shader"
 			float _Colordepthfade;
 			float _FoamTextureSize;
 			float _SDFinfluenceFoam;
+			float _Wavesize;
+			float _Glimmerstep;
+			float _Glimmersize2;
+			float _WaveDeformationScale;
+			float _PolarpowerV;
+			float _PolartilingU;
+			float _PolartilingV;
+			float _ZoomSDFMask;
+			float _MaxAlpha;
+			float _SDFInfluenceWavesX;
 			float _DisplacementfadeOffset;
 			float _Displacementfadedistance;
 			float _SDFwavemultipliyer;
 			float _Displacementintensity;
 			float _Wavesize2;
-			float _WaveDeformationIntensity;
-			float _WaveDeformationScale;
 			float _SDFInfluenceWavesY;
-			float _SDFInfluenceWavesX;
-			float _ZoomSDFMask;
-			float _PolartilingV;
-			float _PolartilingU;
-			float _PolarpowerV;
-			float _Wavesize;
-			float _MaxAlpha;
+			float _Glimmersize1;
 			float _Alphadepthfade;
 			float4 _EmissionColor;
 			float _AlphaCutoff;
@@ -1540,6 +1571,7 @@ Shader "Water Shader"
 			sampler2D _WaveTexture;
 			sampler2D _SDFMask;
 			sampler2D _GlobalWavedeformation;
+			sampler2D _GlimmerTexture;
 			sampler2D _FoamTexture;
 
 
@@ -1906,13 +1938,14 @@ Shader "Water Shader"
 
 				float3 ase_positionWS = GetAbsolutePositionWS( TransformObjectToWorld( ( inputMesh.positionOS ).xyz ) );
 				float2 appendResult97 = (float2(ase_positionWS.x , ase_positionWS.z));
-				float2 break4_g34 = ( ( ( appendResult97 / _Wavesize ) - _PolarUVCenter ) * float2( 2,2 ) );
-				float temp_output_29_11_g33 = ( ( atan2( break4_g34.y , break4_g34.x ) / TWO_PI ) + 0.5 );
-				float temp_output_29_0_g33 = sqrt( ( ( break4_g34.x * break4_g34.x ) + ( break4_g34.y * break4_g34.y ) ) );
-				float2 appendResult10_g33 = (float2(temp_output_29_11_g33 , pow( temp_output_29_0_g33 , _PolarpowerV )));
-				float2 break17_g33 = appendResult10_g33;
-				float2 appendResult22_g33 = (float2(( break17_g33.x * floor( _PolartilingU ) ) , ( _PolartilingV * break17_g33.y )));
-				float2 panner95 = ( 1.0 * _Time.y * _WaveSpeed + appendResult22_g33);
+				float2 temp_output_98_0 = ( appendResult97 / _Wavesize );
+				float2 break4_g39 = ( ( temp_output_98_0 - _PolarUVCenter ) * float2( 2,2 ) );
+				float temp_output_29_11_g38 = ( ( atan2( break4_g39.y , break4_g39.x ) / TWO_PI ) + 0.5 );
+				float temp_output_29_0_g38 = sqrt( ( ( break4_g39.x * break4_g39.x ) + ( break4_g39.y * break4_g39.y ) ) );
+				float2 appendResult10_g38 = (float2(temp_output_29_11_g38 , pow( temp_output_29_0_g38 , _PolarpowerV )));
+				float2 break17_g38 = appendResult10_g38;
+				float2 appendResult22_g38 = (float2(( break17_g38.x * floor( _PolartilingU ) ) , ( _PolartilingV * break17_g38.y )));
+				float2 panner95 = ( 1.0 * _Time.y * _WaveSpeed + appendResult22_g38);
 				float2 temp_cast_0 = (( 1.0 + ( _ZoomSDFMask * 2.0 ) )).xx;
 				float2 temp_cast_1 = (-_ZoomSDFMask).xx;
 				float2 texCoord144 = inputMesh.uv0.xy * temp_cast_0 + temp_cast_1;
@@ -1923,13 +1956,13 @@ Shader "Water Shader"
 				float temp_output_231_0 = ( tex2Dlod( _GlobalWavedeformation, float4( ( appendResult225 / _WaveDeformationScale ), 0, 0.0) ).r * _WaveDeformationIntensity );
 				float4 tex2DNode27 = tex2Dlod( _WaveTexture, float4( ( panner95 + appendResult233 + temp_output_231_0 ), 0, 0.0) );
 				float2 appendResult118 = (float2(ase_positionWS.x , ase_positionWS.z));
-				float2 break4_g39 = ( ( ( appendResult118 / _Wavesize2 ) - _PolarUVCenter ) * float2( 2,2 ) );
-				float temp_output_29_11_g38 = ( ( atan2( break4_g39.y , break4_g39.x ) / TWO_PI ) + 0.5 );
-				float temp_output_29_0_g38 = sqrt( ( ( break4_g39.x * break4_g39.x ) + ( break4_g39.y * break4_g39.y ) ) );
-				float2 appendResult10_g38 = (float2(temp_output_29_11_g38 , pow( temp_output_29_0_g38 , _PolarpowerV )));
-				float2 break17_g38 = appendResult10_g38;
-				float2 appendResult22_g38 = (float2(( break17_g38.x * floor( _PolartilingU ) ) , ( _PolartilingV * break17_g38.y )));
-				float2 panner121 = ( 1.0 * _Time.y * _WaveSpeed2 + appendResult22_g38);
+				float2 break4_g55 = ( ( ( appendResult118 / _Wavesize2 ) - _PolarUVCenter ) * float2( 2,2 ) );
+				float temp_output_29_11_g54 = ( ( atan2( break4_g55.y , break4_g55.x ) / TWO_PI ) + 0.5 );
+				float temp_output_29_0_g54 = sqrt( ( ( break4_g55.x * break4_g55.x ) + ( break4_g55.y * break4_g55.y ) ) );
+				float2 appendResult10_g54 = (float2(temp_output_29_11_g54 , pow( temp_output_29_0_g54 , _PolarpowerV )));
+				float2 break17_g54 = appendResult10_g54;
+				float2 appendResult22_g54 = (float2(( break17_g54.x * floor( _PolartilingU ) ) , ( _PolartilingV * break17_g54.y )));
+				float2 panner121 = ( 1.0 * _Time.y * _WaveSpeed2 + appendResult22_g54);
 				float4 tex2DNode116 = tex2Dlod( _WaveTexture, float4( ( panner121 + appendResult233 + temp_output_231_0 ), 0, 0.0) );
 				float Water_diplacement92 = ( tex2DNode27.r + tex2DNode116.g );
 				float lerpResult171 = lerp( _SDFwavemultipliyer , 1.0 , SDF_Mask153);
@@ -1937,16 +1970,16 @@ Shader "Water Shader"
 				float eyeDepth = -objectToViewPos.z;
 				float cameraDepthFade111 = (( eyeDepth -_ProjectionParams.y - _DisplacementfadeOffset ) / _Displacementfadedistance);
 				
+				output.ase_texcoord2.xyz = ase_positionWS;
 				float4 ase_positionCS = TransformWorldToHClip( TransformObjectToWorld( ( inputMesh.positionOS ).xyz ) );
 				float4 screenPos = ComputeScreenPos( ase_positionCS, _ProjectionParams.x );
-				output.ase_texcoord2 = screenPos;
-				output.ase_texcoord3.xyz = ase_positionWS;
+				output.ase_texcoord4 = screenPos;
 				
-				output.ase_texcoord4.xy = inputMesh.uv0.xy;
+				output.ase_texcoord3.xy = inputMesh.uv0.xy;
 				
 				//setting value to unused interpolator channels and avoid initialization warnings
-				output.ase_texcoord3.w = 0;
-				output.ase_texcoord4.zw = 0;
+				output.ase_texcoord2.w = 0;
+				output.ase_texcoord3.zw = 0;
 
 				#ifdef ASE_ABSOLUTE_VERTEX_POS
 				float3 defaultVertexValue = inputMesh.positionOS.xyz;
@@ -2099,42 +2132,52 @@ Shader "Water Shader"
 
 				float3 V = float3(1.0, 1.0, 1.0);
 
-				float4 screenPos = packedInput.ase_texcoord2;
-				float4 ase_positionSSNorm = screenPos / screenPos.w;
-				ase_positionSSNorm.z = ( UNITY_NEAR_CLIP_VALUE >= 0 ) ? ase_positionSSNorm.z : ase_positionSSNorm.z * 0.5 + 0.5;
-				float4 ase_positionSS_Pixel = ASEScreenPositionNormalizedToPixel( ase_positionSSNorm, _ScreenParams );
-				float dither208 = Dither4x4Bayer( fmod( ase_positionSS_Pixel.x, 4 ), fmod( ase_positionSS_Pixel.y, 4 ) );
-				float3 ase_positionWS = packedInput.ase_texcoord3.xyz;
-				float2 appendResult97 = (float2(ase_positionWS.x , ase_positionWS.z));
-				float2 break4_g34 = ( ( ( appendResult97 / _Wavesize ) - _PolarUVCenter ) * float2( 2,2 ) );
-				float temp_output_29_11_g33 = ( ( atan2( break4_g34.y , break4_g34.x ) / TWO_PI ) + 0.5 );
-				float temp_output_29_0_g33 = sqrt( ( ( break4_g34.x * break4_g34.x ) + ( break4_g34.y * break4_g34.y ) ) );
-				float2 appendResult10_g33 = (float2(temp_output_29_11_g33 , pow( temp_output_29_0_g33 , _PolarpowerV )));
-				float2 break17_g33 = appendResult10_g33;
-				float2 appendResult22_g33 = (float2(( break17_g33.x * floor( _PolartilingU ) ) , ( _PolartilingV * break17_g33.y )));
-				float2 panner95 = ( 1.0 * _Time.y * _WaveSpeed + appendResult22_g33);
+				float3 ase_positionWS = packedInput.ase_texcoord2.xyz;
+				float2 appendResult241 = (float2(ase_positionWS.x , ase_positionWS.z));
+				float2 panner244 = ( 1.0 * _Time.y * _GlimmerSpeed + ( appendResult241 / _Glimmersize1 ));
 				float2 temp_cast_0 = (( 1.0 + ( _ZoomSDFMask * 2.0 ) )).xx;
 				float2 temp_cast_1 = (-_ZoomSDFMask).xx;
-				float2 texCoord144 = packedInput.ase_texcoord4.xy * temp_cast_0 + temp_cast_1;
+				float2 texCoord144 = packedInput.ase_texcoord3.xy * temp_cast_0 + temp_cast_1;
 				float2 appendResult147 = (float2(( 1.0 - texCoord144.x ) , texCoord144.y));
 				float SDF_Mask153 = tex2D( _SDFMask, appendResult147 ).r;
 				float2 appendResult233 = (float2(( SDF_Mask153 * _SDFInfluenceWavesX ) , ( SDF_Mask153 * _SDFInfluenceWavesY )));
 				float2 appendResult225 = (float2(ase_positionWS.x , ase_positionWS.z));
 				float temp_output_231_0 = ( tex2D( _GlobalWavedeformation, ( appendResult225 / _WaveDeformationScale ) ).r * _WaveDeformationIntensity );
-				float4 tex2DNode27 = tex2D( _WaveTexture, ( panner95 + appendResult233 + temp_output_231_0 ) );
-				float2 appendResult118 = (float2(ase_positionWS.x , ase_positionWS.z));
-				float2 break4_g39 = ( ( ( appendResult118 / _Wavesize2 ) - _PolarUVCenter ) * float2( 2,2 ) );
+				float2 appendResult250 = (float2(ase_positionWS.x , ase_positionWS.z));
+				float2 panner253 = ( 1.0 * _Time.y * _GlimmerSpeed2 + ( appendResult250 / _Glimmersize2 ));
+				float cos269 = cos( 15.2 );
+				float sin269 = sin( 15.2 );
+				float2 rotator269 = mul( panner253 - float2( 0,0 ) , float2x2( cos269 , -sin269 , sin269 , cos269 )) + float2( 0,0 );
+				float Glimmer257 = ( tex2D( _GlimmerTexture, ( panner244 + appendResult233 + temp_output_231_0 ) ).r * tex2D( _GlimmerTexture, ( rotator269 + appendResult233 + temp_output_231_0 ) ).g );
+				float3 lerpResult262 = lerp( _GlimmerColor.rgb , _MainColor.rgb , step( Glimmer257 , _Glimmerstep ));
+				float4 screenPos = packedInput.ase_texcoord4;
+				float4 ase_positionSSNorm = screenPos / screenPos.w;
+				ase_positionSSNorm.z = ( UNITY_NEAR_CLIP_VALUE >= 0 ) ? ase_positionSSNorm.z : ase_positionSSNorm.z * 0.5 + 0.5;
+				float4 ase_positionSS_Pixel = ASEScreenPositionNormalizedToPixel( ase_positionSSNorm, _ScreenParams );
+				float dither208 = Dither4x4Bayer( fmod( ase_positionSS_Pixel.x, 4 ), fmod( ase_positionSS_Pixel.y, 4 ) );
+				float2 appendResult97 = (float2(ase_positionWS.x , ase_positionWS.z));
+				float2 temp_output_98_0 = ( appendResult97 / _Wavesize );
+				float2 break4_g39 = ( ( temp_output_98_0 - _PolarUVCenter ) * float2( 2,2 ) );
 				float temp_output_29_11_g38 = ( ( atan2( break4_g39.y , break4_g39.x ) / TWO_PI ) + 0.5 );
 				float temp_output_29_0_g38 = sqrt( ( ( break4_g39.x * break4_g39.x ) + ( break4_g39.y * break4_g39.y ) ) );
 				float2 appendResult10_g38 = (float2(temp_output_29_11_g38 , pow( temp_output_29_0_g38 , _PolarpowerV )));
 				float2 break17_g38 = appendResult10_g38;
 				float2 appendResult22_g38 = (float2(( break17_g38.x * floor( _PolartilingU ) ) , ( _PolartilingV * break17_g38.y )));
-				float2 panner121 = ( 1.0 * _Time.y * _WaveSpeed2 + appendResult22_g38);
+				float2 panner95 = ( 1.0 * _Time.y * _WaveSpeed + appendResult22_g38);
+				float4 tex2DNode27 = tex2D( _WaveTexture, ( panner95 + appendResult233 + temp_output_231_0 ) );
+				float2 appendResult118 = (float2(ase_positionWS.x , ase_positionWS.z));
+				float2 break4_g55 = ( ( ( appendResult118 / _Wavesize2 ) - _PolarUVCenter ) * float2( 2,2 ) );
+				float temp_output_29_11_g54 = ( ( atan2( break4_g55.y , break4_g55.x ) / TWO_PI ) + 0.5 );
+				float temp_output_29_0_g54 = sqrt( ( ( break4_g55.x * break4_g55.x ) + ( break4_g55.y * break4_g55.y ) ) );
+				float2 appendResult10_g54 = (float2(temp_output_29_11_g54 , pow( temp_output_29_0_g54 , _PolarpowerV )));
+				float2 break17_g54 = appendResult10_g54;
+				float2 appendResult22_g54 = (float2(( break17_g54.x * floor( _PolartilingU ) ) , ( _PolartilingV * break17_g54.y )));
+				float2 panner121 = ( 1.0 * _Time.y * _WaveSpeed2 + appendResult22_g54);
 				float4 tex2DNode116 = tex2D( _WaveTexture, ( panner121 + appendResult233 + temp_output_231_0 ) );
 				float Water_diplacement92 = ( tex2DNode27.r + tex2DNode116.g );
 				float smoothstepResult203 = smoothstep( 0.5 , 1.5 , Water_diplacement92);
 				dither208 = step( dither208, saturate( smoothstepResult203 * 1.00001 ) );
-				float3 lerpResult69 = lerp( _MainColor.rgb , _WaveColor2.rgb , dither208);
+				float3 lerpResult69 = lerp( lerpResult262 , _WaveColor2.rgb , dither208);
 				float dither209 = Dither4x4Bayer( fmod( ase_positionSS_Pixel.x, 4 ), fmod( ase_positionSS_Pixel.y, 4 ) );
 				float smoothstepResult180 = smoothstep( 1.3 , 1.5 , ( Water_diplacement92 + ( ( 1.0 - SDF_Mask153 ) * _SDFinfluenceFoam ) ));
 				float temp_output_1_0_g42 = ( smoothstepResult180 + 0.0 );
@@ -2160,10 +2203,10 @@ Shader "Water Shader"
 				dither167 = step( dither167, saturate( Water_diplacement92 * 1.00001 ) );
 				float lerpResult138 = lerp( _Smoothnessmin , _Smoothness1 , dither167);
 				
+				float lerpResult192 = lerp( _MaxAlpha , 1.0 , Foam_Mask191);
 				float screenDepth22 = LinearEyeDepth(SampleCameraDepth( ase_positionSSNorm.xy ),_ZBufferParams);
 				float distanceDepth22 = ( screenDepth22 - LinearEyeDepth( ase_positionSSNorm.z,_ZBufferParams ) ) / ( _Alphadepthfade );
-				float lerpResult24 = lerp( _MinAlpha , _MaxAlpha , saturate( distanceDepth22 ));
-				float lerpResult192 = lerp( lerpResult24 , 1.0 , Foam_Mask191);
+				float lerpResult24 = lerp( _MinAlpha , lerpResult192 , saturate( distanceDepth22 ));
 				
 
 				GlobalSurfaceDescription surfaceDescription = (GlobalSurfaceDescription)0;
@@ -2181,7 +2224,7 @@ Shader "Water Shader"
 				surfaceDescription.Smoothness = lerpResult138;
 				surfaceDescription.Occlusion = 1;
 				surfaceDescription.Emission = 0;
-				surfaceDescription.Alpha = lerpResult192;
+				surfaceDescription.Alpha = lerpResult24;
 
 				#ifdef _ALPHATEST_ON
 				surfaceDescription.AlphaClipThreshold = _AlphaCutoff;
@@ -2369,14 +2412,18 @@ Shader "Water Shader"
             #endif
 
 			CBUFFER_START( UnityPerMaterial )
+			float4 _SDFColor;
 			float4 _WaveColor;
 			float4 _WaveColor2;
 			float4 _MainColor;
-			float4 _SDFColor;
+			float4 _GlimmerColor;
 			float4 _Tidecolor;
+			float2 _GlimmerSpeed2;
+			float2 _GlimmerSpeed;
+			float2 _WaveSpeed2;
 			float2 _WaveSpeed;
 			float2 _PolarUVCenter;
-			float2 _WaveSpeed2;
+			float _WaveDeformationIntensity;
 			float _MinAlpha;
 			float _Smoothness1;
 			float _Smoothnessmin;
@@ -2384,21 +2431,23 @@ Shader "Water Shader"
 			float _Colordepthfade;
 			float _FoamTextureSize;
 			float _SDFinfluenceFoam;
+			float _Wavesize;
+			float _Glimmerstep;
+			float _Glimmersize2;
+			float _WaveDeformationScale;
+			float _PolarpowerV;
+			float _PolartilingU;
+			float _PolartilingV;
+			float _ZoomSDFMask;
+			float _MaxAlpha;
+			float _SDFInfluenceWavesX;
 			float _DisplacementfadeOffset;
 			float _Displacementfadedistance;
 			float _SDFwavemultipliyer;
 			float _Displacementintensity;
 			float _Wavesize2;
-			float _WaveDeformationIntensity;
-			float _WaveDeformationScale;
 			float _SDFInfluenceWavesY;
-			float _SDFInfluenceWavesX;
-			float _ZoomSDFMask;
-			float _PolartilingV;
-			float _PolartilingU;
-			float _PolarpowerV;
-			float _Wavesize;
-			float _MaxAlpha;
+			float _Glimmersize1;
 			float _Alphadepthfade;
 			float4 _EmissionColor;
 			float _AlphaCutoff;
@@ -2490,8 +2539,8 @@ Shader "Water Shader"
 
 			#define ASE_NEEDS_VERT_POSITION
 			#define ASE_NEEDS_TEXTURE_COORDINATES0
-			#define ASE_NEEDS_FRAG_SCREEN_POSITION_NORMALIZED
 			#define ASE_NEEDS_FRAG_WORLD_POSITION
+			#define ASE_NEEDS_FRAG_SCREEN_POSITION_NORMALIZED
 
 
 			struct AttributesMesh
@@ -2729,13 +2778,14 @@ Shader "Water Shader"
 
 				float3 ase_positionWS = GetAbsolutePositionWS( TransformObjectToWorld( ( inputMesh.positionOS ).xyz ) );
 				float2 appendResult97 = (float2(ase_positionWS.x , ase_positionWS.z));
-				float2 break4_g34 = ( ( ( appendResult97 / _Wavesize ) - _PolarUVCenter ) * float2( 2,2 ) );
-				float temp_output_29_11_g33 = ( ( atan2( break4_g34.y , break4_g34.x ) / TWO_PI ) + 0.5 );
-				float temp_output_29_0_g33 = sqrt( ( ( break4_g34.x * break4_g34.x ) + ( break4_g34.y * break4_g34.y ) ) );
-				float2 appendResult10_g33 = (float2(temp_output_29_11_g33 , pow( temp_output_29_0_g33 , _PolarpowerV )));
-				float2 break17_g33 = appendResult10_g33;
-				float2 appendResult22_g33 = (float2(( break17_g33.x * floor( _PolartilingU ) ) , ( _PolartilingV * break17_g33.y )));
-				float2 panner95 = ( 1.0 * _Time.y * _WaveSpeed + appendResult22_g33);
+				float2 temp_output_98_0 = ( appendResult97 / _Wavesize );
+				float2 break4_g39 = ( ( temp_output_98_0 - _PolarUVCenter ) * float2( 2,2 ) );
+				float temp_output_29_11_g38 = ( ( atan2( break4_g39.y , break4_g39.x ) / TWO_PI ) + 0.5 );
+				float temp_output_29_0_g38 = sqrt( ( ( break4_g39.x * break4_g39.x ) + ( break4_g39.y * break4_g39.y ) ) );
+				float2 appendResult10_g38 = (float2(temp_output_29_11_g38 , pow( temp_output_29_0_g38 , _PolarpowerV )));
+				float2 break17_g38 = appendResult10_g38;
+				float2 appendResult22_g38 = (float2(( break17_g38.x * floor( _PolartilingU ) ) , ( _PolartilingV * break17_g38.y )));
+				float2 panner95 = ( 1.0 * _Time.y * _WaveSpeed + appendResult22_g38);
 				float2 temp_cast_0 = (( 1.0 + ( _ZoomSDFMask * 2.0 ) )).xx;
 				float2 temp_cast_1 = (-_ZoomSDFMask).xx;
 				float2 texCoord144 = inputMesh.ase_texcoord.xy * temp_cast_0 + temp_cast_1;
@@ -2746,13 +2796,13 @@ Shader "Water Shader"
 				float temp_output_231_0 = ( tex2Dlod( _GlobalWavedeformation, float4( ( appendResult225 / _WaveDeformationScale ), 0, 0.0) ).r * _WaveDeformationIntensity );
 				float4 tex2DNode27 = tex2Dlod( _WaveTexture, float4( ( panner95 + appendResult233 + temp_output_231_0 ), 0, 0.0) );
 				float2 appendResult118 = (float2(ase_positionWS.x , ase_positionWS.z));
-				float2 break4_g39 = ( ( ( appendResult118 / _Wavesize2 ) - _PolarUVCenter ) * float2( 2,2 ) );
-				float temp_output_29_11_g38 = ( ( atan2( break4_g39.y , break4_g39.x ) / TWO_PI ) + 0.5 );
-				float temp_output_29_0_g38 = sqrt( ( ( break4_g39.x * break4_g39.x ) + ( break4_g39.y * break4_g39.y ) ) );
-				float2 appendResult10_g38 = (float2(temp_output_29_11_g38 , pow( temp_output_29_0_g38 , _PolarpowerV )));
-				float2 break17_g38 = appendResult10_g38;
-				float2 appendResult22_g38 = (float2(( break17_g38.x * floor( _PolartilingU ) ) , ( _PolartilingV * break17_g38.y )));
-				float2 panner121 = ( 1.0 * _Time.y * _WaveSpeed2 + appendResult22_g38);
+				float2 break4_g55 = ( ( ( appendResult118 / _Wavesize2 ) - _PolarUVCenter ) * float2( 2,2 ) );
+				float temp_output_29_11_g54 = ( ( atan2( break4_g55.y , break4_g55.x ) / TWO_PI ) + 0.5 );
+				float temp_output_29_0_g54 = sqrt( ( ( break4_g55.x * break4_g55.x ) + ( break4_g55.y * break4_g55.y ) ) );
+				float2 appendResult10_g54 = (float2(temp_output_29_11_g54 , pow( temp_output_29_0_g54 , _PolarpowerV )));
+				float2 break17_g54 = appendResult10_g54;
+				float2 appendResult22_g54 = (float2(( break17_g54.x * floor( _PolartilingU ) ) , ( _PolartilingV * break17_g54.y )));
+				float2 panner121 = ( 1.0 * _Time.y * _WaveSpeed2 + appendResult22_g54);
 				float4 tex2DNode116 = tex2Dlod( _WaveTexture, float4( ( panner121 + appendResult233 + temp_output_231_0 ), 0, 0.0) );
 				float Water_diplacement92 = ( tex2DNode27.r + tex2DNode116.g );
 				float lerpResult171 = lerp( _SDFwavemultipliyer , 1.0 , SDF_Mask153);
@@ -2942,17 +2992,15 @@ Shader "Water Shader"
 				float3 TangentWS = packedInput.tangentWS.xyz;
 				float3 BitangentWS = input.tangentToWorld[ 1 ];
 
-				float screenDepth22 = LinearEyeDepth(SampleCameraDepth( ScreenPosNorm.xy ),_ZBufferParams);
-				float distanceDepth22 = ( screenDepth22 - LinearEyeDepth( ScreenPosNorm.z,_ZBufferParams ) ) / ( _Alphadepthfade );
-				float lerpResult24 = lerp( _MinAlpha , _MaxAlpha , saturate( distanceDepth22 ));
 				float2 appendResult97 = (float2(PositionWS.x , PositionWS.z));
-				float2 break4_g34 = ( ( ( appendResult97 / _Wavesize ) - _PolarUVCenter ) * float2( 2,2 ) );
-				float temp_output_29_11_g33 = ( ( atan2( break4_g34.y , break4_g34.x ) / TWO_PI ) + 0.5 );
-				float temp_output_29_0_g33 = sqrt( ( ( break4_g34.x * break4_g34.x ) + ( break4_g34.y * break4_g34.y ) ) );
-				float2 appendResult10_g33 = (float2(temp_output_29_11_g33 , pow( temp_output_29_0_g33 , _PolarpowerV )));
-				float2 break17_g33 = appendResult10_g33;
-				float2 appendResult22_g33 = (float2(( break17_g33.x * floor( _PolartilingU ) ) , ( _PolartilingV * break17_g33.y )));
-				float2 panner95 = ( 1.0 * _Time.y * _WaveSpeed + appendResult22_g33);
+				float2 temp_output_98_0 = ( appendResult97 / _Wavesize );
+				float2 break4_g39 = ( ( temp_output_98_0 - _PolarUVCenter ) * float2( 2,2 ) );
+				float temp_output_29_11_g38 = ( ( atan2( break4_g39.y , break4_g39.x ) / TWO_PI ) + 0.5 );
+				float temp_output_29_0_g38 = sqrt( ( ( break4_g39.x * break4_g39.x ) + ( break4_g39.y * break4_g39.y ) ) );
+				float2 appendResult10_g38 = (float2(temp_output_29_11_g38 , pow( temp_output_29_0_g38 , _PolarpowerV )));
+				float2 break17_g38 = appendResult10_g38;
+				float2 appendResult22_g38 = (float2(( break17_g38.x * floor( _PolartilingU ) ) , ( _PolartilingV * break17_g38.y )));
+				float2 panner95 = ( 1.0 * _Time.y * _WaveSpeed + appendResult22_g38);
 				float2 temp_cast_0 = (( 1.0 + ( _ZoomSDFMask * 2.0 ) )).xx;
 				float2 temp_cast_1 = (-_ZoomSDFMask).xx;
 				float2 texCoord144 = packedInput.ase_texcoord3.xy * temp_cast_0 + temp_cast_1;
@@ -2963,13 +3011,13 @@ Shader "Water Shader"
 				float temp_output_231_0 = ( tex2D( _GlobalWavedeformation, ( appendResult225 / _WaveDeformationScale ) ).r * _WaveDeformationIntensity );
 				float4 tex2DNode27 = tex2D( _WaveTexture, ( panner95 + appendResult233 + temp_output_231_0 ) );
 				float2 appendResult118 = (float2(PositionWS.x , PositionWS.z));
-				float2 break4_g39 = ( ( ( appendResult118 / _Wavesize2 ) - _PolarUVCenter ) * float2( 2,2 ) );
-				float temp_output_29_11_g38 = ( ( atan2( break4_g39.y , break4_g39.x ) / TWO_PI ) + 0.5 );
-				float temp_output_29_0_g38 = sqrt( ( ( break4_g39.x * break4_g39.x ) + ( break4_g39.y * break4_g39.y ) ) );
-				float2 appendResult10_g38 = (float2(temp_output_29_11_g38 , pow( temp_output_29_0_g38 , _PolarpowerV )));
-				float2 break17_g38 = appendResult10_g38;
-				float2 appendResult22_g38 = (float2(( break17_g38.x * floor( _PolartilingU ) ) , ( _PolartilingV * break17_g38.y )));
-				float2 panner121 = ( 1.0 * _Time.y * _WaveSpeed2 + appendResult22_g38);
+				float2 break4_g55 = ( ( ( appendResult118 / _Wavesize2 ) - _PolarUVCenter ) * float2( 2,2 ) );
+				float temp_output_29_11_g54 = ( ( atan2( break4_g55.y , break4_g55.x ) / TWO_PI ) + 0.5 );
+				float temp_output_29_0_g54 = sqrt( ( ( break4_g55.x * break4_g55.x ) + ( break4_g55.y * break4_g55.y ) ) );
+				float2 appendResult10_g54 = (float2(temp_output_29_11_g54 , pow( temp_output_29_0_g54 , _PolarpowerV )));
+				float2 break17_g54 = appendResult10_g54;
+				float2 appendResult22_g54 = (float2(( break17_g54.x * floor( _PolartilingU ) ) , ( _PolartilingV * break17_g54.y )));
+				float2 panner121 = ( 1.0 * _Time.y * _WaveSpeed2 + appendResult22_g54);
 				float4 tex2DNode116 = tex2D( _WaveTexture, ( panner121 + appendResult233 + temp_output_231_0 ) );
 				float Water_diplacement92 = ( tex2DNode27.r + tex2DNode116.g );
 				float smoothstepResult180 = smoothstep( 1.3 , 1.5 , ( Water_diplacement92 + ( ( 1.0 - SDF_Mask153 ) * _SDFinfluenceFoam ) ));
@@ -2977,12 +3025,15 @@ Shader "Water Shader"
 				float2 appendResult184 = (float2(PositionWS.x , PositionWS.z));
 				float temp_output_23_0_g42 = saturate( ( temp_output_1_0_g42 + ( saturate( ( 1.0 - ( abs( ( temp_output_1_0_g42 - 0.5 ) ) * 2.0 ) ) ) * ( tex2D( _FoamTexture, ( appendResult184 / _FoamTextureSize ) ).r - 0.5 ) * 3.0 ) ) );
 				float Foam_Mask191 = temp_output_23_0_g42;
-				float lerpResult192 = lerp( lerpResult24 , 1.0 , Foam_Mask191);
+				float lerpResult192 = lerp( _MaxAlpha , 1.0 , Foam_Mask191);
+				float screenDepth22 = LinearEyeDepth(SampleCameraDepth( ScreenPosNorm.xy ),_ZBufferParams);
+				float distanceDepth22 = ( screenDepth22 - LinearEyeDepth( ScreenPosNorm.z,_ZBufferParams ) ) / ( _Alphadepthfade );
+				float lerpResult24 = lerp( _MinAlpha , lerpResult192 , saturate( distanceDepth22 ));
 				
 
 				AlphaSurfaceDescription surfaceDescription = (AlphaSurfaceDescription)0;
 
-				surfaceDescription.Alpha = lerpResult192;
+				surfaceDescription.Alpha = lerpResult24;
 
 				#ifdef _ALPHATEST_ON
 				surfaceDescription.AlphaClipThreshold = _AlphaCutoff;
@@ -3150,14 +3201,18 @@ Shader "Water Shader"
             #endif
 
 			CBUFFER_START( UnityPerMaterial )
+			float4 _SDFColor;
 			float4 _WaveColor;
 			float4 _WaveColor2;
 			float4 _MainColor;
-			float4 _SDFColor;
+			float4 _GlimmerColor;
 			float4 _Tidecolor;
+			float2 _GlimmerSpeed2;
+			float2 _GlimmerSpeed;
+			float2 _WaveSpeed2;
 			float2 _WaveSpeed;
 			float2 _PolarUVCenter;
-			float2 _WaveSpeed2;
+			float _WaveDeformationIntensity;
 			float _MinAlpha;
 			float _Smoothness1;
 			float _Smoothnessmin;
@@ -3165,21 +3220,23 @@ Shader "Water Shader"
 			float _Colordepthfade;
 			float _FoamTextureSize;
 			float _SDFinfluenceFoam;
+			float _Wavesize;
+			float _Glimmerstep;
+			float _Glimmersize2;
+			float _WaveDeformationScale;
+			float _PolarpowerV;
+			float _PolartilingU;
+			float _PolartilingV;
+			float _ZoomSDFMask;
+			float _MaxAlpha;
+			float _SDFInfluenceWavesX;
 			float _DisplacementfadeOffset;
 			float _Displacementfadedistance;
 			float _SDFwavemultipliyer;
 			float _Displacementintensity;
 			float _Wavesize2;
-			float _WaveDeformationIntensity;
-			float _WaveDeformationScale;
 			float _SDFInfluenceWavesY;
-			float _SDFInfluenceWavesX;
-			float _ZoomSDFMask;
-			float _PolartilingV;
-			float _PolartilingU;
-			float _PolarpowerV;
-			float _Wavesize;
-			float _MaxAlpha;
+			float _Glimmersize1;
 			float _Alphadepthfade;
 			float4 _EmissionColor;
 			float _AlphaCutoff;
@@ -3272,8 +3329,8 @@ Shader "Water Shader"
 
 			#define ASE_NEEDS_VERT_POSITION
 			#define ASE_NEEDS_TEXTURE_COORDINATES0
-			#define ASE_NEEDS_FRAG_SCREEN_POSITION_NORMALIZED
 			#define ASE_NEEDS_FRAG_WORLD_POSITION
+			#define ASE_NEEDS_FRAG_SCREEN_POSITION_NORMALIZED
 
 
 			struct AttributesMesh
@@ -3514,13 +3571,14 @@ Shader "Water Shader"
 
 				float3 ase_positionWS = GetAbsolutePositionWS( TransformObjectToWorld( ( inputMesh.positionOS ).xyz ) );
 				float2 appendResult97 = (float2(ase_positionWS.x , ase_positionWS.z));
-				float2 break4_g34 = ( ( ( appendResult97 / _Wavesize ) - _PolarUVCenter ) * float2( 2,2 ) );
-				float temp_output_29_11_g33 = ( ( atan2( break4_g34.y , break4_g34.x ) / TWO_PI ) + 0.5 );
-				float temp_output_29_0_g33 = sqrt( ( ( break4_g34.x * break4_g34.x ) + ( break4_g34.y * break4_g34.y ) ) );
-				float2 appendResult10_g33 = (float2(temp_output_29_11_g33 , pow( temp_output_29_0_g33 , _PolarpowerV )));
-				float2 break17_g33 = appendResult10_g33;
-				float2 appendResult22_g33 = (float2(( break17_g33.x * floor( _PolartilingU ) ) , ( _PolartilingV * break17_g33.y )));
-				float2 panner95 = ( 1.0 * _Time.y * _WaveSpeed + appendResult22_g33);
+				float2 temp_output_98_0 = ( appendResult97 / _Wavesize );
+				float2 break4_g39 = ( ( temp_output_98_0 - _PolarUVCenter ) * float2( 2,2 ) );
+				float temp_output_29_11_g38 = ( ( atan2( break4_g39.y , break4_g39.x ) / TWO_PI ) + 0.5 );
+				float temp_output_29_0_g38 = sqrt( ( ( break4_g39.x * break4_g39.x ) + ( break4_g39.y * break4_g39.y ) ) );
+				float2 appendResult10_g38 = (float2(temp_output_29_11_g38 , pow( temp_output_29_0_g38 , _PolarpowerV )));
+				float2 break17_g38 = appendResult10_g38;
+				float2 appendResult22_g38 = (float2(( break17_g38.x * floor( _PolartilingU ) ) , ( _PolartilingV * break17_g38.y )));
+				float2 panner95 = ( 1.0 * _Time.y * _WaveSpeed + appendResult22_g38);
 				float2 temp_cast_0 = (( 1.0 + ( _ZoomSDFMask * 2.0 ) )).xx;
 				float2 temp_cast_1 = (-_ZoomSDFMask).xx;
 				float2 texCoord144 = inputMesh.ase_texcoord.xy * temp_cast_0 + temp_cast_1;
@@ -3531,13 +3589,13 @@ Shader "Water Shader"
 				float temp_output_231_0 = ( tex2Dlod( _GlobalWavedeformation, float4( ( appendResult225 / _WaveDeformationScale ), 0, 0.0) ).r * _WaveDeformationIntensity );
 				float4 tex2DNode27 = tex2Dlod( _WaveTexture, float4( ( panner95 + appendResult233 + temp_output_231_0 ), 0, 0.0) );
 				float2 appendResult118 = (float2(ase_positionWS.x , ase_positionWS.z));
-				float2 break4_g39 = ( ( ( appendResult118 / _Wavesize2 ) - _PolarUVCenter ) * float2( 2,2 ) );
-				float temp_output_29_11_g38 = ( ( atan2( break4_g39.y , break4_g39.x ) / TWO_PI ) + 0.5 );
-				float temp_output_29_0_g38 = sqrt( ( ( break4_g39.x * break4_g39.x ) + ( break4_g39.y * break4_g39.y ) ) );
-				float2 appendResult10_g38 = (float2(temp_output_29_11_g38 , pow( temp_output_29_0_g38 , _PolarpowerV )));
-				float2 break17_g38 = appendResult10_g38;
-				float2 appendResult22_g38 = (float2(( break17_g38.x * floor( _PolartilingU ) ) , ( _PolartilingV * break17_g38.y )));
-				float2 panner121 = ( 1.0 * _Time.y * _WaveSpeed2 + appendResult22_g38);
+				float2 break4_g55 = ( ( ( appendResult118 / _Wavesize2 ) - _PolarUVCenter ) * float2( 2,2 ) );
+				float temp_output_29_11_g54 = ( ( atan2( break4_g55.y , break4_g55.x ) / TWO_PI ) + 0.5 );
+				float temp_output_29_0_g54 = sqrt( ( ( break4_g55.x * break4_g55.x ) + ( break4_g55.y * break4_g55.y ) ) );
+				float2 appendResult10_g54 = (float2(temp_output_29_11_g54 , pow( temp_output_29_0_g54 , _PolarpowerV )));
+				float2 break17_g54 = appendResult10_g54;
+				float2 appendResult22_g54 = (float2(( break17_g54.x * floor( _PolartilingU ) ) , ( _PolartilingV * break17_g54.y )));
+				float2 panner121 = ( 1.0 * _Time.y * _WaveSpeed2 + appendResult22_g54);
 				float4 tex2DNode116 = tex2Dlod( _WaveTexture, float4( ( panner121 + appendResult233 + temp_output_231_0 ), 0, 0.0) );
 				float Water_diplacement92 = ( tex2DNode27.r + tex2DNode116.g );
 				float lerpResult171 = lerp( _SDFwavemultipliyer , 1.0 , SDF_Mask153);
@@ -3710,17 +3768,15 @@ Shader "Water Shader"
 				float3 TangentWS = packedInput.tangentWS.xyz;
 				float3 BitangentWS = input.tangentToWorld[ 1 ];
 
-				float screenDepth22 = LinearEyeDepth(SampleCameraDepth( ScreenPosNorm.xy ),_ZBufferParams);
-				float distanceDepth22 = ( screenDepth22 - LinearEyeDepth( ScreenPosNorm.z,_ZBufferParams ) ) / ( _Alphadepthfade );
-				float lerpResult24 = lerp( _MinAlpha , _MaxAlpha , saturate( distanceDepth22 ));
 				float2 appendResult97 = (float2(PositionWS.x , PositionWS.z));
-				float2 break4_g34 = ( ( ( appendResult97 / _Wavesize ) - _PolarUVCenter ) * float2( 2,2 ) );
-				float temp_output_29_11_g33 = ( ( atan2( break4_g34.y , break4_g34.x ) / TWO_PI ) + 0.5 );
-				float temp_output_29_0_g33 = sqrt( ( ( break4_g34.x * break4_g34.x ) + ( break4_g34.y * break4_g34.y ) ) );
-				float2 appendResult10_g33 = (float2(temp_output_29_11_g33 , pow( temp_output_29_0_g33 , _PolarpowerV )));
-				float2 break17_g33 = appendResult10_g33;
-				float2 appendResult22_g33 = (float2(( break17_g33.x * floor( _PolartilingU ) ) , ( _PolartilingV * break17_g33.y )));
-				float2 panner95 = ( 1.0 * _Time.y * _WaveSpeed + appendResult22_g33);
+				float2 temp_output_98_0 = ( appendResult97 / _Wavesize );
+				float2 break4_g39 = ( ( temp_output_98_0 - _PolarUVCenter ) * float2( 2,2 ) );
+				float temp_output_29_11_g38 = ( ( atan2( break4_g39.y , break4_g39.x ) / TWO_PI ) + 0.5 );
+				float temp_output_29_0_g38 = sqrt( ( ( break4_g39.x * break4_g39.x ) + ( break4_g39.y * break4_g39.y ) ) );
+				float2 appendResult10_g38 = (float2(temp_output_29_11_g38 , pow( temp_output_29_0_g38 , _PolarpowerV )));
+				float2 break17_g38 = appendResult10_g38;
+				float2 appendResult22_g38 = (float2(( break17_g38.x * floor( _PolartilingU ) ) , ( _PolartilingV * break17_g38.y )));
+				float2 panner95 = ( 1.0 * _Time.y * _WaveSpeed + appendResult22_g38);
 				float2 temp_cast_0 = (( 1.0 + ( _ZoomSDFMask * 2.0 ) )).xx;
 				float2 temp_cast_1 = (-_ZoomSDFMask).xx;
 				float2 texCoord144 = packedInput.ase_texcoord3.xy * temp_cast_0 + temp_cast_1;
@@ -3731,13 +3787,13 @@ Shader "Water Shader"
 				float temp_output_231_0 = ( tex2D( _GlobalWavedeformation, ( appendResult225 / _WaveDeformationScale ) ).r * _WaveDeformationIntensity );
 				float4 tex2DNode27 = tex2D( _WaveTexture, ( panner95 + appendResult233 + temp_output_231_0 ) );
 				float2 appendResult118 = (float2(PositionWS.x , PositionWS.z));
-				float2 break4_g39 = ( ( ( appendResult118 / _Wavesize2 ) - _PolarUVCenter ) * float2( 2,2 ) );
-				float temp_output_29_11_g38 = ( ( atan2( break4_g39.y , break4_g39.x ) / TWO_PI ) + 0.5 );
-				float temp_output_29_0_g38 = sqrt( ( ( break4_g39.x * break4_g39.x ) + ( break4_g39.y * break4_g39.y ) ) );
-				float2 appendResult10_g38 = (float2(temp_output_29_11_g38 , pow( temp_output_29_0_g38 , _PolarpowerV )));
-				float2 break17_g38 = appendResult10_g38;
-				float2 appendResult22_g38 = (float2(( break17_g38.x * floor( _PolartilingU ) ) , ( _PolartilingV * break17_g38.y )));
-				float2 panner121 = ( 1.0 * _Time.y * _WaveSpeed2 + appendResult22_g38);
+				float2 break4_g55 = ( ( ( appendResult118 / _Wavesize2 ) - _PolarUVCenter ) * float2( 2,2 ) );
+				float temp_output_29_11_g54 = ( ( atan2( break4_g55.y , break4_g55.x ) / TWO_PI ) + 0.5 );
+				float temp_output_29_0_g54 = sqrt( ( ( break4_g55.x * break4_g55.x ) + ( break4_g55.y * break4_g55.y ) ) );
+				float2 appendResult10_g54 = (float2(temp_output_29_11_g54 , pow( temp_output_29_0_g54 , _PolarpowerV )));
+				float2 break17_g54 = appendResult10_g54;
+				float2 appendResult22_g54 = (float2(( break17_g54.x * floor( _PolartilingU ) ) , ( _PolartilingV * break17_g54.y )));
+				float2 panner121 = ( 1.0 * _Time.y * _WaveSpeed2 + appendResult22_g54);
 				float4 tex2DNode116 = tex2D( _WaveTexture, ( panner121 + appendResult233 + temp_output_231_0 ) );
 				float Water_diplacement92 = ( tex2DNode27.r + tex2DNode116.g );
 				float smoothstepResult180 = smoothstep( 1.3 , 1.5 , ( Water_diplacement92 + ( ( 1.0 - SDF_Mask153 ) * _SDFinfluenceFoam ) ));
@@ -3745,12 +3801,15 @@ Shader "Water Shader"
 				float2 appendResult184 = (float2(PositionWS.x , PositionWS.z));
 				float temp_output_23_0_g42 = saturate( ( temp_output_1_0_g42 + ( saturate( ( 1.0 - ( abs( ( temp_output_1_0_g42 - 0.5 ) ) * 2.0 ) ) ) * ( tex2D( _FoamTexture, ( appendResult184 / _FoamTextureSize ) ).r - 0.5 ) * 3.0 ) ) );
 				float Foam_Mask191 = temp_output_23_0_g42;
-				float lerpResult192 = lerp( lerpResult24 , 1.0 , Foam_Mask191);
+				float lerpResult192 = lerp( _MaxAlpha , 1.0 , Foam_Mask191);
+				float screenDepth22 = LinearEyeDepth(SampleCameraDepth( ScreenPosNorm.xy ),_ZBufferParams);
+				float distanceDepth22 = ( screenDepth22 - LinearEyeDepth( ScreenPosNorm.z,_ZBufferParams ) ) / ( _Alphadepthfade );
+				float lerpResult24 = lerp( _MinAlpha , lerpResult192 , saturate( distanceDepth22 ));
 				
 
 				SceneSurfaceDescription surfaceDescription = (SceneSurfaceDescription)0;
 
-				surfaceDescription.Alpha = lerpResult192;
+				surfaceDescription.Alpha = lerpResult24;
 
 				#ifdef _ALPHATEST_ON
 				surfaceDescription.AlphaClipThreshold = _AlphaCutoff;
@@ -3906,14 +3965,18 @@ Shader "Water Shader"
             #endif
 
 			CBUFFER_START( UnityPerMaterial )
+			float4 _SDFColor;
 			float4 _WaveColor;
 			float4 _WaveColor2;
 			float4 _MainColor;
-			float4 _SDFColor;
+			float4 _GlimmerColor;
 			float4 _Tidecolor;
+			float2 _GlimmerSpeed2;
+			float2 _GlimmerSpeed;
+			float2 _WaveSpeed2;
 			float2 _WaveSpeed;
 			float2 _PolarUVCenter;
-			float2 _WaveSpeed2;
+			float _WaveDeformationIntensity;
 			float _MinAlpha;
 			float _Smoothness1;
 			float _Smoothnessmin;
@@ -3921,21 +3984,23 @@ Shader "Water Shader"
 			float _Colordepthfade;
 			float _FoamTextureSize;
 			float _SDFinfluenceFoam;
+			float _Wavesize;
+			float _Glimmerstep;
+			float _Glimmersize2;
+			float _WaveDeformationScale;
+			float _PolarpowerV;
+			float _PolartilingU;
+			float _PolartilingV;
+			float _ZoomSDFMask;
+			float _MaxAlpha;
+			float _SDFInfluenceWavesX;
 			float _DisplacementfadeOffset;
 			float _Displacementfadedistance;
 			float _SDFwavemultipliyer;
 			float _Displacementintensity;
 			float _Wavesize2;
-			float _WaveDeformationIntensity;
-			float _WaveDeformationScale;
 			float _SDFInfluenceWavesY;
-			float _SDFInfluenceWavesX;
-			float _ZoomSDFMask;
-			float _PolartilingV;
-			float _PolartilingU;
-			float _PolarpowerV;
-			float _Wavesize;
-			float _MaxAlpha;
+			float _Glimmersize1;
 			float _Alphadepthfade;
 			float4 _EmissionColor;
 			float _AlphaCutoff;
@@ -4308,13 +4373,14 @@ Shader "Water Shader"
 
 				float3 ase_positionWS = GetAbsolutePositionWS( TransformObjectToWorld( ( inputMesh.positionOS ).xyz ) );
 				float2 appendResult97 = (float2(ase_positionWS.x , ase_positionWS.z));
-				float2 break4_g34 = ( ( ( appendResult97 / _Wavesize ) - _PolarUVCenter ) * float2( 2,2 ) );
-				float temp_output_29_11_g33 = ( ( atan2( break4_g34.y , break4_g34.x ) / TWO_PI ) + 0.5 );
-				float temp_output_29_0_g33 = sqrt( ( ( break4_g34.x * break4_g34.x ) + ( break4_g34.y * break4_g34.y ) ) );
-				float2 appendResult10_g33 = (float2(temp_output_29_11_g33 , pow( temp_output_29_0_g33 , _PolarpowerV )));
-				float2 break17_g33 = appendResult10_g33;
-				float2 appendResult22_g33 = (float2(( break17_g33.x * floor( _PolartilingU ) ) , ( _PolartilingV * break17_g33.y )));
-				float2 panner95 = ( 1.0 * _Time.y * _WaveSpeed + appendResult22_g33);
+				float2 temp_output_98_0 = ( appendResult97 / _Wavesize );
+				float2 break4_g39 = ( ( temp_output_98_0 - _PolarUVCenter ) * float2( 2,2 ) );
+				float temp_output_29_11_g38 = ( ( atan2( break4_g39.y , break4_g39.x ) / TWO_PI ) + 0.5 );
+				float temp_output_29_0_g38 = sqrt( ( ( break4_g39.x * break4_g39.x ) + ( break4_g39.y * break4_g39.y ) ) );
+				float2 appendResult10_g38 = (float2(temp_output_29_11_g38 , pow( temp_output_29_0_g38 , _PolarpowerV )));
+				float2 break17_g38 = appendResult10_g38;
+				float2 appendResult22_g38 = (float2(( break17_g38.x * floor( _PolartilingU ) ) , ( _PolartilingV * break17_g38.y )));
+				float2 panner95 = ( 1.0 * _Time.y * _WaveSpeed + appendResult22_g38);
 				float2 temp_cast_0 = (( 1.0 + ( _ZoomSDFMask * 2.0 ) )).xx;
 				float2 temp_cast_1 = (-_ZoomSDFMask).xx;
 				float2 texCoord144 = inputMesh.uv0.xy * temp_cast_0 + temp_cast_1;
@@ -4325,13 +4391,13 @@ Shader "Water Shader"
 				float temp_output_231_0 = ( tex2Dlod( _GlobalWavedeformation, float4( ( appendResult225 / _WaveDeformationScale ), 0, 0.0) ).r * _WaveDeformationIntensity );
 				float4 tex2DNode27 = tex2Dlod( _WaveTexture, float4( ( panner95 + appendResult233 + temp_output_231_0 ), 0, 0.0) );
 				float2 appendResult118 = (float2(ase_positionWS.x , ase_positionWS.z));
-				float2 break4_g39 = ( ( ( appendResult118 / _Wavesize2 ) - _PolarUVCenter ) * float2( 2,2 ) );
-				float temp_output_29_11_g38 = ( ( atan2( break4_g39.y , break4_g39.x ) / TWO_PI ) + 0.5 );
-				float temp_output_29_0_g38 = sqrt( ( ( break4_g39.x * break4_g39.x ) + ( break4_g39.y * break4_g39.y ) ) );
-				float2 appendResult10_g38 = (float2(temp_output_29_11_g38 , pow( temp_output_29_0_g38 , _PolarpowerV )));
-				float2 break17_g38 = appendResult10_g38;
-				float2 appendResult22_g38 = (float2(( break17_g38.x * floor( _PolartilingU ) ) , ( _PolartilingV * break17_g38.y )));
-				float2 panner121 = ( 1.0 * _Time.y * _WaveSpeed2 + appendResult22_g38);
+				float2 break4_g55 = ( ( ( appendResult118 / _Wavesize2 ) - _PolarUVCenter ) * float2( 2,2 ) );
+				float temp_output_29_11_g54 = ( ( atan2( break4_g55.y , break4_g55.x ) / TWO_PI ) + 0.5 );
+				float temp_output_29_0_g54 = sqrt( ( ( break4_g55.x * break4_g55.x ) + ( break4_g55.y * break4_g55.y ) ) );
+				float2 appendResult10_g54 = (float2(temp_output_29_11_g54 , pow( temp_output_29_0_g54 , _PolarpowerV )));
+				float2 break17_g54 = appendResult10_g54;
+				float2 appendResult22_g54 = (float2(( break17_g54.x * floor( _PolartilingU ) ) , ( _PolartilingV * break17_g54.y )));
+				float2 panner121 = ( 1.0 * _Time.y * _WaveSpeed2 + appendResult22_g54);
 				float4 tex2DNode116 = tex2Dlod( _WaveTexture, float4( ( panner121 + appendResult233 + temp_output_231_0 ), 0, 0.0) );
 				float Water_diplacement92 = ( tex2DNode27.r + tex2DNode116.g );
 				float lerpResult171 = lerp( _SDFwavemultipliyer , 1.0 , SDF_Mask153);
@@ -4539,13 +4605,14 @@ Shader "Water Shader"
 				float4 ase_positionSS_Pixel = ASEScreenPositionNormalizedToPixel( ScreenPosNorm, _ScreenParams );
 				float dither167 = Dither8x8Bayer( fmod( ase_positionSS_Pixel.x, 8 ), fmod( ase_positionSS_Pixel.y, 8 ) );
 				float2 appendResult97 = (float2(PositionWS.x , PositionWS.z));
-				float2 break4_g34 = ( ( ( appendResult97 / _Wavesize ) - _PolarUVCenter ) * float2( 2,2 ) );
-				float temp_output_29_11_g33 = ( ( atan2( break4_g34.y , break4_g34.x ) / TWO_PI ) + 0.5 );
-				float temp_output_29_0_g33 = sqrt( ( ( break4_g34.x * break4_g34.x ) + ( break4_g34.y * break4_g34.y ) ) );
-				float2 appendResult10_g33 = (float2(temp_output_29_11_g33 , pow( temp_output_29_0_g33 , _PolarpowerV )));
-				float2 break17_g33 = appendResult10_g33;
-				float2 appendResult22_g33 = (float2(( break17_g33.x * floor( _PolartilingU ) ) , ( _PolartilingV * break17_g33.y )));
-				float2 panner95 = ( 1.0 * _Time.y * _WaveSpeed + appendResult22_g33);
+				float2 temp_output_98_0 = ( appendResult97 / _Wavesize );
+				float2 break4_g39 = ( ( temp_output_98_0 - _PolarUVCenter ) * float2( 2,2 ) );
+				float temp_output_29_11_g38 = ( ( atan2( break4_g39.y , break4_g39.x ) / TWO_PI ) + 0.5 );
+				float temp_output_29_0_g38 = sqrt( ( ( break4_g39.x * break4_g39.x ) + ( break4_g39.y * break4_g39.y ) ) );
+				float2 appendResult10_g38 = (float2(temp_output_29_11_g38 , pow( temp_output_29_0_g38 , _PolarpowerV )));
+				float2 break17_g38 = appendResult10_g38;
+				float2 appendResult22_g38 = (float2(( break17_g38.x * floor( _PolartilingU ) ) , ( _PolartilingV * break17_g38.y )));
+				float2 panner95 = ( 1.0 * _Time.y * _WaveSpeed + appendResult22_g38);
 				float2 temp_cast_0 = (( 1.0 + ( _ZoomSDFMask * 2.0 ) )).xx;
 				float2 temp_cast_1 = (-_ZoomSDFMask).xx;
 				float2 texCoord144 = packedInput.ase_texcoord3.xy * temp_cast_0 + temp_cast_1;
@@ -4556,34 +4623,34 @@ Shader "Water Shader"
 				float temp_output_231_0 = ( tex2D( _GlobalWavedeformation, ( appendResult225 / _WaveDeformationScale ) ).r * _WaveDeformationIntensity );
 				float4 tex2DNode27 = tex2D( _WaveTexture, ( panner95 + appendResult233 + temp_output_231_0 ) );
 				float2 appendResult118 = (float2(PositionWS.x , PositionWS.z));
-				float2 break4_g39 = ( ( ( appendResult118 / _Wavesize2 ) - _PolarUVCenter ) * float2( 2,2 ) );
-				float temp_output_29_11_g38 = ( ( atan2( break4_g39.y , break4_g39.x ) / TWO_PI ) + 0.5 );
-				float temp_output_29_0_g38 = sqrt( ( ( break4_g39.x * break4_g39.x ) + ( break4_g39.y * break4_g39.y ) ) );
-				float2 appendResult10_g38 = (float2(temp_output_29_11_g38 , pow( temp_output_29_0_g38 , _PolarpowerV )));
-				float2 break17_g38 = appendResult10_g38;
-				float2 appendResult22_g38 = (float2(( break17_g38.x * floor( _PolartilingU ) ) , ( _PolartilingV * break17_g38.y )));
-				float2 panner121 = ( 1.0 * _Time.y * _WaveSpeed2 + appendResult22_g38);
+				float2 break4_g55 = ( ( ( appendResult118 / _Wavesize2 ) - _PolarUVCenter ) * float2( 2,2 ) );
+				float temp_output_29_11_g54 = ( ( atan2( break4_g55.y , break4_g55.x ) / TWO_PI ) + 0.5 );
+				float temp_output_29_0_g54 = sqrt( ( ( break4_g55.x * break4_g55.x ) + ( break4_g55.y * break4_g55.y ) ) );
+				float2 appendResult10_g54 = (float2(temp_output_29_11_g54 , pow( temp_output_29_0_g54 , _PolarpowerV )));
+				float2 break17_g54 = appendResult10_g54;
+				float2 appendResult22_g54 = (float2(( break17_g54.x * floor( _PolartilingU ) ) , ( _PolartilingV * break17_g54.y )));
+				float2 panner121 = ( 1.0 * _Time.y * _WaveSpeed2 + appendResult22_g54);
 				float4 tex2DNode116 = tex2D( _WaveTexture, ( panner121 + appendResult233 + temp_output_231_0 ) );
 				float Water_diplacement92 = ( tex2DNode27.r + tex2DNode116.g );
 				dither167 = step( dither167, saturate( Water_diplacement92 * 1.00001 ) );
 				float lerpResult138 = lerp( _Smoothnessmin , _Smoothness1 , dither167);
 				
-				float screenDepth22 = LinearEyeDepth(SampleCameraDepth( ScreenPosNorm.xy ),_ZBufferParams);
-				float distanceDepth22 = ( screenDepth22 - LinearEyeDepth( ScreenPosNorm.z,_ZBufferParams ) ) / ( _Alphadepthfade );
-				float lerpResult24 = lerp( _MinAlpha , _MaxAlpha , saturate( distanceDepth22 ));
 				float smoothstepResult180 = smoothstep( 1.3 , 1.5 , ( Water_diplacement92 + ( ( 1.0 - SDF_Mask153 ) * _SDFinfluenceFoam ) ));
 				float temp_output_1_0_g42 = ( smoothstepResult180 + 0.0 );
 				float2 appendResult184 = (float2(PositionWS.x , PositionWS.z));
 				float temp_output_23_0_g42 = saturate( ( temp_output_1_0_g42 + ( saturate( ( 1.0 - ( abs( ( temp_output_1_0_g42 - 0.5 ) ) * 2.0 ) ) ) * ( tex2D( _FoamTexture, ( appendResult184 / _FoamTextureSize ) ).r - 0.5 ) * 3.0 ) ) );
 				float Foam_Mask191 = temp_output_23_0_g42;
-				float lerpResult192 = lerp( lerpResult24 , 1.0 , Foam_Mask191);
+				float lerpResult192 = lerp( _MaxAlpha , 1.0 , Foam_Mask191);
+				float screenDepth22 = LinearEyeDepth(SampleCameraDepth( ScreenPosNorm.xy ),_ZBufferParams);
+				float distanceDepth22 = ( screenDepth22 - LinearEyeDepth( ScreenPosNorm.z,_ZBufferParams ) ) / ( _Alphadepthfade );
+				float lerpResult24 = lerp( _MinAlpha , lerpResult192 , saturate( distanceDepth22 ));
 				
 
 				SmoothSurfaceDescription surfaceDescription = (SmoothSurfaceDescription)0;
 
 				surfaceDescription.Normal = float3( 0, 0, 1 );
 				surfaceDescription.Smoothness = lerpResult138;
-				surfaceDescription.Alpha = lerpResult192;
+				surfaceDescription.Alpha = lerpResult24;
 
 				#ifdef _ALPHATEST_ON
 				surfaceDescription.AlphaClipThreshold = _AlphaCutoff;
@@ -4800,14 +4867,18 @@ Shader "Water Shader"
             #endif
 
 			CBUFFER_START( UnityPerMaterial )
+			float4 _SDFColor;
 			float4 _WaveColor;
 			float4 _WaveColor2;
 			float4 _MainColor;
-			float4 _SDFColor;
+			float4 _GlimmerColor;
 			float4 _Tidecolor;
+			float2 _GlimmerSpeed2;
+			float2 _GlimmerSpeed;
+			float2 _WaveSpeed2;
 			float2 _WaveSpeed;
 			float2 _PolarUVCenter;
-			float2 _WaveSpeed2;
+			float _WaveDeformationIntensity;
 			float _MinAlpha;
 			float _Smoothness1;
 			float _Smoothnessmin;
@@ -4815,21 +4886,23 @@ Shader "Water Shader"
 			float _Colordepthfade;
 			float _FoamTextureSize;
 			float _SDFinfluenceFoam;
+			float _Wavesize;
+			float _Glimmerstep;
+			float _Glimmersize2;
+			float _WaveDeformationScale;
+			float _PolarpowerV;
+			float _PolartilingU;
+			float _PolartilingV;
+			float _ZoomSDFMask;
+			float _MaxAlpha;
+			float _SDFInfluenceWavesX;
 			float _DisplacementfadeOffset;
 			float _Displacementfadedistance;
 			float _SDFwavemultipliyer;
 			float _Displacementintensity;
 			float _Wavesize2;
-			float _WaveDeformationIntensity;
-			float _WaveDeformationScale;
 			float _SDFInfluenceWavesY;
-			float _SDFInfluenceWavesX;
-			float _ZoomSDFMask;
-			float _PolartilingV;
-			float _PolartilingU;
-			float _PolarpowerV;
-			float _Wavesize;
-			float _MaxAlpha;
+			float _Glimmersize1;
 			float _Alphadepthfade;
 			float4 _EmissionColor;
 			float _AlphaCutoff;
@@ -4898,6 +4971,7 @@ Shader "Water Shader"
 			sampler2D _WaveTexture;
 			sampler2D _SDFMask;
 			sampler2D _GlobalWavedeformation;
+			sampler2D _GlimmerTexture;
 			sampler2D _FoamTexture;
 
 
@@ -4929,8 +5003,8 @@ Shader "Water Shader"
 			#define ASE_NEEDS_VERT_POSITION
 			#define ASE_NEEDS_TEXTURE_COORDINATES0
 			#define ASE_NEEDS_VERT_TEXTURE_COORDINATES0
-			#define ASE_NEEDS_FRAG_SCREEN_POSITION_NORMALIZED
 			#define ASE_NEEDS_FRAG_WORLD_POSITION
+			#define ASE_NEEDS_FRAG_SCREEN_POSITION_NORMALIZED
 			#pragma shader_feature_local _DEBUG_BASE _DEBUG_DEBUGSDFMASK
 
 
@@ -5264,13 +5338,14 @@ Shader "Water Shader"
 
 				float3 ase_positionWS = GetAbsolutePositionWS( TransformObjectToWorld( ( inputMesh.positionOS ).xyz ) );
 				float2 appendResult97 = (float2(ase_positionWS.x , ase_positionWS.z));
-				float2 break4_g34 = ( ( ( appendResult97 / _Wavesize ) - _PolarUVCenter ) * float2( 2,2 ) );
-				float temp_output_29_11_g33 = ( ( atan2( break4_g34.y , break4_g34.x ) / TWO_PI ) + 0.5 );
-				float temp_output_29_0_g33 = sqrt( ( ( break4_g34.x * break4_g34.x ) + ( break4_g34.y * break4_g34.y ) ) );
-				float2 appendResult10_g33 = (float2(temp_output_29_11_g33 , pow( temp_output_29_0_g33 , _PolarpowerV )));
-				float2 break17_g33 = appendResult10_g33;
-				float2 appendResult22_g33 = (float2(( break17_g33.x * floor( _PolartilingU ) ) , ( _PolartilingV * break17_g33.y )));
-				float2 panner95 = ( 1.0 * _Time.y * _WaveSpeed + appendResult22_g33);
+				float2 temp_output_98_0 = ( appendResult97 / _Wavesize );
+				float2 break4_g39 = ( ( temp_output_98_0 - _PolarUVCenter ) * float2( 2,2 ) );
+				float temp_output_29_11_g38 = ( ( atan2( break4_g39.y , break4_g39.x ) / TWO_PI ) + 0.5 );
+				float temp_output_29_0_g38 = sqrt( ( ( break4_g39.x * break4_g39.x ) + ( break4_g39.y * break4_g39.y ) ) );
+				float2 appendResult10_g38 = (float2(temp_output_29_11_g38 , pow( temp_output_29_0_g38 , _PolarpowerV )));
+				float2 break17_g38 = appendResult10_g38;
+				float2 appendResult22_g38 = (float2(( break17_g38.x * floor( _PolartilingU ) ) , ( _PolartilingV * break17_g38.y )));
+				float2 panner95 = ( 1.0 * _Time.y * _WaveSpeed + appendResult22_g38);
 				float2 temp_cast_0 = (( 1.0 + ( _ZoomSDFMask * 2.0 ) )).xx;
 				float2 temp_cast_1 = (-_ZoomSDFMask).xx;
 				float2 texCoord144 = inputMesh.uv0.xy * temp_cast_0 + temp_cast_1;
@@ -5281,13 +5356,13 @@ Shader "Water Shader"
 				float temp_output_231_0 = ( tex2Dlod( _GlobalWavedeformation, float4( ( appendResult225 / _WaveDeformationScale ), 0, 0.0) ).r * _WaveDeformationIntensity );
 				float4 tex2DNode27 = tex2Dlod( _WaveTexture, float4( ( panner95 + appendResult233 + temp_output_231_0 ), 0, 0.0) );
 				float2 appendResult118 = (float2(ase_positionWS.x , ase_positionWS.z));
-				float2 break4_g39 = ( ( ( appendResult118 / _Wavesize2 ) - _PolarUVCenter ) * float2( 2,2 ) );
-				float temp_output_29_11_g38 = ( ( atan2( break4_g39.y , break4_g39.x ) / TWO_PI ) + 0.5 );
-				float temp_output_29_0_g38 = sqrt( ( ( break4_g39.x * break4_g39.x ) + ( break4_g39.y * break4_g39.y ) ) );
-				float2 appendResult10_g38 = (float2(temp_output_29_11_g38 , pow( temp_output_29_0_g38 , _PolarpowerV )));
-				float2 break17_g38 = appendResult10_g38;
-				float2 appendResult22_g38 = (float2(( break17_g38.x * floor( _PolartilingU ) ) , ( _PolartilingV * break17_g38.y )));
-				float2 panner121 = ( 1.0 * _Time.y * _WaveSpeed2 + appendResult22_g38);
+				float2 break4_g55 = ( ( ( appendResult118 / _Wavesize2 ) - _PolarUVCenter ) * float2( 2,2 ) );
+				float temp_output_29_11_g54 = ( ( atan2( break4_g55.y , break4_g55.x ) / TWO_PI ) + 0.5 );
+				float temp_output_29_0_g54 = sqrt( ( ( break4_g55.x * break4_g55.x ) + ( break4_g55.y * break4_g55.y ) ) );
+				float2 appendResult10_g54 = (float2(temp_output_29_11_g54 , pow( temp_output_29_0_g54 , _PolarpowerV )));
+				float2 break17_g54 = appendResult10_g54;
+				float2 appendResult22_g54 = (float2(( break17_g54.x * floor( _PolartilingU ) ) , ( _PolartilingV * break17_g54.y )));
+				float2 panner121 = ( 1.0 * _Time.y * _WaveSpeed2 + appendResult22_g54);
 				float4 tex2DNode116 = tex2Dlod( _WaveTexture, float4( ( panner121 + appendResult233 + temp_output_231_0 ), 0, 0.0) );
 				float Water_diplacement92 = ( tex2DNode27.r + tex2DNode116.g );
 				float lerpResult171 = lerp( _SDFwavemultipliyer , 1.0 , SDF_Mask153);
@@ -5590,16 +5665,8 @@ Shader "Water Shader"
 					BitangentWS = input.tangentToWorld[ 1 ];
 				#endif
 
-				float4 ase_positionSS_Pixel = ASEScreenPositionNormalizedToPixel( ScreenPosNorm, _ScreenParams );
-				float dither208 = Dither4x4Bayer( fmod( ase_positionSS_Pixel.x, 4 ), fmod( ase_positionSS_Pixel.y, 4 ) );
-				float2 appendResult97 = (float2(PositionWS.x , PositionWS.z));
-				float2 break4_g34 = ( ( ( appendResult97 / _Wavesize ) - _PolarUVCenter ) * float2( 2,2 ) );
-				float temp_output_29_11_g33 = ( ( atan2( break4_g34.y , break4_g34.x ) / TWO_PI ) + 0.5 );
-				float temp_output_29_0_g33 = sqrt( ( ( break4_g34.x * break4_g34.x ) + ( break4_g34.y * break4_g34.y ) ) );
-				float2 appendResult10_g33 = (float2(temp_output_29_11_g33 , pow( temp_output_29_0_g33 , _PolarpowerV )));
-				float2 break17_g33 = appendResult10_g33;
-				float2 appendResult22_g33 = (float2(( break17_g33.x * floor( _PolartilingU ) ) , ( _PolartilingV * break17_g33.y )));
-				float2 panner95 = ( 1.0 * _Time.y * _WaveSpeed + appendResult22_g33);
+				float2 appendResult241 = (float2(PositionWS.x , PositionWS.z));
+				float2 panner244 = ( 1.0 * _Time.y * _GlimmerSpeed + ( appendResult241 / _Glimmersize1 ));
 				float2 temp_cast_0 = (( 1.0 + ( _ZoomSDFMask * 2.0 ) )).xx;
 				float2 temp_cast_1 = (-_ZoomSDFMask).xx;
 				float2 texCoord144 = packedInput.ase_texcoord7.xy * temp_cast_0 + temp_cast_1;
@@ -5608,20 +5675,38 @@ Shader "Water Shader"
 				float2 appendResult233 = (float2(( SDF_Mask153 * _SDFInfluenceWavesX ) , ( SDF_Mask153 * _SDFInfluenceWavesY )));
 				float2 appendResult225 = (float2(PositionWS.x , PositionWS.z));
 				float temp_output_231_0 = ( tex2D( _GlobalWavedeformation, ( appendResult225 / _WaveDeformationScale ) ).r * _WaveDeformationIntensity );
-				float4 tex2DNode27 = tex2D( _WaveTexture, ( panner95 + appendResult233 + temp_output_231_0 ) );
-				float2 appendResult118 = (float2(PositionWS.x , PositionWS.z));
-				float2 break4_g39 = ( ( ( appendResult118 / _Wavesize2 ) - _PolarUVCenter ) * float2( 2,2 ) );
+				float2 appendResult250 = (float2(PositionWS.x , PositionWS.z));
+				float2 panner253 = ( 1.0 * _Time.y * _GlimmerSpeed2 + ( appendResult250 / _Glimmersize2 ));
+				float cos269 = cos( 15.2 );
+				float sin269 = sin( 15.2 );
+				float2 rotator269 = mul( panner253 - float2( 0,0 ) , float2x2( cos269 , -sin269 , sin269 , cos269 )) + float2( 0,0 );
+				float Glimmer257 = ( tex2D( _GlimmerTexture, ( panner244 + appendResult233 + temp_output_231_0 ) ).r * tex2D( _GlimmerTexture, ( rotator269 + appendResult233 + temp_output_231_0 ) ).g );
+				float3 lerpResult262 = lerp( _GlimmerColor.rgb , _MainColor.rgb , step( Glimmer257 , _Glimmerstep ));
+				float4 ase_positionSS_Pixel = ASEScreenPositionNormalizedToPixel( ScreenPosNorm, _ScreenParams );
+				float dither208 = Dither4x4Bayer( fmod( ase_positionSS_Pixel.x, 4 ), fmod( ase_positionSS_Pixel.y, 4 ) );
+				float2 appendResult97 = (float2(PositionWS.x , PositionWS.z));
+				float2 temp_output_98_0 = ( appendResult97 / _Wavesize );
+				float2 break4_g39 = ( ( temp_output_98_0 - _PolarUVCenter ) * float2( 2,2 ) );
 				float temp_output_29_11_g38 = ( ( atan2( break4_g39.y , break4_g39.x ) / TWO_PI ) + 0.5 );
 				float temp_output_29_0_g38 = sqrt( ( ( break4_g39.x * break4_g39.x ) + ( break4_g39.y * break4_g39.y ) ) );
 				float2 appendResult10_g38 = (float2(temp_output_29_11_g38 , pow( temp_output_29_0_g38 , _PolarpowerV )));
 				float2 break17_g38 = appendResult10_g38;
 				float2 appendResult22_g38 = (float2(( break17_g38.x * floor( _PolartilingU ) ) , ( _PolartilingV * break17_g38.y )));
-				float2 panner121 = ( 1.0 * _Time.y * _WaveSpeed2 + appendResult22_g38);
+				float2 panner95 = ( 1.0 * _Time.y * _WaveSpeed + appendResult22_g38);
+				float4 tex2DNode27 = tex2D( _WaveTexture, ( panner95 + appendResult233 + temp_output_231_0 ) );
+				float2 appendResult118 = (float2(PositionWS.x , PositionWS.z));
+				float2 break4_g55 = ( ( ( appendResult118 / _Wavesize2 ) - _PolarUVCenter ) * float2( 2,2 ) );
+				float temp_output_29_11_g54 = ( ( atan2( break4_g55.y , break4_g55.x ) / TWO_PI ) + 0.5 );
+				float temp_output_29_0_g54 = sqrt( ( ( break4_g55.x * break4_g55.x ) + ( break4_g55.y * break4_g55.y ) ) );
+				float2 appendResult10_g54 = (float2(temp_output_29_11_g54 , pow( temp_output_29_0_g54 , _PolarpowerV )));
+				float2 break17_g54 = appendResult10_g54;
+				float2 appendResult22_g54 = (float2(( break17_g54.x * floor( _PolartilingU ) ) , ( _PolartilingV * break17_g54.y )));
+				float2 panner121 = ( 1.0 * _Time.y * _WaveSpeed2 + appendResult22_g54);
 				float4 tex2DNode116 = tex2D( _WaveTexture, ( panner121 + appendResult233 + temp_output_231_0 ) );
 				float Water_diplacement92 = ( tex2DNode27.r + tex2DNode116.g );
 				float smoothstepResult203 = smoothstep( 0.5 , 1.5 , Water_diplacement92);
 				dither208 = step( dither208, saturate( smoothstepResult203 * 1.00001 ) );
-				float3 lerpResult69 = lerp( _MainColor.rgb , _WaveColor2.rgb , dither208);
+				float3 lerpResult69 = lerp( lerpResult262 , _WaveColor2.rgb , dither208);
 				float dither209 = Dither4x4Bayer( fmod( ase_positionSS_Pixel.x, 4 ), fmod( ase_positionSS_Pixel.y, 4 ) );
 				float smoothstepResult180 = smoothstep( 1.3 , 1.5 , ( Water_diplacement92 + ( ( 1.0 - SDF_Mask153 ) * _SDFinfluenceFoam ) ));
 				float temp_output_1_0_g42 = ( smoothstepResult180 + 0.0 );
@@ -5647,10 +5732,10 @@ Shader "Water Shader"
 				dither167 = step( dither167, saturate( Water_diplacement92 * 1.00001 ) );
 				float lerpResult138 = lerp( _Smoothnessmin , _Smoothness1 , dither167);
 				
+				float lerpResult192 = lerp( _MaxAlpha , 1.0 , Foam_Mask191);
 				float screenDepth22 = LinearEyeDepth(SampleCameraDepth( ScreenPosNorm.xy ),_ZBufferParams);
 				float distanceDepth22 = ( screenDepth22 - LinearEyeDepth( ScreenPosNorm.z,_ZBufferParams ) ) / ( _Alphadepthfade );
-				float lerpResult24 = lerp( _MinAlpha , _MaxAlpha , saturate( distanceDepth22 ));
-				float lerpResult192 = lerp( lerpResult24 , 1.0 , Foam_Mask191);
+				float lerpResult24 = lerp( _MinAlpha , lerpResult192 , saturate( distanceDepth22 ));
 				
 
 				GlobalSurfaceDescription surfaceDescription = (GlobalSurfaceDescription)0;
@@ -5668,7 +5753,7 @@ Shader "Water Shader"
 				surfaceDescription.Smoothness = lerpResult138;
 				surfaceDescription.Occlusion = 1;
 				surfaceDescription.Emission = 0;
-				surfaceDescription.Alpha = lerpResult192;
+				surfaceDescription.Alpha = lerpResult24;
 
 				#ifdef _ALPHATEST_ON
 				surfaceDescription.AlphaClipThreshold = _AlphaCutoff;
@@ -5972,14 +6057,18 @@ Shader "Water Shader"
             #endif
 
             CBUFFER_START( UnityPerMaterial )
+			float4 _SDFColor;
 			float4 _WaveColor;
 			float4 _WaveColor2;
 			float4 _MainColor;
-			float4 _SDFColor;
+			float4 _GlimmerColor;
 			float4 _Tidecolor;
+			float2 _GlimmerSpeed2;
+			float2 _GlimmerSpeed;
+			float2 _WaveSpeed2;
 			float2 _WaveSpeed;
 			float2 _PolarUVCenter;
-			float2 _WaveSpeed2;
+			float _WaveDeformationIntensity;
 			float _MinAlpha;
 			float _Smoothness1;
 			float _Smoothnessmin;
@@ -5987,21 +6076,23 @@ Shader "Water Shader"
 			float _Colordepthfade;
 			float _FoamTextureSize;
 			float _SDFinfluenceFoam;
+			float _Wavesize;
+			float _Glimmerstep;
+			float _Glimmersize2;
+			float _WaveDeformationScale;
+			float _PolarpowerV;
+			float _PolartilingU;
+			float _PolartilingV;
+			float _ZoomSDFMask;
+			float _MaxAlpha;
+			float _SDFInfluenceWavesX;
 			float _DisplacementfadeOffset;
 			float _Displacementfadedistance;
 			float _SDFwavemultipliyer;
 			float _Displacementintensity;
 			float _Wavesize2;
-			float _WaveDeformationIntensity;
-			float _WaveDeformationScale;
 			float _SDFInfluenceWavesY;
-			float _SDFInfluenceWavesX;
-			float _ZoomSDFMask;
-			float _PolartilingV;
-			float _PolartilingU;
-			float _PolarpowerV;
-			float _Wavesize;
-			float _MaxAlpha;
+			float _Glimmersize1;
 			float _Alphadepthfade;
 			float4 _EmissionColor;
 			float _AlphaCutoff;
@@ -6089,8 +6180,8 @@ Shader "Water Shader"
 
 			#define ASE_NEEDS_VERT_POSITION
 			#define ASE_NEEDS_TEXTURE_COORDINATES0
-			#define ASE_NEEDS_FRAG_SCREEN_POSITION_NORMALIZED
 			#define ASE_NEEDS_FRAG_WORLD_POSITION
+			#define ASE_NEEDS_FRAG_SCREEN_POSITION_NORMALIZED
 
 
 			struct AttributesMesh
@@ -6189,13 +6280,14 @@ Shader "Water Shader"
 
 				float3 ase_positionWS = GetAbsolutePositionWS( TransformObjectToWorld( ( inputMesh.positionOS ).xyz ) );
 				float2 appendResult97 = (float2(ase_positionWS.x , ase_positionWS.z));
-				float2 break4_g34 = ( ( ( appendResult97 / _Wavesize ) - _PolarUVCenter ) * float2( 2,2 ) );
-				float temp_output_29_11_g33 = ( ( atan2( break4_g34.y , break4_g34.x ) / TWO_PI ) + 0.5 );
-				float temp_output_29_0_g33 = sqrt( ( ( break4_g34.x * break4_g34.x ) + ( break4_g34.y * break4_g34.y ) ) );
-				float2 appendResult10_g33 = (float2(temp_output_29_11_g33 , pow( temp_output_29_0_g33 , _PolarpowerV )));
-				float2 break17_g33 = appendResult10_g33;
-				float2 appendResult22_g33 = (float2(( break17_g33.x * floor( _PolartilingU ) ) , ( _PolartilingV * break17_g33.y )));
-				float2 panner95 = ( 1.0 * _Time.y * _WaveSpeed + appendResult22_g33);
+				float2 temp_output_98_0 = ( appendResult97 / _Wavesize );
+				float2 break4_g39 = ( ( temp_output_98_0 - _PolarUVCenter ) * float2( 2,2 ) );
+				float temp_output_29_11_g38 = ( ( atan2( break4_g39.y , break4_g39.x ) / TWO_PI ) + 0.5 );
+				float temp_output_29_0_g38 = sqrt( ( ( break4_g39.x * break4_g39.x ) + ( break4_g39.y * break4_g39.y ) ) );
+				float2 appendResult10_g38 = (float2(temp_output_29_11_g38 , pow( temp_output_29_0_g38 , _PolarpowerV )));
+				float2 break17_g38 = appendResult10_g38;
+				float2 appendResult22_g38 = (float2(( break17_g38.x * floor( _PolartilingU ) ) , ( _PolartilingV * break17_g38.y )));
+				float2 panner95 = ( 1.0 * _Time.y * _WaveSpeed + appendResult22_g38);
 				float2 temp_cast_0 = (( 1.0 + ( _ZoomSDFMask * 2.0 ) )).xx;
 				float2 temp_cast_1 = (-_ZoomSDFMask).xx;
 				float2 texCoord144 = inputMesh.ase_texcoord.xy * temp_cast_0 + temp_cast_1;
@@ -6206,13 +6298,13 @@ Shader "Water Shader"
 				float temp_output_231_0 = ( tex2Dlod( _GlobalWavedeformation, float4( ( appendResult225 / _WaveDeformationScale ), 0, 0.0) ).r * _WaveDeformationIntensity );
 				float4 tex2DNode27 = tex2Dlod( _WaveTexture, float4( ( panner95 + appendResult233 + temp_output_231_0 ), 0, 0.0) );
 				float2 appendResult118 = (float2(ase_positionWS.x , ase_positionWS.z));
-				float2 break4_g39 = ( ( ( appendResult118 / _Wavesize2 ) - _PolarUVCenter ) * float2( 2,2 ) );
-				float temp_output_29_11_g38 = ( ( atan2( break4_g39.y , break4_g39.x ) / TWO_PI ) + 0.5 );
-				float temp_output_29_0_g38 = sqrt( ( ( break4_g39.x * break4_g39.x ) + ( break4_g39.y * break4_g39.y ) ) );
-				float2 appendResult10_g38 = (float2(temp_output_29_11_g38 , pow( temp_output_29_0_g38 , _PolarpowerV )));
-				float2 break17_g38 = appendResult10_g38;
-				float2 appendResult22_g38 = (float2(( break17_g38.x * floor( _PolartilingU ) ) , ( _PolartilingV * break17_g38.y )));
-				float2 panner121 = ( 1.0 * _Time.y * _WaveSpeed2 + appendResult22_g38);
+				float2 break4_g55 = ( ( ( appendResult118 / _Wavesize2 ) - _PolarUVCenter ) * float2( 2,2 ) );
+				float temp_output_29_11_g54 = ( ( atan2( break4_g55.y , break4_g55.x ) / TWO_PI ) + 0.5 );
+				float temp_output_29_0_g54 = sqrt( ( ( break4_g55.x * break4_g55.x ) + ( break4_g55.y * break4_g55.y ) ) );
+				float2 appendResult10_g54 = (float2(temp_output_29_11_g54 , pow( temp_output_29_0_g54 , _PolarpowerV )));
+				float2 break17_g54 = appendResult10_g54;
+				float2 appendResult22_g54 = (float2(( break17_g54.x * floor( _PolartilingU ) ) , ( _PolartilingV * break17_g54.y )));
+				float2 panner121 = ( 1.0 * _Time.y * _WaveSpeed2 + appendResult22_g54);
 				float4 tex2DNode116 = tex2Dlod( _WaveTexture, float4( ( panner121 + appendResult233 + temp_output_231_0 ), 0, 0.0) );
 				float Water_diplacement92 = ( tex2DNode27.r + tex2DNode116.g );
 				float lerpResult171 = lerp( _SDFwavemultipliyer , 1.0 , SDF_Mask153);
@@ -6402,17 +6494,15 @@ Shader "Water Shader"
 				float3 TangentWS = packedInput.tangentWS.xyz;
 				float3 BitangentWS = input.tangentToWorld[ 1 ];
 
-				float screenDepth22 = LinearEyeDepth(SampleCameraDepth( ScreenPosNorm.xy ),_ZBufferParams);
-				float distanceDepth22 = ( screenDepth22 - LinearEyeDepth( ScreenPosNorm.z,_ZBufferParams ) ) / ( _Alphadepthfade );
-				float lerpResult24 = lerp( _MinAlpha , _MaxAlpha , saturate( distanceDepth22 ));
 				float2 appendResult97 = (float2(PositionWS.x , PositionWS.z));
-				float2 break4_g34 = ( ( ( appendResult97 / _Wavesize ) - _PolarUVCenter ) * float2( 2,2 ) );
-				float temp_output_29_11_g33 = ( ( atan2( break4_g34.y , break4_g34.x ) / TWO_PI ) + 0.5 );
-				float temp_output_29_0_g33 = sqrt( ( ( break4_g34.x * break4_g34.x ) + ( break4_g34.y * break4_g34.y ) ) );
-				float2 appendResult10_g33 = (float2(temp_output_29_11_g33 , pow( temp_output_29_0_g33 , _PolarpowerV )));
-				float2 break17_g33 = appendResult10_g33;
-				float2 appendResult22_g33 = (float2(( break17_g33.x * floor( _PolartilingU ) ) , ( _PolartilingV * break17_g33.y )));
-				float2 panner95 = ( 1.0 * _Time.y * _WaveSpeed + appendResult22_g33);
+				float2 temp_output_98_0 = ( appendResult97 / _Wavesize );
+				float2 break4_g39 = ( ( temp_output_98_0 - _PolarUVCenter ) * float2( 2,2 ) );
+				float temp_output_29_11_g38 = ( ( atan2( break4_g39.y , break4_g39.x ) / TWO_PI ) + 0.5 );
+				float temp_output_29_0_g38 = sqrt( ( ( break4_g39.x * break4_g39.x ) + ( break4_g39.y * break4_g39.y ) ) );
+				float2 appendResult10_g38 = (float2(temp_output_29_11_g38 , pow( temp_output_29_0_g38 , _PolarpowerV )));
+				float2 break17_g38 = appendResult10_g38;
+				float2 appendResult22_g38 = (float2(( break17_g38.x * floor( _PolartilingU ) ) , ( _PolartilingV * break17_g38.y )));
+				float2 panner95 = ( 1.0 * _Time.y * _WaveSpeed + appendResult22_g38);
 				float2 temp_cast_0 = (( 1.0 + ( _ZoomSDFMask * 2.0 ) )).xx;
 				float2 temp_cast_1 = (-_ZoomSDFMask).xx;
 				float2 texCoord144 = packedInput.ase_texcoord3.xy * temp_cast_0 + temp_cast_1;
@@ -6423,13 +6513,13 @@ Shader "Water Shader"
 				float temp_output_231_0 = ( tex2D( _GlobalWavedeformation, ( appendResult225 / _WaveDeformationScale ) ).r * _WaveDeformationIntensity );
 				float4 tex2DNode27 = tex2D( _WaveTexture, ( panner95 + appendResult233 + temp_output_231_0 ) );
 				float2 appendResult118 = (float2(PositionWS.x , PositionWS.z));
-				float2 break4_g39 = ( ( ( appendResult118 / _Wavesize2 ) - _PolarUVCenter ) * float2( 2,2 ) );
-				float temp_output_29_11_g38 = ( ( atan2( break4_g39.y , break4_g39.x ) / TWO_PI ) + 0.5 );
-				float temp_output_29_0_g38 = sqrt( ( ( break4_g39.x * break4_g39.x ) + ( break4_g39.y * break4_g39.y ) ) );
-				float2 appendResult10_g38 = (float2(temp_output_29_11_g38 , pow( temp_output_29_0_g38 , _PolarpowerV )));
-				float2 break17_g38 = appendResult10_g38;
-				float2 appendResult22_g38 = (float2(( break17_g38.x * floor( _PolartilingU ) ) , ( _PolartilingV * break17_g38.y )));
-				float2 panner121 = ( 1.0 * _Time.y * _WaveSpeed2 + appendResult22_g38);
+				float2 break4_g55 = ( ( ( appendResult118 / _Wavesize2 ) - _PolarUVCenter ) * float2( 2,2 ) );
+				float temp_output_29_11_g54 = ( ( atan2( break4_g55.y , break4_g55.x ) / TWO_PI ) + 0.5 );
+				float temp_output_29_0_g54 = sqrt( ( ( break4_g55.x * break4_g55.x ) + ( break4_g55.y * break4_g55.y ) ) );
+				float2 appendResult10_g54 = (float2(temp_output_29_11_g54 , pow( temp_output_29_0_g54 , _PolarpowerV )));
+				float2 break17_g54 = appendResult10_g54;
+				float2 appendResult22_g54 = (float2(( break17_g54.x * floor( _PolartilingU ) ) , ( _PolartilingV * break17_g54.y )));
+				float2 panner121 = ( 1.0 * _Time.y * _WaveSpeed2 + appendResult22_g54);
 				float4 tex2DNode116 = tex2D( _WaveTexture, ( panner121 + appendResult233 + temp_output_231_0 ) );
 				float Water_diplacement92 = ( tex2DNode27.r + tex2DNode116.g );
 				float smoothstepResult180 = smoothstep( 1.3 , 1.5 , ( Water_diplacement92 + ( ( 1.0 - SDF_Mask153 ) * _SDFinfluenceFoam ) ));
@@ -6437,12 +6527,15 @@ Shader "Water Shader"
 				float2 appendResult184 = (float2(PositionWS.x , PositionWS.z));
 				float temp_output_23_0_g42 = saturate( ( temp_output_1_0_g42 + ( saturate( ( 1.0 - ( abs( ( temp_output_1_0_g42 - 0.5 ) ) * 2.0 ) ) ) * ( tex2D( _FoamTexture, ( appendResult184 / _FoamTextureSize ) ).r - 0.5 ) * 3.0 ) ) );
 				float Foam_Mask191 = temp_output_23_0_g42;
-				float lerpResult192 = lerp( lerpResult24 , 1.0 , Foam_Mask191);
+				float lerpResult192 = lerp( _MaxAlpha , 1.0 , Foam_Mask191);
+				float screenDepth22 = LinearEyeDepth(SampleCameraDepth( ScreenPosNorm.xy ),_ZBufferParams);
+				float distanceDepth22 = ( screenDepth22 - LinearEyeDepth( ScreenPosNorm.z,_ZBufferParams ) ) / ( _Alphadepthfade );
+				float lerpResult24 = lerp( _MinAlpha , lerpResult192 , saturate( distanceDepth22 ));
 				
 
 				PickingSurfaceDescription surfaceDescription = (PickingSurfaceDescription)0;
 
-				surfaceDescription.Alpha = lerpResult192;
+				surfaceDescription.Alpha = lerpResult24;
 
 				#ifdef _ALPHATEST_ON
 				surfaceDescription.AlphaClipThreshold = _AlphaCutoff;
@@ -6750,104 +6843,103 @@ Shader "Water Shader"
 /*ASEBEGIN
 Version=19904
 Node;AmplifyShaderEditor.CommentaryNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;168;128,2240;Inherit;False;1652;378.7;Comment;10;144;148;149;150;151;152;146;147;140;153;SDF Mask;1,1,1,1;0;0
-Node;AmplifyShaderEditor.RangedFloatNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;148;176,2464;Inherit;False;Property;_ZoomSDFMask;Zoom SDF Mask;41;0;Create;True;0;0;0;False;0;False;0;0;0;1;0;1;FLOAT;0
+Node;AmplifyShaderEditor.RangedFloatNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;148;176,2464;Inherit;False;Property;_ZoomSDFMask;Zoom SDF Mask;48;0;Create;True;0;0;0;False;0;False;0;0;0;1;0;1;FLOAT;0
 Node;AmplifyShaderEditor.RangedFloatNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;149;320,2288;Inherit;False;Constant;_Float4;Float 4;25;0;Create;True;0;0;0;False;0;False;1;0;0;0;0;1;FLOAT;0
 Node;AmplifyShaderEditor.SimpleMultiplyOpNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;151;448,2352;Inherit;False;2;2;0;FLOAT;0;False;1;FLOAT;2;False;1;FLOAT;0
 Node;AmplifyShaderEditor.SimpleAddOpNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;150;592,2288;Inherit;False;2;2;0;FLOAT;0;False;1;FLOAT;0;False;1;FLOAT;0
 Node;AmplifyShaderEditor.NegateNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;152;512,2464;Inherit;False;1;0;FLOAT;0;False;1;FLOAT;0
 Node;AmplifyShaderEditor.TextureCoordinatesNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;144;720,2400;Inherit;False;0;-1;2;3;2;SAMPLER2D;;False;0;FLOAT2;1.4,1.4;False;1;FLOAT2;-0.2,-0.2;False;5;FLOAT2;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
 Node;AmplifyShaderEditor.OneMinusNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;146;928,2416;Inherit;False;1;0;FLOAT;0;False;1;FLOAT;0
-Node;AmplifyShaderEditor.CommentaryNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;238;-3504,2720;Inherit;False;1204;418.95;Comment;7;225;226;224;227;231;232;223;Global Wave distortion;1,1,1,1;0;0
-Node;AmplifyShaderEditor.CommentaryNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;159;-3456,1376;Inherit;False;2292;770.8501;Comment;22;96;117;97;118;123;98;119;104;120;122;95;121;36;35;116;27;125;127;124;92;216;217;Waves;1,1,1,1;0;0
+Node;AmplifyShaderEditor.CommentaryNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;238;-3744,3680;Inherit;False;1204;418.95;Comment;7;225;226;224;227;231;232;223;Global Wave distortion;1,1,1,1;0;0
 Node;AmplifyShaderEditor.DynamicAppendNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;147;1088,2416;Inherit;False;FLOAT2;4;0;FLOAT;0;False;1;FLOAT;0;False;2;FLOAT;0;False;3;FLOAT;0;False;1;FLOAT2;0
-Node;AmplifyShaderEditor.WorldPosInputsNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;96;-3408,1632;Inherit;False;0;4;FLOAT3;0;FLOAT;1;FLOAT;2;FLOAT;3
-Node;AmplifyShaderEditor.WorldPosInputsNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;117;-3408,1888;Inherit;False;0;4;FLOAT3;0;FLOAT;1;FLOAT;2;FLOAT;3
-Node;AmplifyShaderEditor.WorldPosInputsNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;224;-3456,2800;Inherit;False;0;4;FLOAT3;0;FLOAT;1;FLOAT;2;FLOAT;3
-Node;AmplifyShaderEditor.SamplerNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;140;1248,2384;Inherit;True;Property;_SDFMask;SDF Mask;36;1;[Header];Create;True;1;SDF MASK;0;0;False;0;False;-1;ad40a65ae826fe24a9fe98481f4b3534;ad40a65ae826fe24a9fe98481f4b3534;True;0;False;white;Auto;False;Object;-1;Auto;Texture2D;False;8;0;SAMPLER2D;;False;1;FLOAT2;0,0;False;2;FLOAT;0;False;3;FLOAT2;0,0;False;4;FLOAT2;0,0;False;5;FLOAT;1;False;6;FLOAT;0;False;7;SAMPLERSTATE;;False;6;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4;FLOAT3;5
-Node;AmplifyShaderEditor.CommentaryNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;237;-3282,2206;Inherit;False;788;434.95;Comment;6;221;235;218;219;236;233;SDF Influence Waves;1,1,1,1;0;0
-Node;AmplifyShaderEditor.DynamicAppendNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;97;-3216,1632;Inherit;False;FLOAT2;4;0;FLOAT;0;False;1;FLOAT;0;False;2;FLOAT;0;False;3;FLOAT;0;False;1;FLOAT2;0
-Node;AmplifyShaderEditor.RangedFloatNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;35;-3168,1728;Inherit;False;Property;_Wavesize;Wave size;19;0;Create;True;0;0;0;False;0;False;1;1;0;0;0;1;FLOAT;0
-Node;AmplifyShaderEditor.DynamicAppendNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;118;-3216,1888;Inherit;False;FLOAT2;4;0;FLOAT;0;False;1;FLOAT;0;False;2;FLOAT;0;False;3;FLOAT;0;False;1;FLOAT2;0
-Node;AmplifyShaderEditor.RangedFloatNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;123;-3168,2032;Inherit;False;Property;_Wavesize2;Wave size 2;20;0;Create;True;0;0;0;False;0;False;1;1;0;0;0;1;FLOAT;0
-Node;AmplifyShaderEditor.DynamicAppendNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;225;-3264,2832;Inherit;False;FLOAT2;4;0;FLOAT;0;False;1;FLOAT;0;False;2;FLOAT;0;False;3;FLOAT;0;False;1;FLOAT2;0
-Node;AmplifyShaderEditor.RangedFloatNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;226;-3376,2992;Inherit;False;Property;_WaveDeformationScale;Wave Deformation Scale;25;0;Create;True;0;0;0;False;0;False;1;1;0;0;0;1;FLOAT;0
+Node;AmplifyShaderEditor.CommentaryNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;159;-3696,2336;Inherit;False;2292;770.8501;Comment;22;96;117;97;118;123;98;119;120;122;95;121;36;35;116;27;125;127;124;92;216;217;276;Waves;1,1,1,1;0;0
+Node;AmplifyShaderEditor.SamplerNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;140;1248,2384;Inherit;True;Property;_SDFMask;SDF Mask;43;1;[Header];Create;True;1;SDF MASK;0;0;False;0;False;-1;ad40a65ae826fe24a9fe98481f4b3534;ad40a65ae826fe24a9fe98481f4b3534;True;0;False;white;Auto;False;Object;-1;Auto;Texture2D;False;8;0;SAMPLER2D;;False;1;FLOAT2;0,0;False;2;FLOAT;0;False;3;FLOAT2;0,0;False;4;FLOAT2;0,0;False;5;FLOAT;1;False;6;FLOAT;0;False;7;SAMPLERSTATE;;False;6;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4;FLOAT3;5
+Node;AmplifyShaderEditor.WorldPosInputsNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;224;-3696,3760;Inherit;False;0;4;FLOAT3;0;FLOAT;1;FLOAT;2;FLOAT;3
+Node;AmplifyShaderEditor.WorldPosInputsNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;96;-3648,2592;Inherit;False;0;4;FLOAT3;0;FLOAT;1;FLOAT;2;FLOAT;3
+Node;AmplifyShaderEditor.WorldPosInputsNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;117;-3648,2848;Inherit;False;0;4;FLOAT3;0;FLOAT;1;FLOAT;2;FLOAT;3
+Node;AmplifyShaderEditor.CommentaryNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;237;-3520,3152;Inherit;False;788;434.95;Comment;6;221;235;218;219;236;233;SDF Influence Waves;1,1,1,1;0;0
 Node;AmplifyShaderEditor.RegisterLocalVarNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;153;1536,2432;Inherit;False;SDF Mask;-1;True;1;0;FLOAT;0;False;1;FLOAT;0
-Node;AmplifyShaderEditor.SimpleDivideOpNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;98;-2992,1632;Inherit;False;2;0;FLOAT2;0,0;False;1;FLOAT;0;False;1;FLOAT2;0
-Node;AmplifyShaderEditor.SimpleDivideOpNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;119;-2992,1888;Inherit;False;2;0;FLOAT2;0,0;False;1;FLOAT;0;False;1;FLOAT2;0
-Node;AmplifyShaderEditor.RangedFloatNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;221;-3216,2368;Inherit;False;Property;_SDFInfluenceWavesX;SDF Influence Waves X;39;0;Create;True;0;0;0;False;0;False;1;0;0;1;0;1;FLOAT;0
-Node;AmplifyShaderEditor.RangedFloatNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;235;-3232,2528;Inherit;False;Property;_SDFInfluenceWavesY;SDF Influence Waves Y;38;0;Create;True;0;0;0;False;0;False;1;0;0;1;0;1;FLOAT;0
-Node;AmplifyShaderEditor.GetLocalVarNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;218;-3232,2272;Inherit;False;153;SDF Mask;1;0;OBJECT;;False;1;FLOAT;0
-Node;AmplifyShaderEditor.SimpleDivideOpNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;227;-3072,2832;Inherit;False;2;0;FLOAT2;0,0;False;1;FLOAT;0;False;1;FLOAT2;0
-Node;AmplifyShaderEditor.FunctionNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;104;-2832,1632;Inherit;False;Polar UV;26;;33;c4233c329a4c24140b2a5ebfd47bf4ca;0;2;30;FLOAT;0;False;12;FLOAT2;0,0;False;1;FLOAT2;0
-Node;AmplifyShaderEditor.Vector2Node, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;36;-2848,1728;Inherit;False;Property;_WaveSpeed;Wave Speed;21;0;Create;True;0;0;0;False;0;False;1,1;1,1;0;3;FLOAT2;0;FLOAT;1;FLOAT;2
-Node;AmplifyShaderEditor.FunctionNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;120;-2832,1888;Inherit;False;Polar UV;26;;38;c4233c329a4c24140b2a5ebfd47bf4ca;0;2;30;FLOAT;0;False;12;FLOAT2;0,0;False;1;FLOAT2;0
-Node;AmplifyShaderEditor.Vector2Node, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;122;-2848,2000;Inherit;False;Property;_WaveSpeed2;Wave Speed 2;22;0;Create;True;0;0;0;False;0;False;1,1;1,1;0;3;FLOAT2;0;FLOAT;1;FLOAT;2
-Node;AmplifyShaderEditor.SimpleMultiplyOpNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;219;-2976,2256;Inherit;False;2;2;0;FLOAT;0;False;1;FLOAT;0;False;1;FLOAT;0
-Node;AmplifyShaderEditor.SimpleMultiplyOpNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;236;-2915.434,2485.837;Inherit;False;2;2;0;FLOAT;0;False;1;FLOAT;0;False;1;FLOAT;0
-Node;AmplifyShaderEditor.RangedFloatNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;232;-2784,3040;Inherit;False;Property;_WaveDeformationIntensity;Wave Deformation Intensity;23;1;[Header];Create;True;1;WAVE DEFORMATION;0;0;False;0;False;1;1;0;1;0;1;FLOAT;0
-Node;AmplifyShaderEditor.SamplerNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;223;-2912,2800;Inherit;True;Property;_GlobalWavedeformation;Global Wave deformation;24;0;Create;True;0;0;0;False;0;False;-1;None;None;True;0;False;white;Auto;False;Object;-1;Auto;Texture2D;False;8;0;SAMPLER2D;;False;1;FLOAT2;0,0;False;2;FLOAT;0;False;3;FLOAT2;0,0;False;4;FLOAT2;0,0;False;5;FLOAT;1;False;6;FLOAT;0;False;7;SAMPLERSTATE;;False;6;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4;FLOAT3;5
-Node;AmplifyShaderEditor.PannerNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;95;-2640,1632;Inherit;False;3;0;FLOAT2;0,0;False;2;FLOAT2;0.1,0.1;False;1;FLOAT;1;False;1;FLOAT2;0
-Node;AmplifyShaderEditor.PannerNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;121;-2640,1888;Inherit;False;3;0;FLOAT2;0,0;False;2;FLOAT2;0.1,0.1;False;1;FLOAT;1;False;1;FLOAT2;0
-Node;AmplifyShaderEditor.DynamicAppendNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;233;-2672,2304;Inherit;False;FLOAT2;4;0;FLOAT;0;False;1;FLOAT;0;False;2;FLOAT;0;False;3;FLOAT;0;False;1;FLOAT2;0
-Node;AmplifyShaderEditor.SimpleMultiplyOpNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;231;-2480,2784;Inherit;False;2;2;0;FLOAT;0;False;1;FLOAT;0;False;1;FLOAT;0
-Node;AmplifyShaderEditor.TexturePropertyNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;125;-2384,1440;Inherit;True;Property;_WaveTexture;Wave Texture;15;1;[Header];Create;True;1;WAVES;0;0;False;0;False;841ad33c2bd5af8448cf499ac7c0c073;81b99e2b9d190ee43ba844984888f9a8;False;white;Auto;Texture2D;False;-1;0;2;SAMPLER2D;0;SAMPLERSTATE;1
-Node;AmplifyShaderEditor.SimpleAddOpNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;216;-2320,1904;Inherit;False;3;3;0;FLOAT2;0,0;False;1;FLOAT2;0,0;False;2;FLOAT;0;False;1;FLOAT2;0
-Node;AmplifyShaderEditor.SimpleAddOpNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;217;-2288,1648;Inherit;False;3;3;0;FLOAT2;0,0;False;1;FLOAT2;0,0;False;2;FLOAT;0;False;1;FLOAT2;0
-Node;AmplifyShaderEditor.SamplerNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;116;-2080,1856;Inherit;True;Property;_TextureSample2;Texture Sample 0;10;0;Create;True;0;0;0;False;0;False;-1;841ad33c2bd5af8448cf499ac7c0c073;841ad33c2bd5af8448cf499ac7c0c073;True;0;False;white;Auto;False;Object;-1;Auto;Texture2D;False;8;0;SAMPLER2D;;False;1;FLOAT2;0,0;False;2;FLOAT;0;False;3;FLOAT2;0,0;False;4;FLOAT2;0,0;False;5;FLOAT;1;False;6;FLOAT;0;False;7;SAMPLERSTATE;;False;6;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4;FLOAT3;5
-Node;AmplifyShaderEditor.SamplerNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;27;-2080,1616;Inherit;True;Property;_TextureSample0;Texture Sample 0;11;0;Create;True;0;0;0;False;0;False;-1;841ad33c2bd5af8448cf499ac7c0c073;841ad33c2bd5af8448cf499ac7c0c073;True;0;False;white;Auto;False;Object;-1;Auto;Texture2D;False;8;0;SAMPLER2D;;False;1;FLOAT2;0,0;False;2;FLOAT;0;False;3;FLOAT2;0,0;False;4;FLOAT2;0,0;False;5;FLOAT;1;False;6;FLOAT;0;False;7;SAMPLERSTATE;;False;6;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4;FLOAT3;5
+Node;AmplifyShaderEditor.DynamicAppendNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;225;-3504,3792;Inherit;False;FLOAT2;4;0;FLOAT;0;False;1;FLOAT;0;False;2;FLOAT;0;False;3;FLOAT;0;False;1;FLOAT2;0
+Node;AmplifyShaderEditor.RangedFloatNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;226;-3616,3952;Inherit;False;Property;_WaveDeformationScale;Wave Deformation Scale;25;0;Create;True;0;0;0;False;0;False;1;1;0;0;0;1;FLOAT;0
+Node;AmplifyShaderEditor.DynamicAppendNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;97;-3456,2592;Inherit;False;FLOAT2;4;0;FLOAT;0;False;1;FLOAT;0;False;2;FLOAT;0;False;3;FLOAT;0;False;1;FLOAT2;0
+Node;AmplifyShaderEditor.RangedFloatNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;35;-3408,2688;Inherit;False;Property;_Wavesize;Wave size;19;0;Create;True;0;0;0;False;0;False;1;1;0;0;0;1;FLOAT;0
+Node;AmplifyShaderEditor.DynamicAppendNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;118;-3456,2848;Inherit;False;FLOAT2;4;0;FLOAT;0;False;1;FLOAT;0;False;2;FLOAT;0;False;3;FLOAT;0;False;1;FLOAT2;0
+Node;AmplifyShaderEditor.RangedFloatNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;123;-3408,2992;Inherit;False;Property;_Wavesize2;Wave size 2;20;0;Create;True;0;0;0;False;0;False;1;1;0;0;0;1;FLOAT;0
+Node;AmplifyShaderEditor.GetLocalVarNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;218;-3472,3232;Inherit;False;153;SDF Mask;1;0;OBJECT;;False;1;FLOAT;0
+Node;AmplifyShaderEditor.SimpleDivideOpNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;227;-3312,3792;Inherit;False;2;0;FLOAT2;0,0;False;1;FLOAT;0;False;1;FLOAT2;0
+Node;AmplifyShaderEditor.RangedFloatNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;221;-3504,3376;Inherit;False;Property;_SDFInfluenceWavesX;SDF Influence Waves X;46;0;Create;True;0;0;0;False;0;False;1;0;0;1;0;1;FLOAT;0
+Node;AmplifyShaderEditor.RangedFloatNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;235;-3504,3472;Inherit;False;Property;_SDFInfluenceWavesY;SDF Influence Waves Y;45;0;Create;True;0;0;0;False;0;False;1;0;0;1;0;1;FLOAT;0
+Node;AmplifyShaderEditor.SimpleDivideOpNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;98;-3232,2592;Inherit;False;2;0;FLOAT2;0,0;False;1;FLOAT;0;False;1;FLOAT2;0
+Node;AmplifyShaderEditor.SimpleDivideOpNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;119;-3232,2848;Inherit;False;2;0;FLOAT2;0,0;False;1;FLOAT;0;False;1;FLOAT2;0
+Node;AmplifyShaderEditor.Vector2Node, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;36;-3088,2688;Inherit;False;Property;_WaveSpeed;Wave Speed;21;0;Create;True;0;0;0;False;0;False;1,1;1,1;0;3;FLOAT2;0;FLOAT;1;FLOAT;2
+Node;AmplifyShaderEditor.Vector2Node, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;122;-3088,2960;Inherit;False;Property;_WaveSpeed2;Wave Speed 2;22;0;Create;True;0;0;0;False;0;False;1,1;1,1;0;3;FLOAT2;0;FLOAT;1;FLOAT;2
+Node;AmplifyShaderEditor.SimpleMultiplyOpNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;236;-3152,3440;Inherit;False;2;2;0;FLOAT;0;False;1;FLOAT;0;False;1;FLOAT;0
+Node;AmplifyShaderEditor.RangedFloatNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;232;-3024,4000;Inherit;False;Property;_WaveDeformationIntensity;Wave Deformation Intensity;23;1;[Header];Create;True;1;WAVE DEFORMATION;0;0;False;0;False;1;1;0;1;0;1;FLOAT;0
+Node;AmplifyShaderEditor.SamplerNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;223;-3152,3760;Inherit;True;Property;_GlobalWavedeformation;Global Wave deformation;24;0;Create;True;0;0;0;False;0;False;-1;None;None;True;0;False;white;Auto;False;Object;-1;Auto;Texture2D;False;8;0;SAMPLER2D;;False;1;FLOAT2;0,0;False;2;FLOAT;0;False;3;FLOAT2;0,0;False;4;FLOAT2;0,0;False;5;FLOAT;1;False;6;FLOAT;0;False;7;SAMPLERSTATE;;False;6;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4;FLOAT3;5
+Node;AmplifyShaderEditor.SimpleMultiplyOpNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;219;-3136,3248;Inherit;False;2;2;0;FLOAT;0;False;1;FLOAT;0;False;1;FLOAT;0
+Node;AmplifyShaderEditor.FunctionNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;120;-3088,2592;Inherit;False;Polar UV;33;;38;c4233c329a4c24140b2a5ebfd47bf4ca;0;2;30;FLOAT;0;False;12;FLOAT2;0,0;False;1;FLOAT2;0
+Node;AmplifyShaderEditor.FunctionNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;276;-3072,2848;Inherit;False;Polar UV;33;;54;c4233c329a4c24140b2a5ebfd47bf4ca;0;2;30;FLOAT;0;False;12;FLOAT2;0,0;False;1;FLOAT2;0
+Node;AmplifyShaderEditor.PannerNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;95;-2880,2592;Inherit;False;3;0;FLOAT2;0,0;False;2;FLOAT2;0.1,0.1;False;1;FLOAT;1;False;1;FLOAT2;0
+Node;AmplifyShaderEditor.PannerNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;121;-2880,2848;Inherit;False;3;0;FLOAT2;0,0;False;2;FLOAT2;0.1,0.1;False;1;FLOAT;1;False;1;FLOAT2;0
+Node;AmplifyShaderEditor.DynamicAppendNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;233;-2912,3264;Inherit;False;FLOAT2;4;0;FLOAT;0;False;1;FLOAT;0;False;2;FLOAT;0;False;3;FLOAT;0;False;1;FLOAT2;0
+Node;AmplifyShaderEditor.SimpleMultiplyOpNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;231;-2720,3744;Inherit;False;2;2;0;FLOAT;0;False;1;FLOAT;0;False;1;FLOAT;0
+Node;AmplifyShaderEditor.SimpleAddOpNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;216;-2560,2864;Inherit;False;3;3;0;FLOAT2;0,0;False;1;FLOAT2;0,0;False;2;FLOAT;0;False;1;FLOAT2;0
+Node;AmplifyShaderEditor.TexturePropertyNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;125;-2624,2400;Inherit;True;Property;_WaveTexture;Wave Texture;15;1;[Header];Create;True;1;WAVES;0;0;False;0;False;c50aa8a3b23e6e94eb41b4607398e4af;81b99e2b9d190ee43ba844984888f9a8;False;white;Auto;Texture2D;False;-1;0;2;SAMPLER2D;0;SAMPLERSTATE;1
+Node;AmplifyShaderEditor.SimpleAddOpNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;217;-2528,2608;Inherit;False;3;3;0;FLOAT2;0,0;False;1;FLOAT2;0,0;False;2;FLOAT;0;False;1;FLOAT2;0
+Node;AmplifyShaderEditor.SamplerNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;116;-2320,2816;Inherit;True;Property;_TextureSample2;Texture Sample 0;10;0;Create;True;0;0;0;False;0;False;-1;841ad33c2bd5af8448cf499ac7c0c073;841ad33c2bd5af8448cf499ac7c0c073;True;0;False;white;Auto;False;Object;-1;Auto;Texture2D;False;8;0;SAMPLER2D;;False;1;FLOAT2;0,0;False;2;FLOAT;0;False;3;FLOAT2;0,0;False;4;FLOAT2;0,0;False;5;FLOAT;1;False;6;FLOAT;0;False;7;SAMPLERSTATE;;False;6;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4;FLOAT3;5
+Node;AmplifyShaderEditor.SamplerNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;27;-2320,2576;Inherit;True;Property;_TextureSample0;Texture Sample 0;11;0;Create;True;0;0;0;False;0;False;-1;841ad33c2bd5af8448cf499ac7c0c073;841ad33c2bd5af8448cf499ac7c0c073;True;0;False;white;Auto;False;Object;-1;Auto;Texture2D;False;8;0;SAMPLER2D;;False;1;FLOAT2;0,0;False;2;FLOAT;0;False;3;FLOAT2;0,0;False;4;FLOAT2;0,0;False;5;FLOAT;1;False;6;FLOAT;0;False;7;SAMPLERSTATE;;False;6;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4;FLOAT3;5
 Node;AmplifyShaderEditor.CommentaryNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;190;-3938,-786;Inherit;False;1476;466.85;Comment;9;182;183;184;185;188;186;94;180;189;Foam;1,1,1,1;0;0
 Node;AmplifyShaderEditor.GetLocalVarNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;212;-4544,-368;Inherit;False;153;SDF Mask;1;0;OBJECT;;False;1;FLOAT;0
-Node;AmplifyShaderEditor.SimpleAddOpNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;127;-1552,1744;Inherit;False;2;2;0;FLOAT;0;False;1;FLOAT;0;False;1;FLOAT;0
-Node;AmplifyShaderEditor.CommentaryNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;176;-594,686;Inherit;False;1540;898.95;Comment;11;169;154;33;32;93;171;31;107;108;195;239;Water Displacement;1,1,1,1;0;0
+Node;AmplifyShaderEditor.SimpleAddOpNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;127;-1792,2704;Inherit;False;2;2;0;FLOAT;0;False;1;FLOAT;0;False;1;FLOAT;0
 Node;AmplifyShaderEditor.WorldPosInputsNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;183;-3888,-736;Inherit;False;0;4;FLOAT3;0;FLOAT;1;FLOAT;2;FLOAT;3
 Node;AmplifyShaderEditor.OneMinusNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;213;-4352,-368;Inherit;False;1;0;FLOAT;0;False;1;FLOAT;0
-Node;AmplifyShaderEditor.RangedFloatNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;215;-4368,-256;Inherit;False;Property;_SDFinfluenceFoam;SDF influence Foam;40;0;Create;True;0;0;0;False;0;False;1;1;0;1;0;1;FLOAT;0
-Node;AmplifyShaderEditor.RegisterLocalVarNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;92;-1408,1744;Inherit;False;Water diplacement;-1;True;1;0;FLOAT;0;False;1;FLOAT;0
-Node;AmplifyShaderEditor.CommentaryNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;169;-544,1184;Inherit;False;959;228.95;Comment;5;115;113;111;114;112;Camera Depth;1,1,1,1;0;0
+Node;AmplifyShaderEditor.RangedFloatNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;215;-4368,-256;Inherit;False;Property;_SDFinfluenceFoam;SDF influence Foam;47;0;Create;True;0;0;0;False;0;False;1;1;0;1;0;1;FLOAT;0
+Node;AmplifyShaderEditor.RegisterLocalVarNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;92;-1648,2704;Inherit;False;Water diplacement;-1;True;1;0;FLOAT;0;False;1;FLOAT;0
 Node;AmplifyShaderEditor.DynamicAppendNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;184;-3664,-688;Inherit;False;FLOAT2;4;0;FLOAT;0;False;1;FLOAT;0;False;2;FLOAT;0;False;3;FLOAT;0;False;1;FLOAT2;0
-Node;AmplifyShaderEditor.RangedFloatNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;186;-3840,-496;Inherit;False;Property;_FoamTextureSize;Foam Texture Size;34;0;Create;True;0;0;0;False;0;False;4;4;0;0;0;1;FLOAT;0
+Node;AmplifyShaderEditor.RangedFloatNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;186;-3840,-496;Inherit;False;Property;_FoamTextureSize;Foam Texture Size;41;0;Create;True;0;0;0;False;0;False;4;4;0;0;0;1;FLOAT;0
 Node;AmplifyShaderEditor.GetLocalVarNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;94;-3792,-416;Inherit;False;92;Water diplacement;1;0;OBJECT;;False;1;FLOAT;0
 Node;AmplifyShaderEditor.SimpleMultiplyOpNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;214;-4128,-368;Inherit;False;2;2;0;FLOAT;0;False;1;FLOAT;0;False;1;FLOAT;0
-Node;AmplifyShaderEditor.CommentaryNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;170;-1666,-18;Inherit;False;948;362.9;Comment;6;24;26;25;23;22;21;Alpha Depth Fade;1,1,1,1;0;0
+Node;AmplifyShaderEditor.CommentaryNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;176;-594,686;Inherit;False;1540;898.95;Comment;11;169;154;33;32;93;171;31;107;108;195;239;Water Displacement;1,1,1,1;0;0
 Node;AmplifyShaderEditor.SimpleDivideOpNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;185;-3504,-688;Inherit;False;2;0;FLOAT2;0,0;False;1;FLOAT;0;False;1;FLOAT2;0
 Node;AmplifyShaderEditor.SimpleAddOpNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;211;-3504,-400;Inherit;False;2;2;0;FLOAT;0;False;1;FLOAT;0;False;1;FLOAT;0
-Node;AmplifyShaderEditor.TexturePropertyNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;210;-3536,-960;Inherit;True;Property;_FoamTexture;Foam Texture;33;1;[Header];Create;True;1;FOAM;0;0;False;0;False;4aae1642eb09d204f8e1d9499f9d5ae2;4aae1642eb09d204f8e1d9499f9d5ae2;False;white;Auto;Texture2D;False;-1;0;2;SAMPLER2D;0;SAMPLERSTATE;1
-Node;AmplifyShaderEditor.RangedFloatNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;112;-496,1264;Inherit;False;Property;_Displacementfadedistance;Displacement fade distance ;18;0;Create;True;0;0;0;False;0;False;100;100;0;0;0;1;FLOAT;0
-Node;AmplifyShaderEditor.RangedFloatNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;114;-448,1328;Inherit;False;Property;_DisplacementfadeOffset;Displacement fade Offset;17;0;Create;True;0;0;0;False;0;False;100;100;0;0;0;1;FLOAT;0
-Node;AmplifyShaderEditor.RangedFloatNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;21;-1616,224;Inherit;False;Property;_Alphadepthfade;Alpha depth fade;14;0;Create;True;0;0;0;False;0;False;5;5;0;0;0;1;FLOAT;0
+Node;AmplifyShaderEditor.TexturePropertyNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;210;-3536,-960;Inherit;True;Property;_FoamTexture;Foam Texture;40;1;[Header];Create;True;1;FOAM;0;0;False;0;False;4aae1642eb09d204f8e1d9499f9d5ae2;4aae1642eb09d204f8e1d9499f9d5ae2;False;white;Auto;Texture2D;False;-1;0;2;SAMPLER2D;0;SAMPLERSTATE;1
+Node;AmplifyShaderEditor.CommentaryNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;169;-544,1184;Inherit;False;959;228.95;Comment;5;115;113;111;114;112;Camera Depth;1,1,1,1;0;0
 Node;AmplifyShaderEditor.RangedFloatNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;189;-3024,-592;Inherit;False;Constant;_Float1;Float 1;29;0;Create;True;0;0;0;False;0;False;3;0;0;0;0;1;FLOAT;0
 Node;AmplifyShaderEditor.SmoothstepOpNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;180;-3248,-480;Inherit;False;3;0;FLOAT;0;False;1;FLOAT;1.3;False;2;FLOAT;1.5;False;1;FLOAT;0
 Node;AmplifyShaderEditor.SamplerNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;182;-3328,-704;Inherit;True;Property;_azza;azza;32;0;Create;True;0;0;0;False;0;False;-1;373ea9afea84dda41a9d55f805e07f35;373ea9afea84dda41a9d55f805e07f35;True;0;False;white;Auto;False;Object;-1;Auto;Texture2D;False;8;0;SAMPLER2D;;False;1;FLOAT2;0,0;False;2;FLOAT;0;False;3;FLOAT2;0,0;False;4;FLOAT2;0,0;False;5;FLOAT;1;False;6;FLOAT;0;False;7;SAMPLERSTATE;;False;6;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4;FLOAT3;5
-Node;AmplifyShaderEditor.CameraDepthFade, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;111;-144,1232;Inherit;False;3;2;FLOAT3;0,0,0;False;0;FLOAT;1;False;1;FLOAT;0;False;1;FLOAT;0
-Node;AmplifyShaderEditor.DepthFade, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;22;-1392,208;Inherit;False;True;False;False;2;1;FLOAT3;0,0,0;False;0;FLOAT;1;False;1;FLOAT;0
+Node;AmplifyShaderEditor.RangedFloatNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;112;-496,1264;Inherit;False;Property;_Displacementfadedistance;Displacement fade distance ;18;0;Create;True;0;0;0;False;0;False;100;100;0;0;0;1;FLOAT;0
+Node;AmplifyShaderEditor.RangedFloatNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;114;-448,1328;Inherit;False;Property;_DisplacementfadeOffset;Displacement fade Offset;17;0;Create;True;0;0;0;False;0;False;100;100;0;0;0;1;FLOAT;0
 Node;AmplifyShaderEditor.FunctionNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;188;-2800,-688;Inherit;False;Custom Heightlerp;0;;42;7af0fc005534a844b8477c5fd0284531;0;5;15;FLOAT4;0,0,0,0;False;16;FLOAT4;0,0,0,0;False;17;FLOAT;0;False;18;FLOAT;0;False;19;FLOAT;0;False;2;FLOAT4;0;FLOAT;22
+Node;AmplifyShaderEditor.CommentaryNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;170;-128,32;Inherit;False;948;362.9;Comment;15;24;26;23;22;21;89;88;87;86;85;84;83;82;81;80;Alpha Depth Fade;1,1,1,1;0;0
+Node;AmplifyShaderEditor.CameraDepthFade, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;111;-144,1232;Inherit;False;3;2;FLOAT3;0,0,0;False;0;FLOAT;1;False;1;FLOAT;0;False;1;FLOAT;0
+Node;AmplifyShaderEditor.RegisterLocalVarNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;191;-2432,-672;Inherit;False;Foam Mask;-1;True;1;0;FLOAT;0;False;1;FLOAT;0
+Node;AmplifyShaderEditor.RangedFloatNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;21;-80,272;Inherit;False;Property;_Alphadepthfade;Alpha depth fade;14;0;Create;True;0;0;0;False;0;False;5;5;0;0;0;1;FLOAT;0
 Node;AmplifyShaderEditor.SaturateNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;113;96,1232;Inherit;False;1;0;FLOAT;0;False;1;FLOAT;0
 Node;AmplifyShaderEditor.GetLocalVarNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;154;272,1488;Inherit;False;153;SDF Mask;1;0;OBJECT;;False;1;FLOAT;0
 Node;AmplifyShaderEditor.GetLocalVarNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;93;-480,816;Inherit;False;92;Water diplacement;1;0;OBJECT;;False;1;FLOAT;0
-Node;AmplifyShaderEditor.RangedFloatNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;239;32,1424;Inherit;False;Property;_SDFwavemultipliyer;SDF wave multipliyer;37;0;Create;True;0;0;0;False;0;False;0.5;0.5;0;1;0;1;FLOAT;0
-Node;AmplifyShaderEditor.RangedFloatNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;25;-1264,112;Inherit;False;Property;_MaxAlpha;Max Alpha;13;0;Create;True;0;0;0;False;0;False;0.2682304;1;0;1;0;1;FLOAT;0
-Node;AmplifyShaderEditor.SaturateNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;23;-1136,208;Inherit;False;1;0;FLOAT;0;False;1;FLOAT;0
-Node;AmplifyShaderEditor.RangedFloatNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;26;-1264,32;Inherit;False;Property;_MinAlpha;Min Alpha;12;1;[Header];Create;True;1;ALPHA;0;0;False;0;False;0;0;0;1;0;1;FLOAT;0
-Node;AmplifyShaderEditor.RegisterLocalVarNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;191;-2432,-672;Inherit;False;Foam Mask;-1;True;1;0;FLOAT;0;False;1;FLOAT;0
+Node;AmplifyShaderEditor.RangedFloatNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;239;32,1424;Inherit;False;Property;_SDFwavemultipliyer;SDF wave multipliyer;44;0;Create;True;0;0;0;False;0;False;0.5;0.5;0;1;0;1;FLOAT;0
+Node;AmplifyShaderEditor.GetLocalVarNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;193;-928,400;Inherit;False;191;Foam Mask;1;0;OBJECT;;False;1;FLOAT;0
+Node;AmplifyShaderEditor.DepthFade, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;22;144,256;Inherit;False;True;False;False;2;1;FLOAT3;0,0,0;False;0;FLOAT;1;False;1;FLOAT;0
 Node;AmplifyShaderEditor.RangedFloatNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;33;-144,1104;Inherit;False;Property;_Displacementintensity;Displacement intensity;16;0;Create;True;0;0;0;False;0;False;0.1;0.1;0;1;0;1;FLOAT;0
 Node;AmplifyShaderEditor.Vector3Node, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;32;-48,944;Inherit;False;Constant;_Vector0;Vector 0;10;0;Create;True;0;0;0;False;0;False;0,1,0;0,0,0;0;4;FLOAT3;0;FLOAT;1;FLOAT;2;FLOAT;3
 Node;AmplifyShaderEditor.OneMinusNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;115;240,1232;Inherit;False;1;0;FLOAT;0;False;1;FLOAT;0
 Node;AmplifyShaderEditor.LerpOp, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;171;464,1408;Inherit;False;3;0;FLOAT;0.5;False;1;FLOAT;1;False;2;FLOAT;0;False;1;FLOAT;0
 Node;AmplifyShaderEditor.SimpleSubtractOpNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;195;-96,784;Inherit;False;2;0;FLOAT;0;False;1;FLOAT;1;False;1;FLOAT;0
+Node;AmplifyShaderEditor.RangedFloatNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;25;-1216,160;Inherit;False;Property;_MaxAlpha;Max Alpha;13;0;Create;True;0;0;0;False;0;False;0.2682304;1;0;1;0;1;FLOAT;0
+Node;AmplifyShaderEditor.RangedFloatNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;194;-960,320;Inherit;False;Constant;_Float2;Float 2;29;0;Create;True;0;0;0;False;0;False;1;0;0;0;0;1;FLOAT;0
+Node;AmplifyShaderEditor.SaturateNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;23;400,256;Inherit;False;1;0;FLOAT;0;False;1;FLOAT;0
+Node;AmplifyShaderEditor.RangedFloatNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;26;272,80;Inherit;False;Property;_MinAlpha;Min Alpha;12;1;[Header];Create;True;1;ALPHA;0;0;False;0;False;0;0;0;1;0;1;FLOAT;0
 Node;AmplifyShaderEditor.CommentaryNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;165;-1264,-352;Inherit;False;740;322.95;Comment;5;138;137;139;13;167;Smoothness;1,1,1,1;0;0
 Node;AmplifyShaderEditor.CommentaryNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;164;-864,-544;Inherit;False;356;162.95;Comment;1;12;Metallic;1,1,1,1;0;0
 Node;AmplifyShaderEditor.CommentaryNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;163;416,-784;Inherit;False;516;226.95;Comment;2;141;155;Debug;1,1,1,1;0;0
 Node;AmplifyShaderEditor.CommentaryNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;162;-912,-1424;Inherit;False;836;458.9;Comment;5;11;157;16;17;18;Tide Color;1,1,1,1;0;0
 Node;AmplifyShaderEditor.CommentaryNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;161;-1408,-1392;Inherit;False;468;450.95;Comment;3;158;19;156;SDF Color;1,1,1,1;0;0
-Node;AmplifyShaderEditor.CommentaryNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;160;-2336,-1408;Inherit;False;628;594.95;Comment;4;20;70;69;207;Wave Color;1,1,1,1;0;0
-Node;AmplifyShaderEditor.LerpOp, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;24;-896,160;Inherit;False;3;0;FLOAT;0;False;1;FLOAT;0;False;2;FLOAT;0;False;1;FLOAT;0
-Node;AmplifyShaderEditor.GetLocalVarNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;193;144,400;Inherit;False;191;Foam Mask;1;0;OBJECT;;False;1;FLOAT;0
-Node;AmplifyShaderEditor.RangedFloatNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;194;96,288;Inherit;False;Constant;_Float2;Float 2;29;0;Create;True;0;0;0;False;0;False;1;0;0;0;0;1;FLOAT;0
+Node;AmplifyShaderEditor.CommentaryNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;160;-2336,-1408;Inherit;False;628;594.95;Comment;3;70;69;207;Wave Color;1,1,1,1;0;0
 Node;AmplifyShaderEditor.CommentaryNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;196;-4016,-240;Inherit;False;1476;466.85;Comment;9;205;204;203;202;201;200;199;198;197;Foam;1,1,1,1;0;0
 Node;AmplifyShaderEditor.SimpleMultiplyOpNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;31;464,912;Inherit;False;5;5;0;FLOAT;0;False;1;FLOAT;0;False;2;FLOAT3;0,0,0;False;3;FLOAT;0;False;4;FLOAT;0;False;1;FLOAT3;0
 Node;AmplifyShaderEditor.PosVertexDataNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;107;496,736;Inherit;False;0;0;5;FLOAT3;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
+Node;AmplifyShaderEditor.LerpOp, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;192;-688,160;Inherit;False;3;0;FLOAT;0;False;1;FLOAT;0;False;2;FLOAT;0;False;1;FLOAT;0
 Node;AmplifyShaderEditor.SaturateNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;17;-352,-1104;Inherit;False;1;0;FLOAT;0;False;1;FLOAT;0
-Node;AmplifyShaderEditor.ColorNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;20;-2288,-1360;Inherit;False;Property;_MainColor;Main Color;3;0;Create;True;0;0;0;False;0;False;0.2392157,0.6901961,1,1;1,1,1,1;True;True;0;6;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4;FLOAT3;5
 Node;AmplifyShaderEditor.LerpOp, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;69;-1888,-1200;Inherit;False;3;0;FLOAT3;0,0,0;False;1;FLOAT3;0,0,0;False;2;FLOAT;0;False;1;FLOAT3;0
 Node;AmplifyShaderEditor.ColorNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;158;-1344,-1344;Inherit;False;Property;_SDFColor;SDF Color;4;0;Create;True;0;0;0;False;0;False;1,1,1,1;1,1,1,1;True;True;0;6;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4;FLOAT3;5
 Node;AmplifyShaderEditor.LerpOp, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;19;-1104,-1184;Inherit;False;3;0;FLOAT3;0,0,0;False;1;FLOAT3;0,0,0;False;2;FLOAT;0;False;1;FLOAT3;0
@@ -6856,7 +6948,6 @@ Node;AmplifyShaderEditor.ColorNode, AmplifyShaderEditor, Version=0.0.0.0, Cultur
 Node;AmplifyShaderEditor.DepthFade, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;16;-592,-1104;Inherit;False;True;False;False;2;1;FLOAT3;0,0,0;False;0;FLOAT;1;False;1;FLOAT;0
 Node;AmplifyShaderEditor.RangedFloatNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;18;-832,-1088;Inherit;False;Property;_Colordepthfade;Color depth fade;6;0;Create;True;0;0;0;False;0;False;5;5;0;0;0;1;FLOAT;0
 Node;AmplifyShaderEditor.StaticSwitch, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;141;656,-736;Inherit;False;Property;_Debug;Debug;2;0;Create;True;0;0;0;False;0;False;0;0;0;True;;KeywordEnum;2;Base;DebugSDFMask;Create;True;True;All;9;1;FLOAT3;0,0,0;False;0;FLOAT3;0,0,0;False;2;FLOAT3;0,0,0;False;3;FLOAT3;0,0,0;False;4;FLOAT3;0,0,0;False;5;FLOAT3;0,0,0;False;6;FLOAT3;0,0,0;False;7;FLOAT3;0,0,0;False;8;FLOAT3;0,0,0;False;1;FLOAT3;0
-Node;AmplifyShaderEditor.GetLocalVarNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;155;464,-672;Inherit;False;153;SDF Mask;1;0;OBJECT;;False;1;FLOAT;0
 Node;AmplifyShaderEditor.LerpOp, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;157;-240,-1264;Inherit;False;3;0;FLOAT3;0,0,0;False;1;FLOAT3;0,0,0;False;2;FLOAT;0;False;1;FLOAT3;0
 Node;AmplifyShaderEditor.LerpOp, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;138;-688,-192;Inherit;False;3;0;FLOAT;0;False;1;FLOAT;0;False;2;FLOAT;0;False;1;FLOAT;0
 Node;AmplifyShaderEditor.RangedFloatNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;139;-1184,-240;Inherit;False;Property;_Smoothness1;Smoothness max;10;0;Create;True;0;0;0;False;0;False;0.9119316;0;0;1;0;1;FLOAT;0
@@ -6864,7 +6955,6 @@ Node;AmplifyShaderEditor.GetLocalVarNode, AmplifyShaderEditor, Version=0.0.0.0, 
 Node;AmplifyShaderEditor.DitheringNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;167;-912,-128;Inherit;False;1;False;4;0;FLOAT;0;False;1;SAMPLER2D;;False;2;FLOAT4;0,0,0,0;False;3;SAMPLERSTATE;;False;1;FLOAT;0
 Node;AmplifyShaderEditor.RangedFloatNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;13;-1200,-304;Inherit;False;Property;_Smoothnessmin;Smoothness min;11;1;[Header];Create;True;1;SMOOTHNESS;0;0;False;0;False;0.5;0;0;1;0;1;FLOAT;0
 Node;AmplifyShaderEditor.RangedFloatNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;12;-816,-496;Inherit;False;Property;_Metallic;Metallic;9;1;[Header];Create;True;1;METALLIC;0;0;False;0;False;0;0;0;1;0;1;FLOAT;0
-Node;AmplifyShaderEditor.LerpOp, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;192;416,208;Inherit;False;3;0;FLOAT;0;False;1;FLOAT;0;False;2;FLOAT;0;False;1;FLOAT;0
 Node;AmplifyShaderEditor.WorldPosInputsNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;197;-3952,-176;Inherit;False;0;4;FLOAT3;0;FLOAT;1;FLOAT;2;FLOAT;3
 Node;AmplifyShaderEditor.DynamicAppendNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;198;-3728,-128;Inherit;False;FLOAT2;4;0;FLOAT;0;False;1;FLOAT;0;False;2;FLOAT;0;False;3;FLOAT;0;False;1;FLOAT2;0
 Node;AmplifyShaderEditor.SimpleDivideOpNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;200;-3568,-128;Inherit;False;2;0;FLOAT2;0,0;False;1;FLOAT;0;False;1;FLOAT2;0
@@ -6877,10 +6967,39 @@ Node;AmplifyShaderEditor.GetLocalVarNode, AmplifyShaderEditor, Version=0.0.0.0, 
 Node;AmplifyShaderEditor.DitheringNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;208;-2496,-208;Inherit;False;0;False;4;0;FLOAT;0;False;1;SAMPLER2D;;False;2;FLOAT4;0,0,0,0;False;3;SAMPLERSTATE;;False;1;FLOAT;0
 Node;AmplifyShaderEditor.DitheringNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;209;-2224,-704;Inherit;False;0;False;4;0;FLOAT;0;False;1;SAMPLER2D;;False;2;FLOAT4;0,0,0,0;False;3;SAMPLERSTATE;;False;1;FLOAT;0
 Node;AmplifyShaderEditor.SamplerNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;202;-3392,-144;Inherit;True;Property;_zaeaze;zaeaze;31;0;Create;True;0;0;0;False;0;False;-1;373ea9afea84dda41a9d55f805e07f35;373ea9afea84dda41a9d55f805e07f35;True;0;False;white;Auto;False;Object;-1;Auto;Texture2D;False;8;0;SAMPLER2D;;False;1;FLOAT2;0,0;False;2;FLOAT;0;False;3;FLOAT2;0,0;False;4;FLOAT2;0,0;False;5;FLOAT;1;False;6;FLOAT;0;False;7;SAMPLERSTATE;;False;6;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4;FLOAT3;5
-Node;AmplifyShaderEditor.RangedFloatNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;199;-3904,64;Inherit;False;Property;_FoamTextureSize2;Foam Texture Size2;35;0;Create;True;0;0;0;False;0;False;4;4;0;0;0;1;FLOAT;0
-Node;AmplifyShaderEditor.SimpleMultiplyOpNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;124;-1712,1936;Inherit;False;2;2;0;FLOAT;0;False;1;FLOAT;0;False;1;FLOAT;0
+Node;AmplifyShaderEditor.RangedFloatNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;199;-3904,64;Inherit;False;Property;_FoamTextureSize2;Foam Texture Size2;42;0;Create;True;0;0;0;False;0;False;4;4;0;0;0;1;FLOAT;0
 Node;AmplifyShaderEditor.SimpleAddOpNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;108;800,864;Inherit;False;2;2;0;FLOAT3;0,0,0;False;1;FLOAT3;0,0,0;False;1;FLOAT3;0
 Node;AmplifyShaderEditor.SmoothstepOpNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;203;-3312,80;Inherit;False;3;0;FLOAT;0;False;1;FLOAT;0.5;False;2;FLOAT;1.5;False;1;FLOAT;0
+Node;AmplifyShaderEditor.LerpOp, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;24;640,128;Inherit;False;3;0;FLOAT;0;False;1;FLOAT;0;False;2;FLOAT;0;False;1;FLOAT;0
+Node;AmplifyShaderEditor.SimpleMultiplyOpNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;124;-1952,2896;Inherit;False;2;2;0;FLOAT;0;False;1;FLOAT;0;False;1;FLOAT;0
+Node;AmplifyShaderEditor.GetLocalVarNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;155;464,-672;Inherit;False;153;SDF Mask;1;0;OBJECT;;False;1;FLOAT;0
+Node;AmplifyShaderEditor.WorldPosInputsNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;240;-3776,1344;Inherit;False;0;4;FLOAT3;0;FLOAT;1;FLOAT;2;FLOAT;3
+Node;AmplifyShaderEditor.WorldPosInputsNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;249;-3744,1584;Inherit;False;0;4;FLOAT3;0;FLOAT;1;FLOAT;2;FLOAT;3
+Node;AmplifyShaderEditor.DynamicAppendNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;241;-3584,1344;Inherit;False;FLOAT2;4;0;FLOAT;0;False;1;FLOAT;0;False;2;FLOAT;0;False;3;FLOAT;0;False;1;FLOAT2;0
+Node;AmplifyShaderEditor.RangedFloatNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;246;-3536,1440;Inherit;False;Property;_Glimmersize1;Glimmer size 1;29;0;Create;True;0;0;0;False;0;False;1;1;0;0;0;1;FLOAT;0
+Node;AmplifyShaderEditor.DynamicAppendNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;250;-3552,1584;Inherit;False;FLOAT2;4;0;FLOAT;0;False;1;FLOAT;0;False;2;FLOAT;0;False;3;FLOAT;0;False;1;FLOAT2;0
+Node;AmplifyShaderEditor.RangedFloatNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;255;-3504,1680;Inherit;False;Property;_Glimmersize2;Glimmer size 2;30;0;Create;True;0;0;0;False;0;False;1;1;0;0;0;1;FLOAT;0
+Node;AmplifyShaderEditor.SimpleDivideOpNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;242;-3360,1344;Inherit;False;2;0;FLOAT2;0,0;False;1;FLOAT;0;False;1;FLOAT2;0
+Node;AmplifyShaderEditor.SimpleDivideOpNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;251;-3328,1584;Inherit;False;2;0;FLOAT2;0,0;False;1;FLOAT;0;False;1;FLOAT2;0
+Node;AmplifyShaderEditor.Vector2Node, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;247;-3216,1440;Inherit;False;Property;_GlimmerSpeed;Glimmer Speed;31;0;Create;True;0;0;0;False;0;False;1,1;1,1;0;3;FLOAT2;0;FLOAT;1;FLOAT;2
+Node;AmplifyShaderEditor.Vector2Node, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;256;-3184,1680;Inherit;False;Property;_GlimmerSpeed2;Glimmer Speed2;32;0;Create;True;0;0;0;False;0;False;1,1;1,1;0;3;FLOAT2;0;FLOAT;1;FLOAT;2
+Node;AmplifyShaderEditor.PannerNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;244;-3008,1344;Inherit;False;3;0;FLOAT2;0,0;False;2;FLOAT2;0.1,0.1;False;1;FLOAT;1;False;1;FLOAT2;0
+Node;AmplifyShaderEditor.PannerNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;253;-2976,1584;Inherit;False;3;0;FLOAT2;0,0;False;2;FLOAT2;0.1,0.1;False;1;FLOAT;1;False;1;FLOAT2;0
+Node;AmplifyShaderEditor.RangedFloatNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;270;-2914.652,1824.728;Inherit;False;Constant;_Float3;Float 3;41;0;Create;True;0;0;0;False;0;False;15.2;0;0;0;0;1;FLOAT;0
+Node;AmplifyShaderEditor.SamplerNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;245;-2160,1344;Inherit;True;Property;_TextureSample1;Texture Sample 0;11;0;Create;True;0;0;0;False;0;False;-1;841ad33c2bd5af8448cf499ac7c0c073;841ad33c2bd5af8448cf499ac7c0c073;True;0;False;white;Auto;False;Object;-1;Auto;Texture2D;False;8;0;SAMPLER2D;;False;1;FLOAT2;0,0;False;2;FLOAT;0;False;3;FLOAT2;0,0;False;4;FLOAT2;0,0;False;5;FLOAT;1;False;6;FLOAT;0;False;7;SAMPLERSTATE;;False;6;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4;FLOAT3;5
+Node;AmplifyShaderEditor.SimpleMultiplyOpNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;248;-1696,1424;Inherit;False;2;2;0;FLOAT;0;False;1;FLOAT;0;False;1;FLOAT;0
+Node;AmplifyShaderEditor.SimpleAddOpNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;274;-2480,1376;Inherit;False;3;3;0;FLOAT2;0,0;False;1;FLOAT2;0,0;False;2;FLOAT;0;False;1;FLOAT2;0
+Node;AmplifyShaderEditor.SimpleAddOpNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;275;-2432,1600;Inherit;False;3;3;0;FLOAT2;0,0;False;1;FLOAT2;0,0;False;2;FLOAT;0;False;1;FLOAT2;0
+Node;AmplifyShaderEditor.RegisterLocalVarNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;257;-1440,1472;Inherit;False;Glimmer;-1;True;1;0;FLOAT;0;False;1;FLOAT;0
+Node;AmplifyShaderEditor.SamplerNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;254;-2000,1584;Inherit;True;Property;_TextureSample3;Texture Sample 0;11;0;Create;True;0;0;0;False;0;False;-1;841ad33c2bd5af8448cf499ac7c0c073;841ad33c2bd5af8448cf499ac7c0c073;True;0;False;white;Auto;False;Object;-1;Auto;Texture2D;False;8;0;SAMPLER2D;;False;1;FLOAT2;0,0;False;2;FLOAT;0;False;3;FLOAT2;0,0;False;4;FLOAT2;0,0;False;5;FLOAT;1;False;6;FLOAT;0;False;7;SAMPLERSTATE;;False;6;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4;FLOAT3;5
+Node;AmplifyShaderEditor.RotatorNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;269;-2736,1632;Inherit;False;3;0;FLOAT2;0,0;False;1;FLOAT2;0,0;False;2;FLOAT;1;False;1;FLOAT2;0
+Node;AmplifyShaderEditor.TexturePropertyNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;271;-2288,1072;Inherit;True;Property;_GlimmerTexture;Glimmer Texture;26;1;[Header];Create;True;1;GLIMMER;0;0;False;0;False;c50aa8a3b23e6e94eb41b4607398e4af;81b99e2b9d190ee43ba844984888f9a8;False;white;Auto;Texture2D;False;-1;0;2;SAMPLER2D;0;SAMPLERSTATE;1
+Node;AmplifyShaderEditor.GetLocalVarNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;266;-2816,-1168;Inherit;False;257;Glimmer;1;0;OBJECT;;False;1;FLOAT;0
+Node;AmplifyShaderEditor.RangedFloatNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;277;-2912,-1088;Inherit;False;Property;_Glimmerstep;Glimmer step;28;0;Create;True;0;0;0;False;0;False;0.7;0.7;0;1;0;1;FLOAT;0
+Node;AmplifyShaderEditor.StepOpNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;268;-2592,-1168;Inherit;False;2;0;FLOAT;0;False;1;FLOAT;0.7;False;1;FLOAT;0
+Node;AmplifyShaderEditor.LerpOp, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;262;-2464,-1216;Inherit;False;3;0;FLOAT3;0,0,0;False;1;FLOAT3;0,0,0;False;2;FLOAT;0;False;1;FLOAT3;0
+Node;AmplifyShaderEditor.ColorNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;20;-2624,-1472;Inherit;False;Property;_MainColor;Main Color;3;0;Create;True;0;0;0;False;0;False;0.2392157,0.6901961,1,1;1,1,1,1;True;True;0;6;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4;FLOAT3;5
+Node;AmplifyShaderEditor.ColorNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;263;-3056,-1312;Inherit;False;Property;_GlimmerColor;Glimmer Color;27;0;Create;True;0;0;0;False;0;False;1,1,1,1;1,1,1,1;True;True;0;6;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4;FLOAT3;5
 Node;AmplifyShaderEditor.TemplateMultiPassMasterNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;80;624,32;Float;False;False;-1;3;Rendering.HighDefinition.LightingShaderGraphGUI;0;12;New Amplify Shader;53b46d85872c5b24c8f4f0a1c3fe4c87;True;META;0;1;META;0;False;False;False;False;False;False;False;False;False;False;False;False;True;0;False;;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;3;RenderPipeline=HDRenderPipeline;RenderType=Opaque=RenderType;Queue=Geometry=Queue=0;True;5;True;7;d3d11;metal;vulkan;xboxone;xboxseries;playstation;switch;0;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;2;False;;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;1;LightMode=Meta;False;False;0;;0;0;Standard;0;False;0
 Node;AmplifyShaderEditor.TemplateMultiPassMasterNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;81;624,32;Float;False;False;-1;3;Rendering.HighDefinition.LightingShaderGraphGUI;0;12;New Amplify Shader;53b46d85872c5b24c8f4f0a1c3fe4c87;True;ShadowCaster;0;2;ShadowCaster;0;False;False;False;False;False;False;False;False;False;False;False;False;True;0;False;;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;3;RenderPipeline=HDRenderPipeline;RenderType=Opaque=RenderType;Queue=Geometry=Queue=0;True;5;True;7;d3d11;metal;vulkan;xboxone;xboxseries;playstation;switch;0;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;0;True;_CullMode;False;True;False;False;False;False;0;False;;False;False;False;False;False;False;False;False;False;True;1;False;;True;3;False;;False;True;1;LightMode=ShadowCaster;False;False;0;;0;0;Standard;0;False;0
 Node;AmplifyShaderEditor.TemplateMultiPassMasterNode, AmplifyShaderEditor, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null;82;624,32;Float;False;False;-1;3;Rendering.HighDefinition.LightingShaderGraphGUI;0;12;New Amplify Shader;53b46d85872c5b24c8f4f0a1c3fe4c87;True;SceneSelectionPass;0;3;SceneSelectionPass;0;False;False;False;False;False;False;False;False;False;False;False;False;True;0;False;;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;3;RenderPipeline=HDRenderPipeline;RenderType=Opaque=RenderType;Queue=Geometry=Queue=0;True;5;True;7;d3d11;metal;vulkan;xboxone;xboxseries;playstation;switch;0;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;2;False;;False;False;False;False;False;False;False;False;False;False;False;False;False;False;True;1;LightMode=SceneSelectionPass;False;False;0;;0;0;Standard;0;False;0
@@ -6902,29 +7021,30 @@ WireConnection;146;0;144;1
 WireConnection;147;0;146;0
 WireConnection;147;1;144;2
 WireConnection;140;1;147;0
+WireConnection;153;0;140;1
+WireConnection;225;0;224;1
+WireConnection;225;1;224;3
 WireConnection;97;0;96;1
 WireConnection;97;1;96;3
 WireConnection;118;0;117;1
 WireConnection;118;1;117;3
-WireConnection;225;0;224;1
-WireConnection;225;1;224;3
-WireConnection;153;0;140;1
+WireConnection;227;0;225;0
+WireConnection;227;1;226;0
 WireConnection;98;0;97;0
 WireConnection;98;1;35;0
 WireConnection;119;0;118;0
 WireConnection;119;1;123;0
-WireConnection;227;0;225;0
-WireConnection;227;1;226;0
-WireConnection;104;12;98;0
-WireConnection;120;12;119;0
-WireConnection;219;0;218;0
-WireConnection;219;1;221;0
 WireConnection;236;0;218;0
 WireConnection;236;1;235;0
 WireConnection;223;1;227;0
-WireConnection;95;0;104;0
+WireConnection;219;0;218;0
+WireConnection;219;1;221;0
+WireConnection;120;30;98;0
+WireConnection;120;12;98;0
+WireConnection;276;12;119;0
+WireConnection;95;0;120;0
 WireConnection;95;2;36;0
-WireConnection;121;0;120;0
+WireConnection;121;0;276;0
 WireConnection;121;2;122;0
 WireConnection;233;0;219;0
 WireConnection;233;1;236;0
@@ -6955,29 +7075,29 @@ WireConnection;211;1;214;0
 WireConnection;180;0;211;0
 WireConnection;182;0;210;0
 WireConnection;182;1;185;0
-WireConnection;111;0;112;0
-WireConnection;111;1;114;0
-WireConnection;22;0;21;0
 WireConnection;188;17;182;1
 WireConnection;188;18;189;0
 WireConnection;188;19;180;0
-WireConnection;113;0;111;0
-WireConnection;23;0;22;0
+WireConnection;111;0;112;0
+WireConnection;111;1;114;0
 WireConnection;191;0;188;22
+WireConnection;113;0;111;0
+WireConnection;22;0;21;0
 WireConnection;115;0;113;0
 WireConnection;171;0;239;0
 WireConnection;171;2;154;0
 WireConnection;195;0;93;0
-WireConnection;24;0;26;0
-WireConnection;24;1;25;0
-WireConnection;24;2;23;0
+WireConnection;23;0;22;0
 WireConnection;31;0;195;0
 WireConnection;31;1;33;0
 WireConnection;31;2;32;0
 WireConnection;31;3;171;0
 WireConnection;31;4;115;0
+WireConnection;192;0;25;0
+WireConnection;192;1;194;0
+WireConnection;192;2;193;0
 WireConnection;17;0;16;0
-WireConnection;69;0;20;5
+WireConnection;69;0;262;0
 WireConnection;69;1;207;5
 WireConnection;69;2;208;0
 WireConnection;19;0;158;5
@@ -6993,9 +7113,6 @@ WireConnection;138;0;13;0
 WireConnection;138;1;139;0
 WireConnection;138;2;167;0
 WireConnection;167;0;137;0
-WireConnection;192;0;24;0
-WireConnection;192;1;194;0
-WireConnection;192;2;193;0
 WireConnection;198;0;197;1
 WireConnection;198;1;197;3
 WireConnection;200;0;198;0
@@ -7010,15 +7127,50 @@ WireConnection;208;0;203;0
 WireConnection;209;0;191;0
 WireConnection;202;0;210;0
 WireConnection;202;1;200;0
-WireConnection;124;0;27;1
-WireConnection;124;1;116;2
 WireConnection;108;0;107;0
 WireConnection;108;1;31;0
 WireConnection;203;0;201;0
+WireConnection;24;0;26;0
+WireConnection;24;1;192;0
+WireConnection;24;2;23;0
+WireConnection;124;0;27;1
+WireConnection;124;1;116;2
+WireConnection;241;0;240;1
+WireConnection;241;1;240;3
+WireConnection;250;0;249;1
+WireConnection;250;1;249;3
+WireConnection;242;0;241;0
+WireConnection;242;1;246;0
+WireConnection;251;0;250;0
+WireConnection;251;1;255;0
+WireConnection;244;0;242;0
+WireConnection;244;2;247;0
+WireConnection;253;0;251;0
+WireConnection;253;2;256;0
+WireConnection;245;0;271;0
+WireConnection;245;1;274;0
+WireConnection;248;0;245;1
+WireConnection;248;1;254;2
+WireConnection;274;0;244;0
+WireConnection;274;1;233;0
+WireConnection;274;2;231;0
+WireConnection;275;0;269;0
+WireConnection;275;1;233;0
+WireConnection;275;2;231;0
+WireConnection;257;0;248;0
+WireConnection;254;0;271;0
+WireConnection;254;1;275;0
+WireConnection;269;0;253;0
+WireConnection;269;2;270;0
+WireConnection;268;0;266;0
+WireConnection;268;1;277;0
+WireConnection;262;0;263;5
+WireConnection;262;1;20;5
+WireConnection;262;2;268;0
 WireConnection;79;0;141;0
 WireConnection;79;4;12;0
 WireConnection;79;7;138;0
-WireConnection;79;9;192;0
+WireConnection;79;9;24;0
 WireConnection;79;11;108;0
 ASEEND*/
-//CHKSM=68469DAA8EFA3AC1E64997EDEAB3A5DA2AF007A5
+//CHKSM=187489213117052B8321CEFB8D994808A3C18E2B
